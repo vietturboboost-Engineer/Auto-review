@@ -199,6 +199,340 @@ const carSpecs: Record<string, Spec> = {
   },
 };
 
+// ===== Bảo dưỡng & phụ tùng (lịch chung Toyota, tham khảo) =====
+// Giá theo VND, chỉ mang tính tham khảo — khác nhau theo đại lý/khu vực/đời xe & động cơ.
+interface Milestone {
+  km: number;
+  kmLabel: string;
+  items: string[];
+  parts: string[];
+  labor: string;
+  partsPrice: string;
+  total: string;
+  costMin: number; // dùng để sắp xếp theo chi phí
+  time: string;
+  priority: 'Bắt buộc' | 'Khuyến nghị' | 'Tùy chọn';
+  notes: string;
+}
+
+const maintenance: Milestone[] = [
+  {
+    km: 5000,
+    kmLabel: '5.000 km',
+    items: ['Thay dầu động cơ', 'Đảo lốp', 'Kiểm tra phanh, lốp, gạt mưa', 'Bổ sung nước làm mát/rửa kính'],
+    parts: ['Dầu động cơ', 'Lọc dầu (tuỳ nơi)'],
+    labor: '150.000 – 300.000đ',
+    partsPrice: '400.000 – 900.000đ',
+    total: '550.000 – 1.200.000đ',
+    costMin: 550000,
+    time: '45 – 60 phút',
+    priority: 'Bắt buộc',
+    notes: 'Mốc quan trọng nhất — đừng bỏ lỡ thay dầu định kỳ.',
+  },
+  {
+    km: 10000,
+    kmLabel: '10.000 km',
+    items: ['Thay dầu + lọc dầu', 'Đảo lốp', 'Kiểm tra hệ thống phanh', 'Kiểm tra gầm & treo'],
+    parts: ['Dầu động cơ', 'Lọc dầu'],
+    labor: '200.000 – 350.000đ',
+    partsPrice: '500.000 – 1.000.000đ',
+    total: '700.000 – 1.350.000đ',
+    costMin: 700000,
+    time: '60 phút',
+    priority: 'Bắt buộc',
+    notes: 'Thay lọc dầu cùng dầu máy để bảo vệ động cơ.',
+  },
+  {
+    km: 20000,
+    kmLabel: '20.000 km',
+    items: ['Thay dầu + lọc dầu', 'Thay/vệ sinh lọc gió động cơ', 'Thay lọc gió điều hòa', 'Kiểm tra phanh'],
+    parts: ['Dầu', 'Lọc dầu', 'Lọc gió động cơ', 'Lọc gió điều hòa'],
+    labor: '250.000 – 450.000đ',
+    partsPrice: '800.000 – 1.600.000đ',
+    total: '1.050.000 – 2.050.000đ',
+    costMin: 1050000,
+    time: '75 – 90 phút',
+    priority: 'Bắt buộc',
+    notes: 'Đi nhiều bụi nên thay lọc gió sớm hơn.',
+  },
+  {
+    km: 30000,
+    kmLabel: '30.000 km',
+    items: ['Vệ sinh kim phun, họng ga, buồng đốt', 'Kiểm tra hệ thống treo & lái'],
+    parts: ['Dung dịch vệ sinh (không bắt buộc thay phụ tùng)'],
+    labor: '300.000 – 600.000đ',
+    partsPrice: '200.000 – 500.000đ',
+    total: '500.000 – 1.100.000đ',
+    costMin: 500000,
+    time: '60 – 90 phút',
+    priority: 'Tùy chọn',
+    notes: 'Giúp máy bốc & tiết kiệm xăng nếu chạy nhiều trong phố.',
+  },
+  {
+    km: 40000,
+    kmLabel: '40.000 km',
+    items: ['Thay dầu + lọc dầu', 'Thay dầu phanh', 'Thay lọc nhiên liệu (nếu có)', 'Kiểm tra/đổi bugi thường', 'Vệ sinh kim phun'],
+    parts: ['Dầu', 'Lọc dầu', 'Lọc gió', 'Dầu phanh', 'Bugi (loại thường)'],
+    labor: '600.000 – 1.200.000đ',
+    partsPrice: '1.500.000 – 3.500.000đ',
+    total: '2.100.000 – 4.700.000đ',
+    costMin: 2100000,
+    time: '2 – 3 giờ',
+    priority: 'Bắt buộc',
+    notes: 'Bảo dưỡng lớn — nên làm tại xưởng uy tín/đại lý.',
+  },
+  {
+    km: 80000,
+    kmLabel: '80.000 km',
+    items: ['Thay nước làm mát', 'Kiểm tra/thay dây curoa', 'Thay dầu hộp số', 'Kiểm tra hệ thống treo'],
+    parts: ['Nước làm mát', 'Dầu hộp số', 'Dây curoa'],
+    labor: '800.000 – 1.800.000đ',
+    partsPrice: '2.000.000 – 5.000.000đ',
+    total: '2.800.000 – 6.800.000đ',
+    costMin: 2800000,
+    time: '3 – 4 giờ',
+    priority: 'Khuyến nghị',
+    notes: 'Xe máy dầu/SUV lớn chi phí cao hơn.',
+  },
+  {
+    km: 100000,
+    kmLabel: '100.000 km',
+    items: ['Thay bugi Iridium', 'Thay nước làm mát', 'Thay dầu hộp số', 'Kiểm tra bơm nước, ắc quy, má phanh, dây đai'],
+    parts: ['Bugi Iridium', 'Ắc quy', 'Má phanh', 'Nước làm mát', 'Dầu hộp số'],
+    labor: '1.000.000 – 2.500.000đ',
+    partsPrice: '3.000.000 – 8.000.000đ',
+    total: '4.000.000 – 10.500.000đ',
+    costMin: 4000000,
+    time: '4 – 5 giờ',
+    priority: 'Khuyến nghị',
+    notes: 'Mốc đại tu nhỏ — thay nhiều chi tiết hao mòn cùng lúc tiết kiệm công.',
+  },
+];
+
+interface PartRow {
+  name: string;
+  oem: string;
+  dealer: string;
+  after: string;
+  life: string;
+  symptom: string;
+  interval: string;
+  category: string;
+}
+
+const wearParts: PartRow[] = [
+  {
+    name: 'Dầu động cơ (Toyota Genuine 0W-20/5W-30)',
+    oem: '08880-83xxx',
+    dealer: '180.000 – 300.000đ/lít',
+    after: '120.000 – 250.000đ/lít',
+    life: '5.000 – 10.000 km',
+    symptom: 'Dầu đen đặc, tiếng máy to, đèn báo dầu',
+    interval: '5.000 – 10.000 km',
+    category: 'Dầu nhớt',
+  },
+  {
+    name: 'Lọc dầu',
+    oem: '90915-YZZE1 / 04152-YZZA1',
+    dealer: '120.000 – 250.000đ',
+    after: '60.000 – 150.000đ',
+    life: '10.000 km',
+    symptom: 'Thay cùng dầu máy',
+    interval: 'Mỗi 10.000 km',
+    category: 'Lọc',
+  },
+  {
+    name: 'Lọc gió động cơ',
+    oem: '17801-xxxxx',
+    dealer: '200.000 – 400.000đ',
+    after: '100.000 – 250.000đ',
+    life: '20.000 – 40.000 km',
+    symptom: 'Hao xăng, máy yếu, tăng tốc kém',
+    interval: 'Vệ sinh 20.000 km / thay 40.000 km',
+    category: 'Lọc',
+  },
+  {
+    name: 'Lọc gió điều hòa',
+    oem: '87139-xxxxx',
+    dealer: '150.000 – 350.000đ',
+    after: '80.000 – 200.000đ',
+    life: '10.000 – 20.000 km',
+    symptom: 'Gió yếu, có mùi hôi trong cabin',
+    interval: '10.000 – 20.000 km',
+    category: 'Lọc',
+  },
+  {
+    name: 'Bugi Iridium',
+    oem: '90919-xxxxx (DENSO/NGK)',
+    dealer: '250.000 – 500.000đ/cái',
+    after: '150.000 – 350.000đ/cái',
+    life: '100.000 km (bugi thường ~40.000 km)',
+    symptom: 'Máy rung, khó nổ, hao xăng',
+    interval: '100.000 km',
+    category: 'Đánh lửa',
+  },
+  {
+    name: 'Má phanh trước',
+    oem: '04465-xxxxx',
+    dealer: '800.000 – 1.800.000đ/bộ',
+    after: '400.000 – 1.000.000đ/bộ',
+    life: '30.000 – 50.000 km',
+    symptom: 'Kêu rít khi phanh, phanh ăn kém',
+    interval: '30.000 – 50.000 km',
+    category: 'Phanh',
+  },
+  {
+    name: 'Dầu phanh (DOT 3/4)',
+    oem: '08823-xxxxx',
+    dealer: '150.000 – 300.000đ',
+    after: '80.000 – 200.000đ',
+    life: '2 năm / 40.000 km',
+    symptom: 'Chân phanh mềm/nặng bất thường',
+    interval: '40.000 km hoặc 2 năm',
+    category: 'Phanh',
+  },
+  {
+    name: 'Nước làm mát (Toyota SLLC)',
+    oem: '08889-80xxx',
+    dealer: '200.000 – 400.000đ',
+    after: '120.000 – 250.000đ',
+    life: '80.000 – 100.000 km',
+    symptom: 'Nhiệt độ máy cao, hao nước',
+    interval: '80.000 – 100.000 km',
+    category: 'Làm mát',
+  },
+  {
+    name: 'Ắc quy',
+    oem: '28800-xxxxx',
+    dealer: '1.500.000 – 3.500.000đ',
+    after: '1.000.000 – 2.500.000đ',
+    life: '3 – 5 năm',
+    symptom: 'Đề yếu, đèn mờ, khó khởi động',
+    interval: '3 – 5 năm',
+    category: 'Điện',
+  },
+  {
+    name: 'Lốp xe',
+    oem: 'Theo hãng lốp (Michelin/Bridgestone…)',
+    dealer: '1.500.000 – 4.000.000đ/lốp',
+    after: '—',
+    life: '50.000 – 60.000 km hoặc 5 năm',
+    symptom: 'Mòn gai, nứt cao su, rung lái',
+    interval: '50.000 km / 5 năm',
+    category: 'Lốp',
+  },
+];
+
+// ===== Danh mục phụ tùng đầy đủ (tham khảo) =====
+// Giá VND tham khảo; mã OEM dạng tham khảo (đuôi xxxxx đổi theo đời/động cơ — xác nhận theo VIN).
+interface CatalogPart {
+  name: string;
+  oem: string;
+  dealer: string;
+  after: string;
+  group: string;
+}
+
+const partsCatalog: CatalogPart[] = [
+  // --- Động cơ ---
+  { name: 'Bơm dầu', oem: '15100-xxxxx', dealer: '1.800.000 – 3.500.000đ', after: '900.000 – 2.000.000đ', group: 'Động cơ' },
+  { name: 'Bơm nước (water pump)', oem: '16100-xxxxx', dealer: '1.200.000 – 2.800.000đ', after: '600.000 – 1.500.000đ', group: 'Động cơ' },
+  { name: 'Van hằng nhiệt', oem: '90916-xxxxx', dealer: '350.000 – 800.000đ', after: '180.000 – 450.000đ', group: 'Động cơ' },
+  { name: 'Dây curoa tổng', oem: '90916-02xxx', dealer: '400.000 – 1.200.000đ', after: '200.000 – 700.000đ', group: 'Động cơ' },
+  { name: 'Bộ căng curoa', oem: '16620-xxxxx', dealer: '900.000 – 2.200.000đ', after: '450.000 – 1.300.000đ', group: 'Động cơ' },
+  { name: 'Xích cam (timing chain)', oem: '13506-xxxxx', dealer: '1.500.000 – 3.800.000đ', after: '800.000 – 2.200.000đ', group: 'Động cơ' },
+  { name: 'Gioăng nắp máy', oem: '11115-xxxxx', dealer: '700.000 – 2.000.000đ', after: '350.000 – 1.200.000đ', group: 'Động cơ' },
+  { name: 'Chân máy (engine mount)', oem: '12361-xxxxx', dealer: '900.000 – 2.500.000đ', after: '400.000 – 1.400.000đ', group: 'Động cơ' },
+  { name: 'Van PCV', oem: '12204-xxxxx', dealer: '250.000 – 600.000đ', after: '120.000 – 350.000đ', group: 'Động cơ' },
+  { name: 'Cuộn đánh lửa (ignition coil)', oem: '90919-02xxx', dealer: '700.000 – 1.600.000đ/cái', after: '350.000 – 900.000đ/cái', group: 'Động cơ' },
+  { name: 'Bugi sấy (xe máy dầu)', oem: '19850-xxxxx', dealer: '400.000 – 900.000đ/cái', after: '200.000 – 550.000đ/cái', group: 'Động cơ' },
+  // --- Nhiên liệu & Khí thải ---
+  { name: 'Bơm xăng', oem: '23220-xxxxx', dealer: '2.000.000 – 5.000.000đ', after: '1.000.000 – 3.000.000đ', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Kim phun nhiên liệu', oem: '23250-xxxxx', dealer: '1.500.000 – 4.000.000đ/cái', after: '700.000 – 2.200.000đ/cái', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Lọc xăng', oem: '23300-xxxxx', dealer: '400.000 – 1.200.000đ', after: '200.000 – 700.000đ', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Họng ga điện tử (throttle body)', oem: '22030-xxxxx', dealer: '3.000.000 – 7.000.000đ', after: '1.500.000 – 4.000.000đ', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Cảm biến oxy', oem: '89465-xxxxx', dealer: '1.500.000 – 3.500.000đ', after: '700.000 – 2.000.000đ', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Cảm biến lưu lượng khí (MAF)', oem: '22204-xxxxx', dealer: '1.800.000 – 4.000.000đ', after: '900.000 – 2.500.000đ', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Bầu lọc khí thải (catalytic)', oem: '25051-xxxxx', dealer: '6.000.000 – 18.000.000đ', after: '3.000.000 – 10.000.000đ', group: 'Nhiên liệu & Khí thải' },
+  { name: 'Ống xả / bô giảm thanh', oem: '17430-xxxxx', dealer: '2.000.000 – 6.000.000đ', after: '1.000.000 – 3.500.000đ', group: 'Nhiên liệu & Khí thải' },
+  // --- Hệ truyền động ---
+  { name: 'Bộ ly hợp (clutch kit)', oem: '31250-xxxxx', dealer: '3.500.000 – 8.000.000đ', after: '1.800.000 – 5.000.000đ', group: 'Hệ truyền động' },
+  { name: 'Lọc dầu hộp số tự động', oem: '35330-xxxxx', dealer: '600.000 – 1.500.000đ', after: '300.000 – 900.000đ', group: 'Hệ truyền động' },
+  { name: 'Trục láp / khớp CV', oem: '43410-xxxxx', dealer: '2.500.000 – 6.000.000đ', after: '1.200.000 – 3.500.000đ', group: 'Hệ truyền động' },
+  { name: 'Cao su chân hộp số', oem: '12371-xxxxx', dealer: '700.000 – 1.800.000đ', after: '350.000 – 1.000.000đ', group: 'Hệ truyền động' },
+  { name: 'Dầu hộp số CVT/AT (ATF/CVTF)', oem: '08886-xxxxx', dealer: '300.000 – 600.000đ/lít', after: '180.000 – 400.000đ/lít', group: 'Hệ truyền động' },
+  // --- Phanh ---
+  { name: 'Đĩa phanh trước', oem: '43512-xxxxx', dealer: '1.500.000 – 3.500.000đ', after: '700.000 – 2.000.000đ', group: 'Phanh' },
+  { name: 'Đĩa phanh sau', oem: '42431-xxxxx', dealer: '1.400.000 – 3.200.000đ', after: '700.000 – 1.900.000đ', group: 'Phanh' },
+  { name: 'Má phanh sau', oem: '04466-xxxxx', dealer: '700.000 – 1.600.000đ', after: '350.000 – 950.000đ', group: 'Phanh' },
+  { name: 'Cùm phanh (caliper)', oem: '47730-xxxxx', dealer: '2.500.000 – 6.000.000đ', after: '1.200.000 – 3.500.000đ', group: 'Phanh' },
+  { name: 'Xi lanh phanh tổng', oem: '47201-xxxxx', dealer: '2.000.000 – 4.500.000đ', after: '1.000.000 – 2.800.000đ', group: 'Phanh' },
+  { name: 'Dây phanh tay', oem: '46410-xxxxx', dealer: '400.000 – 900.000đ', after: '200.000 – 550.000đ', group: 'Phanh' },
+  // --- Treo & Lái ---
+  { name: 'Giảm xóc trước', oem: '48510-xxxxx', dealer: '1.800.000 – 4.500.000đ/cái', after: '900.000 – 2.500.000đ/cái', group: 'Treo & Lái' },
+  { name: 'Giảm xóc sau', oem: '48530-xxxxx', dealer: '1.600.000 – 4.000.000đ/cái', after: '800.000 – 2.200.000đ/cái', group: 'Treo & Lái' },
+  { name: 'Bát bèo giảm xóc', oem: '48609-xxxxx', dealer: '600.000 – 1.500.000đ', after: '300.000 – 900.000đ', group: 'Treo & Lái' },
+  { name: 'Rotuyn trụ đứng (ball joint)', oem: '43330-xxxxx', dealer: '500.000 – 1.300.000đ', after: '250.000 – 800.000đ', group: 'Treo & Lái' },
+  { name: 'Rotuyn lái ngoài', oem: '45046-xxxxx', dealer: '400.000 – 1.000.000đ', after: '200.000 – 600.000đ', group: 'Treo & Lái' },
+  { name: 'Rotuyn cân bằng', oem: '48820-xxxxx', dealer: '350.000 – 900.000đ', after: '180.000 – 500.000đ', group: 'Treo & Lái' },
+  { name: 'Càng A (control arm)', oem: '48068-xxxxx', dealer: '1.500.000 – 3.500.000đ', after: '700.000 – 2.000.000đ', group: 'Treo & Lái' },
+  { name: 'Thước lái', oem: '44250-xxxxx', dealer: '5.000.000 – 12.000.000đ', after: '2.500.000 – 7.000.000đ', group: 'Treo & Lái' },
+  { name: 'Bơm trợ lực lái', oem: '44310-xxxxx', dealer: '3.000.000 – 7.000.000đ', after: '1.500.000 – 4.000.000đ', group: 'Treo & Lái' },
+  { name: 'Bạc đạn bánh xe (wheel bearing)', oem: '90369-xxxxx', dealer: '700.000 – 2.000.000đ', after: '350.000 – 1.200.000đ', group: 'Treo & Lái' },
+  // --- Điện & Ắc quy ---
+  { name: 'Máy phát điện (alternator)', oem: '27060-xxxxx', dealer: '3.500.000 – 8.000.000đ', after: '1.800.000 – 5.000.000đ', group: 'Điện & Ắc quy' },
+  { name: 'Máy đề (starter)', oem: '28100-xxxxx', dealer: '2.500.000 – 6.000.000đ', after: '1.200.000 – 3.500.000đ', group: 'Điện & Ắc quy' },
+  { name: 'Còi xe', oem: '86510-xxxxx', dealer: '300.000 – 800.000đ', after: '150.000 – 450.000đ', group: 'Điện & Ắc quy' },
+  { name: 'Mô tơ nâng kính', oem: '85710-xxxxx', dealer: '900.000 – 2.500.000đ', after: '450.000 – 1.400.000đ', group: 'Điện & Ắc quy' },
+  { name: 'Ổ khóa điện / đề nổ', oem: '89070-xxxxx', dealer: '1.500.000 – 4.000.000đ', after: '—', group: 'Điện & Ắc quy' },
+  // --- Làm mát & Điều hòa ---
+  { name: 'Két nước (radiator)', oem: '16400-xxxxx', dealer: '1.800.000 – 4.500.000đ', after: '900.000 – 2.500.000đ', group: 'Làm mát & Điều hòa' },
+  { name: 'Quạt két nước', oem: '16361-xxxxx', dealer: '1.200.000 – 3.000.000đ', after: '600.000 – 1.700.000đ', group: 'Làm mát & Điều hòa' },
+  { name: 'Ống nước trên / dưới', oem: '16571-xxxxx', dealer: '250.000 – 700.000đ', after: '120.000 – 400.000đ', group: 'Làm mát & Điều hòa' },
+  { name: 'Lốc lạnh điều hòa (AC compressor)', oem: '88310-xxxxx', dealer: '5.000.000 – 14.000.000đ', after: '2.500.000 – 8.000.000đ', group: 'Làm mát & Điều hòa' },
+  { name: 'Dàn nóng điều hòa (condenser)', oem: '88460-xxxxx', dealer: '2.000.000 – 5.000.000đ', after: '1.000.000 – 3.000.000đ', group: 'Làm mát & Điều hòa' },
+  { name: 'Dàn lạnh (evaporator)', oem: '88501-xxxxx', dealer: '2.500.000 – 6.000.000đ', after: '1.200.000 – 3.500.000đ', group: 'Làm mát & Điều hòa' },
+  { name: 'Quạt giàn lạnh (blower)', oem: '87103-xxxxx', dealer: '900.000 – 2.200.000đ', after: '450.000 – 1.300.000đ', group: 'Làm mát & Điều hòa' },
+  // --- Thân vỏ & Ngoại thất ---
+  { name: 'Cản trước', oem: '52119-xxxxx', dealer: '2.000.000 – 6.000.000đ', after: '1.000.000 – 3.500.000đ', group: 'Thân vỏ & Ngoại thất' },
+  { name: 'Cản sau', oem: '52159-xxxxx', dealer: '2.000.000 – 6.000.000đ', after: '1.000.000 – 3.500.000đ', group: 'Thân vỏ & Ngoại thất' },
+  { name: 'Lưới tản nhiệt (grille)', oem: '53111-xxxxx', dealer: '1.200.000 – 4.000.000đ', after: '600.000 – 2.200.000đ', group: 'Thân vỏ & Ngoại thất' },
+  { name: 'Nắp capo', oem: '53301-xxxxx', dealer: '3.000.000 – 8.000.000đ', after: '1.500.000 – 4.500.000đ', group: 'Thân vỏ & Ngoại thất' },
+  { name: 'Vè / chắn bùn', oem: '53811-xxxxx', dealer: '1.000.000 – 3.000.000đ', after: '500.000 – 1.700.000đ', group: 'Thân vỏ & Ngoại thất' },
+  { name: 'Gương chiếu hậu', oem: '87940-xxxxx', dealer: '1.500.000 – 4.500.000đ', after: '700.000 – 2.500.000đ', group: 'Thân vỏ & Ngoại thất' },
+  { name: 'Tay nắm cửa ngoài', oem: '69210-xxxxx', dealer: '400.000 – 1.200.000đ', after: '200.000 – 700.000đ', group: 'Thân vỏ & Ngoại thất' },
+  // --- Đèn & Gạt mưa ---
+  { name: 'Đèn pha (headlight)', oem: '81150-xxxxx', dealer: '2.500.000 – 9.000.000đ', after: '1.200.000 – 5.000.000đ', group: 'Đèn & Gạt mưa' },
+  { name: 'Đèn hậu', oem: '81550-xxxxx', dealer: '1.500.000 – 4.500.000đ', after: '700.000 – 2.500.000đ', group: 'Đèn & Gạt mưa' },
+  { name: 'Đèn sương mù', oem: '81210-xxxxx', dealer: '600.000 – 1.800.000đ', after: '300.000 – 1.000.000đ', group: 'Đèn & Gạt mưa' },
+  { name: 'Bóng đèn pha', oem: '90981-xxxxx', dealer: '200.000 – 800.000đ/cái', after: '100.000 – 500.000đ/cái', group: 'Đèn & Gạt mưa' },
+  { name: 'Cần gạt mưa', oem: '85222-xxxxx', dealer: '250.000 – 700.000đ/cái', after: '120.000 – 400.000đ/cái', group: 'Đèn & Gạt mưa' },
+  { name: 'Mô tơ gạt mưa', oem: '85110-xxxxx', dealer: '1.200.000 – 3.000.000đ', after: '600.000 – 1.700.000đ', group: 'Đèn & Gạt mưa' },
+  { name: 'Kính chắn gió', oem: '56101-xxxxx', dealer: '2.500.000 – 8.000.000đ', after: '1.500.000 – 5.000.000đ', group: 'Đèn & Gạt mưa' },
+  // --- Nội thất ---
+  { name: 'Vô lăng', oem: '45100-xxxxx', dealer: '2.000.000 – 6.000.000đ', after: '—', group: 'Nội thất' },
+  { name: 'Mặt táp lô', oem: '55401-xxxxx', dealer: '3.000.000 – 9.000.000đ', after: '—', group: 'Nội thất' },
+  { name: 'Khung ghế', oem: '71100-xxxxx', dealer: '4.000.000 – 12.000.000đ', after: '—', group: 'Nội thất' },
+  { name: 'Dây an toàn', oem: '73210-xxxxx', dealer: '800.000 – 2.500.000đ', after: '—', group: 'Nội thất' },
+  { name: 'Thảm sàn', oem: '—', dealer: '500.000 – 2.500.000đ', after: '200.000 – 1.200.000đ', group: 'Nội thất' },
+];
+
+// Dữ liệu so sánh xe = giá/ảnh (toyotaCars) ghép thông số (carSpecs).
+const compareData = toyotaCars.map((c) => ({
+  name: c.name,
+  type: c.type,
+  price: c.price,
+  image: c.image,
+  engine: carSpecs[c.name].engine,
+  power: carSpecs[c.name].power,
+  gearbox: carSpecs[c.name].gearbox,
+  seats: carSpecs[c.name].seats,
+  drive: carSpecs[c.name].drive,
+  fuel: carSpecs[c.name].fuel,
+  pros: carSpecs[c.name].pros,
+  cons: carSpecs[c.name].cons,
+}));
+
 // Ảnh minh hoạ SVG inline (không phụ thuộc mạng ngoài) — đổi màu theo từng xe.
 function carThumb(color: string): string {
   return `<svg viewBox="0 0 120 60" width="96" height="48" role="img" aria-label="xe">
@@ -233,6 +567,8 @@ const rows = toyotaCars
           onclick="open3d('${c.model ?? CAR_MODEL}', '${c.name}')">↻ 3D</button>
         <button class="btnspec" type="button"
           onclick="openSpec('${c.name}')">📋 Thông số</button>
+        <button class="btnmaint" type="button"
+          onclick="openMaint('${c.name}')">🔧 Bảo dưỡng</button>
       </td>
     </tr>`,
   )
@@ -402,6 +738,153 @@ const page = /* html */ `<!doctype html>
       }
       .btnspec:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.28); }
       .btnspec:active { transform: translateY(0); }
+      .btnmaint {
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0d1b2a;
+        background: #4ade80;
+        border: none;
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        margin-top: 0.35rem;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      .btnmaint:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); }
+      .btnmaint:active { transform: translateY(0); }
+      /* ---- Popup bảo dưỡng ---- */
+      .maint-card { width: min(96vw, 1040px) !important; }
+      .maint-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem 0.9rem;
+        margin-bottom: 0.8rem;
+        text-align: left;
+      }
+      .maint-filters label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        font-size: 0.78rem;
+        opacity: 0.85;
+      }
+      .maint-filters select {
+        font: inherit;
+        font-size: 0.85rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: #16243f;
+        color: #fff;
+      }
+      .maint-scroll { max-height: 56vh; overflow: auto; border-radius: 12px; }
+      h4.sec { text-align: left; margin: 1rem 0 0.5rem; font-size: 1rem; color: var(--accent); }
+      .mtable { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+      .mtable th, .mtable td {
+        text-align: left;
+        padding: 0.5rem 0.6rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        vertical-align: top;
+      }
+      .mtable thead th {
+        position: sticky;
+        top: 0;
+        background: #16243f;
+        color: var(--accent);
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .mtable tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+      .pri {
+        display: inline-block;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .pri-req { background: rgba(248, 113, 113, 0.22); color: #fca5a5; }
+      .pri-rec { background: rgba(96, 165, 250, 0.22); color: #93c5fd; }
+      .pri-opt { background: rgba(250, 204, 21, 0.2); color: #fde047; }
+      .total-cell { font-weight: 700; color: var(--accent); white-space: nowrap; }
+      .empty-row { opacity: 0.7; font-style: italic; padding: 1rem; }
+      .catalog-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0.3rem 0 0.6rem;
+      }
+      .catalog-filters input[type='search'] {
+        flex: 1 1 240px;
+        font: inherit;
+        font-size: 0.88rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: #16243f;
+        color: #fff;
+      }
+      .catalog-filters select {
+        font: inherit;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.5rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: #16243f;
+        color: #fff;
+      }
+      .cat-count { font-size: 0.8rem; opacity: 0.75; }
+      .toolbar { margin: 0 0 0.9rem; }
+      .tabs { display: flex; gap: 0.5rem; margin: 0.2rem 0 0.8rem; }
+      .tab {
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        padding: 0.5rem 1.1rem;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+      .tab:hover { background: rgba(255, 255, 255, 0.18); }
+      .tab.active { background: var(--accent); color: #0d1b2a; border-color: var(--accent); }
+      .tabpane[hidden] { display: none; }
+      .picon { font-size: 1.4rem; text-align: center; width: 46px; }
+      .inline-lbl { font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+      /* ---- So sánh xe ---- */
+      .compare-card { width: min(96vw, 880px) !important; }
+      .cmp-pickers { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+      .cmp-pickers select {
+        flex: 1 1 200px;
+        font: inherit;
+        font-size: 0.9rem;
+        padding: 0.45rem 0.6rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: #16243f;
+        color: #fff;
+      }
+      .cmp-pickers .vs { font-weight: 700; color: var(--accent); }
+      .cmp-body { max-height: 64vh; overflow: auto; }
+      .cmp-tbl { width: 100%; border-collapse: collapse; }
+      .cmp-tbl th, .cmp-tbl td {
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.9rem;
+      }
+      .cmp-tbl thead th { color: var(--accent); text-align: center; font-size: 0.98rem; }
+      .cmp-tbl td.lbl { color: var(--accent); font-weight: 600; width: 26%; }
+      .cmp-tbl img { width: 100%; max-width: 200px; border-radius: 10px; display: block; margin: 0 auto; }
+      .cmp-tbl ul { margin: 0; padding-left: 1.1rem; }
+      .cmp-tbl li { margin: 0.2rem 0; }
       /* ---- Bảng thông số trong popup ---- */
       .spec-tbl { width: 100%; border-collapse: collapse; margin-bottom: 1rem; min-width: 0; }
       .spec-tbl th, .spec-tbl td {
@@ -561,6 +1044,9 @@ const page = /* html */ `<!doctype html>
     </div>
 
     <h2>🛞 Bảng giá xe Toyota</h2>
+    <div class="toolbar">
+      <button class="btnspec" type="button" onclick="openCompare()">⚖️ So sánh xe</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -615,6 +1101,138 @@ const page = /* html */ `<!doctype html>
         <button class="close" type="button" onclick="closeSpec()" aria-label="Đóng">✕</button>
         <h3 id="spec-title">Thông số</h3>
         <div id="spec-body"></div>
+      </div>
+    </div>
+
+    <div id="maintbox" class="modal3d" hidden>
+      <div class="card3d maint-card">
+        <button class="close" type="button" onclick="closeMaint()" aria-label="Đóng">✕</button>
+        <h3 id="maint-title">Bảo dưỡng</h3>
+        <div class="tabs">
+          <button class="tab active" type="button" data-tab="sched">🗓️ Lịch bảo dưỡng</button>
+          <button class="tab" type="button" data-tab="parts">🔧 Phụ tùng</button>
+        </div>
+        <div class="maint-scroll">
+          <section id="tab-sched" class="tabpane">
+            <div class="maint-filters">
+              <label>Số km
+                <select id="f-km">
+                  <option value="">Tất cả</option>
+                  <option value="5000">≤ 5.000 km</option>
+                  <option value="10000">≤ 10.000 km</option>
+                  <option value="20000">≤ 20.000 km</option>
+                  <option value="30000">≤ 30.000 km</option>
+                  <option value="40000">≤ 40.000 km</option>
+                  <option value="80000">≤ 80.000 km</option>
+                  <option value="100000">≤ 100.000 km</option>
+                </select>
+              </label>
+              <label>Tuổi xe (~15.000 km/năm)
+                <select id="f-age">
+                  <option value="">—</option>
+                  <option value="1">1 năm</option>
+                  <option value="2">2 năm</option>
+                  <option value="3">3 năm</option>
+                  <option value="5">5 năm</option>
+                  <option value="7">7 năm</option>
+                </select>
+              </label>
+              <label>Mức độ
+                <select id="f-prio">
+                  <option value="">Tất cả</option>
+                  <option value="Bắt buộc">Bắt buộc</option>
+                  <option value="Khuyến nghị">Khuyến nghị</option>
+                  <option value="Tùy chọn">Tùy chọn</option>
+                </select>
+              </label>
+              <label>Sắp xếp chi phí
+                <select id="f-cost">
+                  <option value="km">Theo mốc km</option>
+                  <option value="asc">Thấp → Cao</option>
+                  <option value="desc">Cao → Thấp</option>
+                </select>
+              </label>
+            </div>
+            <table class="mtable">
+              <thead>
+                <tr>
+                  <th>Mốc</th><th>Hạng mục</th><th>Phụ tùng</th><th>Nhân công</th>
+                  <th>Giá PT</th><th>Tổng</th><th>Thời gian</th><th>Mức độ</th><th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody id="maint-rows"></tbody>
+            </table>
+          </section>
+
+          <section id="tab-parts" class="tabpane" hidden>
+            <h4 class="sec">🔩 Phụ tùng thay thế (tham khảo)</h4>
+            <div class="catalog-filters">
+              <label class="inline-lbl">Lọc theo hạng mục:
+                <select id="f-cat">
+                  <option value="">Tất cả</option>
+                  <option value="Dầu nhớt">Dầu nhớt</option>
+                  <option value="Lọc">Lọc</option>
+                  <option value="Phanh">Phanh</option>
+                  <option value="Đánh lửa">Đánh lửa</option>
+                  <option value="Làm mát">Làm mát</option>
+                  <option value="Điện">Điện</option>
+                  <option value="Lốp">Lốp</option>
+                </select>
+              </label>
+            </div>
+            <table class="mtable">
+              <thead>
+                <tr>
+                  <th>Ảnh</th><th>Phụ tùng</th><th>Mã OEM*</th><th>Giá chính hãng</th><th>Giá ngoài</th>
+                  <th>Tuổi thọ</th><th>Dấu hiệu thay</th><th>Chu kỳ thay</th>
+                </tr>
+              </thead>
+              <tbody id="parts-rows"></tbody>
+            </table>
+
+            <h4 class="sec">🧩 Danh mục phụ tùng đầy đủ (tham khảo)</h4>
+            <div class="catalog-filters">
+              <input id="f-search" type="search" placeholder="🔍 Tìm phụ tùng (ví dụ: bơm nước, má phanh...)" />
+              <select id="f-group">
+                <option value="">Tất cả nhóm</option>
+                <option value="Động cơ">Động cơ</option>
+                <option value="Nhiên liệu & Khí thải">Nhiên liệu & Khí thải</option>
+                <option value="Hệ truyền động">Hệ truyền động</option>
+                <option value="Phanh">Phanh</option>
+                <option value="Treo & Lái">Treo & Lái</option>
+                <option value="Điện & Ắc quy">Điện & Ắc quy</option>
+                <option value="Làm mát & Điều hòa">Làm mát & Điều hòa</option>
+                <option value="Thân vỏ & Ngoại thất">Thân vỏ & Ngoại thất</option>
+                <option value="Đèn & Gạt mưa">Đèn & Gạt mưa</option>
+                <option value="Nội thất">Nội thất</option>
+              </select>
+              <span id="catalog-count" class="cat-count"></span>
+            </div>
+            <table class="mtable">
+              <thead>
+                <tr>
+                  <th>Ảnh</th><th>Phụ tùng</th><th>Nhóm</th><th>Mã OEM*</th><th>Giá chính hãng</th><th>Giá ngoài</th>
+                </tr>
+              </thead>
+              <tbody id="catalog-rows"></tbody>
+            </table>
+          </section>
+        </div>
+        <p class="hint">* Giá & mã OEM chỉ mang tính tham khảo, thay đổi theo đại lý / khu vực / đời xe & động cơ.
+          Đuôi mã OEM (xxxxx) cần xác nhận theo số VIN tại đại lý. Luôn ưu tiên lịch bảo dưỡng chính hãng.</p>
+      </div>
+    </div>
+
+    <div id="comparebox" class="modal3d" hidden>
+      <div class="card3d compare-card">
+        <button class="close" type="button" onclick="closeCompare()" aria-label="Đóng">✕</button>
+        <h3>⚖️ So sánh xe</h3>
+        <div class="cmp-pickers">
+          <select id="cmp-a"></select>
+          <span class="vs">VS</span>
+          <select id="cmp-b"></select>
+        </div>
+        <div id="cmp-body" class="cmp-body"></div>
       </div>
     </div>
 
@@ -717,6 +1335,217 @@ const page = /* html */ `<!doctype html>
         });
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') window.closeSpec();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var MAINT = ${JSON.stringify(maintenance).replace(/</g, '\\u003c')};
+        var PARTS = ${JSON.stringify(wearParts).replace(/</g, '\\u003c')};
+        var CATALOG = ${JSON.stringify(partsCatalog).replace(/</g, '\\u003c')};
+        var box = document.getElementById('maintbox');
+        var title = document.getElementById('maint-title');
+        var mRows = document.getElementById('maint-rows');
+        var pRows = document.getElementById('parts-rows');
+        var cRows = document.getElementById('catalog-rows');
+        var cCount = document.getElementById('catalog-count');
+        var fKm = document.getElementById('f-km');
+        var fAge = document.getElementById('f-age');
+        var fPrio = document.getElementById('f-prio');
+        var fCost = document.getElementById('f-cost');
+        var fCat = document.getElementById('f-cat');
+        var fSearch = document.getElementById('f-search');
+        var fGroup = document.getElementById('f-group');
+        function esc(s) {
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function priClass(p) {
+          return p === 'Bắt buộc' ? 'pri-req' : p === 'Khuyến nghị' ? 'pri-rec' : 'pri-opt';
+        }
+        var ICONS = {
+          'Dầu nhớt': '🛢️', 'Lọc': '🌬️', 'Phanh': '🛑', 'Đánh lửa': '⚡', 'Làm mát': '🌡️',
+          'Điện': '🔋', 'Lốp': '🛞', 'Động cơ': '🔧', 'Nhiên liệu & Khí thải': '⛽',
+          'Hệ truyền động': '⚙️', 'Treo & Lái': '🔩', 'Điện & Ắc quy': '🔋',
+          'Làm mát & Điều hòa': '❄️', 'Thân vỏ & Ngoại thất': '🚙', 'Đèn & Gạt mưa': '💡', 'Nội thất': '🪑',
+        };
+        function iconFor(key) { return ICONS[key] || '🔧'; }
+        function list(arr) {
+          return arr.map(function (x) { return esc(x); }).join('<br>');
+        }
+        function renderSchedule() {
+          var maxKm = fKm.value ? Number(fKm.value) : Infinity;
+          if (fAge.value) maxKm = Math.min(maxKm, Number(fAge.value) * 15000);
+          var rows = MAINT.filter(function (m) {
+            if (m.km > maxKm) return false;
+            if (fPrio.value && m.priority !== fPrio.value) return false;
+            return true;
+          });
+          if (fCost.value === 'asc') rows.sort(function (a, b) { return a.costMin - b.costMin; });
+          else if (fCost.value === 'desc') rows.sort(function (a, b) { return b.costMin - a.costMin; });
+          else rows.sort(function (a, b) { return a.km - b.km; });
+          if (!rows.length) {
+            mRows.innerHTML = '<tr><td class="empty-row" colspan="9">Không có hạng mục phù hợp bộ lọc.</td></tr>';
+            return;
+          }
+          mRows.innerHTML = rows.map(function (m) {
+            return '<tr>' +
+              '<td><strong>' + esc(m.kmLabel) + '</strong></td>' +
+              '<td>' + list(m.items) + '</td>' +
+              '<td>' + list(m.parts) + '</td>' +
+              '<td>' + esc(m.labor) + '</td>' +
+              '<td>' + esc(m.partsPrice) + '</td>' +
+              '<td class="total-cell">' + esc(m.total) + '</td>' +
+              '<td>' + esc(m.time) + '</td>' +
+              '<td><span class="pri ' + priClass(m.priority) + '">' + esc(m.priority) + '</span></td>' +
+              '<td>' + esc(m.notes) + '</td>' +
+              '</tr>';
+          }).join('');
+        }
+        function renderParts() {
+          var rows = PARTS.filter(function (p) {
+            return !fCat.value || p.category === fCat.value;
+          });
+          if (fCost.value === 'asc' || fCost.value === 'desc') {
+            // giữ nguyên thứ tự phụ tùng (giá dạng khoảng, khó sắp chính xác)
+          }
+          if (!rows.length) {
+            pRows.innerHTML = '<tr><td class="empty-row" colspan="8">Không có phụ tùng trong hạng mục này.</td></tr>';
+            return;
+          }
+          pRows.innerHTML = rows.map(function (p) {
+            return '<tr>' +
+              '<td class="picon">' + iconFor(p.category) + '</td>' +
+              '<td><strong>' + esc(p.name) + '</strong></td>' +
+              '<td>' + esc(p.oem) + '</td>' +
+              '<td>' + esc(p.dealer) + '</td>' +
+              '<td>' + esc(p.after) + '</td>' +
+              '<td>' + esc(p.life) + '</td>' +
+              '<td>' + esc(p.symptom) + '</td>' +
+              '<td>' + esc(p.interval) + '</td>' +
+              '</tr>';
+          }).join('');
+        }
+        function renderCatalog() {
+          var q = (fSearch.value || '').trim().toLowerCase();
+          var g = fGroup.value;
+          var rows = CATALOG.filter(function (p) {
+            if (g && p.group !== g) return false;
+            if (q && p.name.toLowerCase().indexOf(q) === -1 && p.oem.toLowerCase().indexOf(q) === -1) return false;
+            return true;
+          });
+          cCount.textContent = rows.length + '/' + CATALOG.length + ' phụ tùng';
+          if (!rows.length) {
+            cRows.innerHTML = '<tr><td class="empty-row" colspan="6">Không tìm thấy phụ tùng phù hợp.</td></tr>';
+            return;
+          }
+          cRows.innerHTML = rows.map(function (p) {
+            return '<tr>' +
+              '<td class="picon">' + iconFor(p.group) + '</td>' +
+              '<td><strong>' + esc(p.name) + '</strong></td>' +
+              '<td>' + esc(p.group) + '</td>' +
+              '<td>' + esc(p.oem) + '</td>' +
+              '<td>' + esc(p.dealer) + '</td>' +
+              '<td>' + esc(p.after) + '</td>' +
+              '</tr>';
+          }).join('');
+        }
+        function renderAll() { renderSchedule(); renderParts(); renderCatalog(); }
+        [fKm, fAge, fPrio, fCost, fCat].forEach(function (el) {
+          el.addEventListener('change', renderAll);
+        });
+        fGroup.addEventListener('change', renderCatalog);
+        fSearch.addEventListener('input', renderCatalog);
+        // Chuyển tab (mỗi lần chỉ hiện 1 tab).
+        function showTab(id) {
+          ['sched', 'parts'].forEach(function (t) {
+            document.getElementById('tab-' + t).hidden = t !== id;
+          });
+          Array.prototype.forEach.call(box.querySelectorAll('.tab'), function (b) {
+            b.classList.toggle('active', b.getAttribute('data-tab') === id);
+          });
+        }
+        Array.prototype.forEach.call(box.querySelectorAll('.tab'), function (b) {
+          b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
+        });
+        window.openMaint = function (name) {
+          title.textContent = name + ' — Bảo dưỡng & phụ tùng (lịch chung Toyota)';
+          renderAll();
+          showTab('sched');
+          box.hidden = false;
+        };
+        window.closeMaint = function () { box.hidden = true; };
+        box.addEventListener('click', function (e) {
+          if (e.target === box) window.closeMaint();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') window.closeMaint();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var CARS = ${JSON.stringify(compareData).replace(/</g, '\\u003c')};
+        var box = document.getElementById('comparebox');
+        var selA = document.getElementById('cmp-a');
+        var selB = document.getElementById('cmp-b');
+        var body = document.getElementById('cmp-body');
+        function esc(s) {
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        // Đổ danh sách xe vào 2 dropdown.
+        CARS.forEach(function (c, i) {
+          var oa = document.createElement('option');
+          oa.value = String(i); oa.textContent = c.name;
+          selA.appendChild(oa);
+          var ob = document.createElement('option');
+          ob.value = String(i); ob.textContent = c.name;
+          selB.appendChild(ob);
+        });
+        selA.value = '0';
+        selB.value = CARS.length > 1 ? '1' : '0';
+        function ulist(arr) {
+          return '<ul>' + arr.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+        }
+        function bigImg(src) { return src; }
+        function render() {
+          var a = CARS[Number(selA.value)];
+          var b = CARS[Number(selB.value)];
+          var rows = [
+            ['Ảnh', '<img src="' + bigImg(a.image) + '" alt="' + esc(a.name) + '" referrerpolicy="no-referrer" />',
+                     '<img src="' + bigImg(b.image) + '" alt="' + esc(b.name) + '" referrerpolicy="no-referrer" />'],
+            ['Giá tham khảo', esc(a.price), esc(b.price)],
+            ['Phân khúc', esc(a.type), esc(b.type)],
+            ['Động cơ', esc(a.engine), esc(b.engine)],
+            ['Công suất', esc(a.power), esc(b.power)],
+            ['Hộp số', esc(a.gearbox), esc(b.gearbox)],
+            ['Số chỗ', esc(a.seats), esc(b.seats)],
+            ['Dẫn động', esc(a.drive), esc(b.drive)],
+            ['Tiêu hao', esc(a.fuel), esc(b.fuel)],
+            ['✅ Ưu điểm', ulist(a.pros), ulist(b.pros)],
+            ['⚠️ Nhược điểm', ulist(a.cons), ulist(b.cons)],
+          ];
+          body.innerHTML =
+            '<table class="cmp-tbl"><thead><tr><th></th><th>' + esc(a.name) + '</th><th>' + esc(b.name) +
+            '</th></tr></thead><tbody>' +
+            rows.map(function (r) {
+              return '<tr><td class="lbl">' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>';
+            }).join('') +
+            '</tbody></table>';
+        }
+        selA.addEventListener('change', render);
+        selB.addEventListener('change', render);
+        window.openCompare = function () {
+          render();
+          box.hidden = false;
+        };
+        window.closeCompare = function () { box.hidden = true; };
+        box.addEventListener('click', function (e) {
+          if (e.target === box) window.closeCompare();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') window.closeCompare();
         });
       })();
     </script>
