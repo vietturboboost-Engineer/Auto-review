@@ -10,10 +10,13 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
 # ---- build stage: compile TypeScript -----------------------------
-# Runs natively on the build host (no QEMU) to avoid exit-code 254 crashes.
+# Runs natively on the build host (no QEMU) so tsc never runs under emulation.
 FROM --platform=$BUILDPLATFORM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+# package.json is required so `npm run build` can resolve the "build" script;
+# without it npm exits with ENOENT (exit code 254).
+COPY package.json package-lock.json* ./
 COPY tsconfig*.json ./
 COPY src ./src
 RUN npm run build
