@@ -46,7 +46,9 @@ describe('JSON API đa hãng', () => {
     const res = await request(app).get('/api/vehicles?brand=toyota');
     expect(res.status).toBe(200);
     expect(res.body.count).toBeGreaterThan(0);
-    expect(res.body.vehicles.every((v: { brandSlug: string }) => v.brandSlug === 'toyota')).toBe(true);
+    expect(res.body.vehicles.every((v: { brandSlug: string }) => v.brandSlug === 'toyota')).toBe(
+      true,
+    );
   });
 
   it('GET /api/vehicles/:id trả chi tiết kèm lịch bảo dưỡng & phụ tùng', async () => {

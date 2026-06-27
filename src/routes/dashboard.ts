@@ -43,7 +43,14 @@ function stars(n: number): string {
   return '★★★★★'.slice(0, full) + '☆☆☆☆☆'.slice(0, 5 - full);
 }
 
-function brandChip(b: { slug: string; name: string; country: string; color: string; wordmark: string; count: number }): string {
+function brandChip(b: {
+  slug: string;
+  name: string;
+  country: string;
+  color: string;
+  wordmark: string;
+  count: number;
+}): string {
   return (
     `<button class="brandchip" data-brand="${b.slug}" title="${escapeHtml(b.name)} · ${escapeHtml(b.country)} (${b.count} xe)">` +
     `<span class="brandflag">${countryFlag(b.country)}</span>` +
@@ -89,8 +96,12 @@ function vehicleCard(v: Vehicle): string {
 
 const cardsHtml = vehicles.map(vehicleCard).join('');
 const brandsHtml = clientBrands.map(brandChip).join('');
-const segmentOptions = segments.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-const fuelOptions = fuelTypes.map((f) => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+const segmentOptions = segments
+  .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
+  .join('');
+const fuelOptions = fuelTypes
+  .map((f) => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`)
+  .join('');
 
 const page = `<!doctype html>
 <html lang="vi" data-theme="dark">

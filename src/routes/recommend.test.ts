@@ -38,7 +38,10 @@ describe('POST /api/recommend', () => {
 
     const res = await request(app)
       .post('/api/recommend')
-      .send({ profile: 'gia đình 4 người', cars: [{ name: 'Toyota Vios', price: '500', overall: 90 }] });
+      .send({
+        profile: 'gia đình 4 người',
+        cars: [{ name: 'Toyota Vios', price: '500', overall: 90 }],
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);

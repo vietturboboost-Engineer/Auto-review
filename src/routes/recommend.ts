@@ -23,7 +23,8 @@ function buildPrompt(profile: string, cars: unknown[]): string {
   const carLines = cars
     .map((c, i) => {
       const o = (c ?? {}) as Record<string, unknown>;
-      const vn = asText(o.vnStatus) || (o.vnAvailable === false ? 'Chưa bán chính hãng tại VN' : '');
+      const vn =
+        asText(o.vnStatus) || (o.vnAvailable === false ? 'Chưa bán chính hãng tại VN' : '');
       return (
         `${i + 1}. ${asText(o.name)} — giá ${asText(o.price)} — điểm phù hợp ` +
         `${Number(o.overall) || 0}% — ${asText(o.body)} ${Number(o.seats) || ''} chỗ — ` +
