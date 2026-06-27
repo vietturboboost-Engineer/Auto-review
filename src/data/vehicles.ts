@@ -1,5 +1,6 @@
 import { getBrand } from './brands.js';
 import { realImages } from './real-images.js';
+import { reviews } from './reviews.js';
 
 // ===== Cơ sở dữ liệu xe đa hãng (mở rộng dễ: thêm 1 dòng mk({...}) vào mảng `vehicles`) =====
 // Ảnh lấy từ Wikipedia/Wikimedia Commons (URL chuẩn). Số liệu mang tính THAM KHẢO cho thị
@@ -275,20 +276,95 @@ function ratingKeys(r: VehicleRatings): (keyof VehicleRatings)[] {
   return Object.keys(r) as (keyof VehicleRatings)[];
 }
 
-function derivePros(r: VehicleRatings): string[] {
-  return ratingKeys(r)
-    .filter((k) => r[k] >= 4)
-    .sort((a, b) => r[b] - r[a])
-    .slice(0, 4)
-    .map((k) => RATING_PROS[k]);
+function priceTier(pmin: number): 'rẻ' | 'trung' | 'cao' | 'sang' | 'siêu' {
+  if (pmin < 500) return 'rẻ';
+  if (pmin < 900) return 'trung';
+  if (pmin < 1800) return 'cao';
+  if (pmin < 4000) return 'sang';
+  return 'siêu';
 }
 
-function deriveCons(r: VehicleRatings): string[] {
-  return ratingKeys(r)
+function isSporty(o: Mk, body: string): boolean {
+  return (
+    body === 'Sports Car' || body === 'Coupe' || body === 'Convertible' || o.seats <= 2 || o.hp >= 400
+  );
+}
+
+function isSmallCar(o: Mk, body: string): boolean {
+  const s = o.segment.toLowerCase();
+  return (
+    body === 'Hatchback' ||
+    s.includes('hạng a') ||
+    s.includes('hạng b') ||
+    s.includes('mini') ||
+    s.includes('đô thị')
+  );
+}
+
+// Ưu điểm bám theo loại nhiên liệu, kiểu thân xe, phân khúc giá & điểm đánh giá thực tế của từng xe
+function derivePros(o: Mk, body: string, r: VehicleRatings): string[] {
+  const out: string[] = [];
+  const tier = priceTier(o.pmin);
+  if (o.fuel === 'Điện')
+    out.push('Vận hành êm, không độ trễ', 'Chi phí sạc điện thấp', 'Tăng tốc tức thì');
+  else if (o.fuel === 'Hybrid') out.push('Tiết kiệm nhiên liệu', 'Vận hành êm ái');
+  else if (o.fuel === 'Dầu') out.push('Mô-men xoắn lớn, kéo khỏe', 'Tiết kiệm dầu khi đi đường trường');
+  else if (r.fuelEcon >= 4) out.push('Tiết kiệm nhiên liệu');
+
+  if (body === 'Pickup') out.push('Khả năng chở hàng tốt', 'Gầm cao, đi đường xấu tốt', 'Bền bỉ');
+  else if (body === 'MPV' || body === 'Van')
+    out.push('Không gian rộng rãi', 'Phù hợp gia đình đông người');
+  else if (body === 'SUV') out.push('Gầm cao, tầm nhìn thoáng', 'Khả năng đa dụng');
+  else if (isSporty(o, body))
+    out.push('Hiệu năng mạnh mẽ', 'Thiết kế thể thao', 'Cảm giác lái phấn khích');
+  else if (isSmallCar(o, body)) out.push('Nhỏ gọn, linh hoạt trong phố', 'Dễ đỗ xe');
+  else if (body === 'Sedan') out.push('Vận hành êm ái', 'Dáng sedan lịch lãm');
+
+  if (o.seats >= 7 && body !== 'MPV' && body !== 'Van') out.push('Chở được 7 người');
+  if (tier === 'sang' || tier === 'siêu') out.push('Nội thất sang trọng', 'Trang bị công nghệ cao cấp');
+
+  ratingKeys(r)
+    .filter((k) => r[k] >= 4)
+    .sort((a, b) => r[b] - r[a])
+    .forEach((k) => out.push(RATING_PROS[k]));
+
+  const pad = ['Vận hành ổn định', 'Phù hợp sử dụng hằng ngày', 'Chi phí vận hành hợp lý'];
+  const uniq = Array.from(new Set(out));
+  for (const p of pad) {
+    if (uniq.length >= 3) break;
+    if (!uniq.includes(p)) uniq.push(p);
+  }
+  return uniq.slice(0, 5);
+}
+
+// Nhược điểm thực tế, khách quan theo đặc tính từng xe
+function deriveCons(o: Mk, body: string, r: VehicleRatings): string[] {
+  const out: string[] = [];
+  const tier = priceTier(o.pmin);
+  if (o.fuel === 'Điện')
+    out.push('Phụ thuộc mạng lưới trạm sạc', 'Phần mềm còn tiếp tục hoàn thiện');
+  else if (o.fuel === 'Dầu') out.push('Động cơ hơi ồn khi tải nặng');
+
+  if (body === 'Pickup') out.push('Cồng kềnh khi đi trong phố', 'Treo hơi cứng khi không chở hàng');
+  else if (isSporty(o, body)) out.push('Khoang nội thất chật', 'Tiêu hao nhiên liệu cao');
+  else if (isSmallCar(o, body)) out.push('Cách âm chưa tốt', 'Trang bị giải trí cơ bản');
+  else if (body === 'MPV' || body === 'Van') out.push('Không thiên về cảm giác lái thể thao');
+
+  if (tier === 'sang' || tier === 'siêu') out.push('Giá bán cao', 'Chi phí bảo dưỡng & phụ tùng cao');
+  else if (tier === 'rẻ') out.push('Vật liệu nội thất cơ bản');
+
+  ratingKeys(r)
     .filter((k) => r[k] <= 2)
     .sort((a, b) => r[a] - r[b])
-    .slice(0, 3)
-    .map((k) => RATING_CONS[k]);
+    .forEach((k) => out.push(RATING_CONS[k]));
+
+  const pad = ['Một số trang bị tùy theo phiên bản', 'Nên lái thử để đánh giá thực tế'];
+  const uniq = Array.from(new Set(out));
+  for (const p of pad) {
+    if (uniq.length >= 2) break;
+    if (!uniq.includes(p)) uniq.push(p);
+  }
+  return uniq.slice(0, 4);
 }
 
 function deriveBodyType(segment: string, seats: number): string {
@@ -682,8 +758,8 @@ function mk(o: Mk): Vehicle {
     commonIssues: o.issues ?? [
       'Số liệu tham khảo theo thị trường VN; nên lái thử & kiểm tra thực tế.',
     ],
-    pros: o.pros ?? derivePros(r),
-    cons: o.cons ?? deriveCons(r),
+    pros: o.pros ?? reviews[o.id]?.pros ?? derivePros(o, bodyType, r),
+    cons: o.cons ?? reviews[o.id]?.cons ?? deriveCons(o, bodyType, r),
     suitableFor: o.suitableFor ?? deriveSuitable(o.seats, o.fuel, o.pmin, bodyType),
     tags: o.tags ?? deriveTags(o, bodyType, r, vietnam),
     reliability: o.rel,
