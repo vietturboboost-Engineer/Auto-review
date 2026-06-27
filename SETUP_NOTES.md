@@ -239,7 +239,83 @@ flyctl releases rollback             # quay về release trước
 | Memory không đủ | Free tier 256MB | `flyctl scale memory 512` (sẽ tính phí phần vượt) |
 | Deploy thành công nhưng `/health` timeout | App không listen trên port `3000` hoặc `0.0.0.0` | Check `src/index.ts` dùng `HOST = '0.0.0.0'` chứ không phải `localhost` |
 
+## AI Code Review — Lấy & cấu hình API key
+
+Workflow `AI Code Review` (`.github/workflows/ai-review.yml`) gọi script `.github/scripts/ai-review.mjs` để review PR tự động. Script bắt buộc phải có **API key của 1 nhà cung cấp AI**, nếu thiếu sẽ fail sớm:
+
+```
+[ai-review] ERROR: Missing GEMINI_API_KEY for provider "gemini".
+```
+
+> Đây KHÔNG phải bug — script cố tình dừng để báo rõ thiếu key.
+
+### Chọn provider
+
+| Provider | Secret cần thêm | `AI_PROVIDER` | Model mặc định | Ghi chú |
+|---|---|---|---|---|
+| **Gemini** (khuyến nghị) | `GEMINI_API_KEY` | `gemini` (đã là mặc định) | `gemini-2.5-flash` | Có free tier |
+| OpenAI | `OPENAI_API_KEY` | `openai` | `gpt-4o-mini` | Trả phí theo dùng |
+| Anthropic | `ANTHROPIC_API_KEY` | `anthropic` | `claude-3-5-haiku-latest` | Trả phí theo dùng |
+
+Mặc định repo đang để `gemini` (xem `AI_PROVIDER: ${{ vars.AI_PROVIDER || 'gemini' }}` trong `ai-review.yml`), nên chỉ cần thêm `GEMINI_API_KEY` là chạy được.
+
+### Bước 1 — Lấy key
+
+**Gemini (free):**
+1. Vào https://aistudio.google.com/app/apikey
+2. **Create API key** → chọn project (hoặc tạo mới) → copy chuỗi key.
+
+**OpenAI:**
+1. Vào https://platform.openai.com/api-keys
+2. **Create new secret key** → copy (chỉ hiện 1 lần).
+3. Cần nạp credit ở Billing thì key mới gọi được.
+
+**Anthropic:**
+1. Vào https://console.anthropic.com/settings/keys
+2. **Create Key** → copy.
+
+### Bước 2 — Thêm vào GitHub Secrets
+
+Repo → **Settings → Secrets and variables → Actions → New repository secret**:
+
+| Type | Name | Value |
+|---|---|---|
+| Secret | `GEMINI_API_KEY` | key lấy ở bước 1 |
+
+Nếu dùng provider khác Gemini, thêm thêm 1 **Variable** `AI_PROVIDER` = `openai` / `anthropic` và secret key tương ứng.
+
+### Bước 3 — (tuỳ chọn) tinh chỉnh qua Variables
+
+Tất cả đều optional, để trống thì dùng mặc định:
+
+| Variable | Mặc định | Ý nghĩa |
+|---|---|---|
+| `AI_PROVIDER` | `gemini` | Nhà cung cấp AI |
+| `AI_MODEL` | theo provider | Đổi model cụ thể |
+| `AI_REVIEW_LANGUAGE` | `English` | Ngôn ngữ comment (đặt `Vietnamese` để review tiếng Việt) |
+| `AI_REVIEW_MAX_FILES` | `25` | Số file tối đa review mỗi PR |
+| `AI_REVIEW_MAX_PATCH_CHARS` | `12000` | Bỏ qua file có patch lớn hơn ngưỡng |
+| `AI_REVIEW_CONCURRENCY` | `4` | Số file review song song |
+| `AI_REVIEW_SKIP_LABELS` | `skip-ai-review,no-ai-review` | Label để bỏ qua review |
+
+### Bước 4 — Chạy review
+
+AI review chỉ chạy trên **Pull Request** (không chạy khi push thẳng main). Sau khi thêm key:
+
+1. Mở 1 PR mới, **hoặc**
+2. Push thêm commit vào branch của PR đang mở, **hoặc**
+3. Actions → `AI Code Review` → **Re-run jobs**.
+
+Cách bỏ qua review cho 1 PR: thêm label `skip-ai-review`, hoặc viết `[skip ai-review]` trong tiêu đề/mô tả PR, hoặc để PR ở trạng thái **Draft**.
+
+### Bảo mật key
+
+- **Chỉ** để key trong GitHub **Secrets**, không hardcode vào file/commit. Script đọc qua `${{ secrets.* }}` nên không lộ ra log.
+- `secrets.GITHUB_TOKEN` là token tự động của Actions — không cần tạo.
+- Nếu lỡ lộ key: revoke ở trang provider rồi tạo key mới, cập nhật lại Secret.
+
 ## Links
+
 
 - Fly.io dashboard: https://fly.io/dashboard
 - Fly tokens: https://fly.io/user/personal_access_tokens
@@ -247,3 +323,6 @@ flyctl releases rollback             # quay về release trước
 - Fly docs: https://fly.io/docs/
 - High-risk unlock: https://fly.io/high-risk-unlock
 - GHCR packages của repo: `https://github.com/<owner>/<repo>/packages`
+- Gemini API keys (free): https://aistudio.google.com/app/apikey
+- OpenAI API keys: https://platform.openai.com/api-keys
+- Anthropic API keys: https://console.anthropic.com/settings/keys

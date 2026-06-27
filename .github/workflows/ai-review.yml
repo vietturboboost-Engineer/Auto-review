@@ -44,7 +44,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           # Choose one provider: openai | anthropic | gemini
-          AI_PROVIDER: ${{ vars.AI_PROVIDER || 'openai' }}
+          AI_PROVIDER: ${{ vars.AI_PROVIDER || 'gemini' }}
           AI_MODEL: ${{ vars.AI_MODEL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
