@@ -1,14 +1,17 @@
 # syntax=docker/dockerfile:1.7
 
 # ---- deps stage: install all deps (including dev) for building -----
-FROM node:20-alpine AS deps
+# Pinned to the native build platform: tsc output is arch-independent,
+# so compiling under QEMU emulation (arm64) is wasteful and can OOM/crash.
+FROM --platform=$BUILDPLATFORM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
 # ---- build stage: compile TypeScript -----------------------------
-FROM node:20-alpine AS build
+# Runs natively on the build host (no QEMU) to avoid exit-code 254 crashes.
+FROM --platform=$BUILDPLATFORM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY tsconfig*.json ./
