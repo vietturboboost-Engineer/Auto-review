@@ -338,3 +338,4 @@ git push origin v1.0.0
 - **Pages 404**: vào **Settings → Pages → Source = GitHub Actions** (không phải branch).
 - **App ngủ sau idle (cold start)**: `auto_stop_machines = "stop"` trong `fly.toml` đang on để tiết kiệm free tier. Đổi sang `"off"` và set `min_machines_running = 1` nếu không muốn cold start (sẽ tốn free hours nhanh hơn).
 - **Cần thay region / scale up**: `flyctl regions set sin nrt` / `flyctl scale memory 512`.
+
