@@ -54,7 +54,7 @@ function brandChip(b: {
   return (
     `<button class="brandchip" data-brand="${b.slug}" title="${escapeHtml(b.name)} · ${escapeHtml(b.country)} (${b.count} xe)">` +
     `<span class="brandflag">${countryFlag(b.country)}</span>` +
-    `<span class="brandmark" style="color:${b.color}">${escapeHtml(b.wordmark)}</span>` +
+    `<span class="brandmark" style="--bc:${b.color}">${escapeHtml(b.wordmark)}</span>` +
     `<span class="brandcountry">${escapeHtml(b.country)}</span>` +
     `<span class="brandcount">${b.count} xe</span>` +
     `</button>`
@@ -76,10 +76,10 @@ function vehicleCard(v: Vehicle): string {
             ? 'vn-up'
             : 'vn-no';
   return (
-    `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment).toLowerCase())}">` +
+    `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment + ' ' + v.tags.join(' ')).toLowerCase())}">` +
     `<div class="vthumb"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span><span class="vlogo" style="color:${color}">${escapeHtml(brand?.wordmark ?? v.brand)}</span></div>` +
     `<div class="vbody">` +
-    `<div class="vbrand" style="color:${color}">${countryFlag(brand?.country ?? '')} ${escapeHtml(v.brand)} <span class="vcountry">· ${escapeHtml(brand?.country ?? '')}</span></div>` +
+    `<div class="vbrand" style="--bc:${color}">${countryFlag(brand?.country ?? '')} ${escapeHtml(v.brand)} <span class="vcountry">· ${escapeHtml(brand?.country ?? '')}</span></div>` +
     `<h3 class="vname">${escapeHtml(v.model)} <span>${escapeHtml(v.trim)}</span></h3>` +
     `<div class="vchips"><span class="chip">${escapeHtml(v.segment)}</span><span class="chip">${escapeHtml(v.fuelType)}</span><span class="chip">${v.seats} chỗ</span></div>` +
     `<div class="vprice">${escapeHtml(v.price.label)}</div>` +
@@ -114,7 +114,8 @@ const page = `<!doctype html>
 :root{
   --bg1:#060608; --bg2:#101015; --surface:#1a1a20; --card:#17171d; --ink:#0a0a0c;
   --accent:#ffd166; --accent2:#f7b733; --text:#e9e9f0; --muted:#9a9aa6;
-  --line:rgba(255,255,255,0.08); --shadow:0 18px 50px rgba(0,0,0,0.55);
+  --line:rgba(255,255,255,0.08);
+  --shadow:0 18px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.14), 0 0 30px rgba(255,209,102,0.28);
   --good:#5ad19a; --bad:#ff7a7a;
 }
 html[data-theme="light"]{
@@ -209,6 +210,14 @@ section{padding:26px 0}
 .vbody{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .vbrand{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
 .vcountry{font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0}
+/* Màu thương hiệu: kẹp độ sáng theo theme để chữ luôn đọc được, vẫn giữ nhận diện hãng */
+.brandmark,.vbrand,.bct{color:var(--bc,currentColor)}
+html:not([data-theme="light"]) .brandmark,
+html:not([data-theme="light"]) .vbrand,
+html:not([data-theme="light"]) .bct{color:oklch(from var(--bc,#8a8a8a) max(l,0.74) c h)}
+html[data-theme="light"] .brandmark,
+html[data-theme="light"] .vbrand,
+html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h)}
 .vname{margin:0;font-size:17px;font-weight:800}
 .vname span{font-weight:500;color:var(--muted);font-size:13px}
 .vchips{display:flex;gap:6px;flex-wrap:wrap}
@@ -231,16 +240,17 @@ section{padding:26px 0}
 .cmpbar .slot b{cursor:pointer;color:var(--bad);margin-left:6px}
 
 /* Modal */
-.modal{position:fixed;inset:0;z-index:60;display:none;align-items:flex-start;justify-content:center;
+.modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
   background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);overflow-y:auto;padding:24px 14px}
 .modal.show{display:flex}
 .sheet{background:linear-gradient(180deg,var(--surface),var(--card));border:1px solid var(--line);
-  border-radius:22px;width:100%;max-width:920px;box-shadow:var(--shadow);overflow:hidden;margin:auto}
-.sheet-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:2}
+  border-radius:22px;width:100%;max-width:920px;box-shadow:var(--shadow);overflow:hidden;margin:auto;
+  display:flex;flex-direction:column;height:min(88vh,800px)}
+.sheet-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
 .sheet-head h3{margin:0;font-size:18px;flex:1}
 .closebtn{border:1px solid var(--line);background:var(--card);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px}
-.sheet-body{padding:18px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--line);position:sticky;top:64px;background:var(--surface);z-index:2}
+.sheet-body{padding:18px;flex:1 1 auto;overflow-y:auto}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
 .tab{padding:8px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600}
 .tab.active{color:var(--ink);background:var(--accent)}
 .tabpane{display:none}
@@ -301,7 +311,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
     <h1>Chọn xe thông minh,<br><b>so sánh minh bạch</b></h1>
     <p>Cẩm nang ${vehicles.length}+ mẫu xe từ ${brands.length} hãng tại Việt Nam — thông số, chi phí sở hữu, bảo dưỡng và gợi ý xe bằng AI.</p>
     <div class="searchbar">
-      <input id="search" type="search" placeholder="Tìm theo hãng, mẫu xe, phân khúc… (vd: SUV, hybrid, Toyota)">
+      <input id="search" type="search" placeholder="Tìm theo hãng, mẫu xe, từ khóa… (vd: SUV, xe điện, 7 chỗ, giá rẻ, chính hãng)">
     </div>
     <div class="cta">
       <button class="btn btn-primary btn-lg" id="cta-reco">🤖 Gợi ý xe bằng AI</button>
@@ -450,6 +460,8 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
         t.classList.add('active');
         var pane=sheet.querySelector('[data-pane="'+t.getAttribute('data-tab')+'"]');
         if(pane) pane.classList.add('active');
+        var body=sheet.querySelector('.sheet-body');
+        if(body) body.scrollTop=0;
       };
     });
   }
@@ -484,7 +496,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       return '<tr><th>'+esc(p.name)+'</th><td>'+esc(p.price)+'<div class="muted">OEM: '+esc(p.oem)+'</div></td></tr>';
     }).join('');
     return ''
-      + '<div class="sheet-head"><h3>'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+'<span style="color:'+c+'">'+esc(v.brand)+'</span> '+esc(v.model)+' · '+esc(v.trim)+'</h3>'
+      + '<div class="sheet-head"><h3>'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+'<span class="bct" style="--bc:'+c+'">'+esc(v.brand)+'</span> '+esc(v.model)+' · '+esc(v.trim)+'</h3>'
       + '<button class="closebtn" data-close>✕</button></div>'
       + '<div class="tabs">'
       +   '<button class="tab active" data-tab="ov">Tổng quan</button>'
@@ -507,6 +519,8 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       +     '<p style="margin-top:14px"><b>An toàn</b></p>'+tags(v.safetyFeatures)
       +     '<p><b>Công nghệ</b></p>'+tags(v.techFeatures)
       +     '<p><b>Lưu ý thường gặp</b></p>'+tags(v.commonIssues)
+      +     '<p><b>Phù hợp với</b></p>'+tags(v.suitableFor||[])
+      +     '<p><b>Từ khóa</b></p>'+tags(v.tags||[])
       +     '<div class="vactions"><button class="btn btn-ghost" data-act="compare" data-id="'+esc(v.id)+'">⚖️ Thêm vào so sánh</button></div>'
       +   '</div>'
       +   '<div class="tabpane" data-pane="spec"><table class="dtbl">'
@@ -676,7 +690,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
     var html=lastTop.map(function(it){
       var v=it.v, c=brandColor[v.brandSlug]||'var(--accent)';
       return '<div class="reco-card"><img src="'+esc(v.image)+'" alt="">'
-        + '<div style="flex:1"><div class="vbrand" style="color:'+c+'">'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand)+'</div>'
+        + '<div style="flex:1"><div class="vbrand" style="--bc:'+c+'">'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand)+'</div>'
         + '<h3 class="vname" style="margin:2px 0">'+esc(v.model)+' <span>'+esc(v.trim)+'</span></h3>'
         + '<div class="muted" style="font-size:13px">'+esc(v.price.label)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+'</div>'
         + '<div class="muted" style="font-size:12px;margin-top:3px">'+esc(it.vnStatus)+'</div>'
