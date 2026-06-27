@@ -94,6 +94,111 @@ const toyotaCars: Car[] = [
   },
 ];
 
+// Thông số kỹ thuật + ưu/nhược điểm (tham khảo, có thể thay đổi theo phiên bản).
+interface Spec {
+  engine: string;
+  power: string;
+  gearbox: string;
+  seats: string;
+  drive: string;
+  fuel: string;
+  pros: string[];
+  cons: string[];
+}
+
+const carSpecs: Record<string, Spec> = {
+  'Toyota Wigo': {
+    engine: '1.2L xăng 3NR-VE',
+    power: '87 mã lực / 113 Nm',
+    gearbox: 'CVT hoặc số sàn 5 cấp',
+    seats: '5 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~5.0 L/100km',
+    pros: ['Giá rẻ nhất phân khúc', 'Tiết kiệm nhiên liệu', 'Nhỏ gọn, dễ đi phố & đỗ xe', 'Chi phí bảo dưỡng thấp'],
+    cons: ['Cách âm kém', 'Tăng tốc yếu khi đầy tải', 'Nội thất đơn giản', 'Trang bị an toàn cơ bản'],
+  },
+  'Toyota Vios': {
+    engine: '1.5L xăng 2NR-VE',
+    power: '107 mã lực / 140 Nm',
+    gearbox: 'CVT hoặc số sàn 5 cấp',
+    seats: '5 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~5.5 L/100km',
+    pros: ['Bền bỉ, ít hỏng vặt', 'Tiết kiệm & giữ giá tốt', 'Khoang nội thất rộng', 'Dễ sửa, phụ tùng rẻ'],
+    cons: ['Cách âm tầm trung', 'Vô-lăng nhẹ, thiếu cảm giác lái', 'Thiết kế an toàn', 'Hệ thống giải trí cơ bản'],
+  },
+  'Toyota Veloz Cross': {
+    engine: '1.5L xăng',
+    power: '105 mã lực / 138 Nm',
+    gearbox: 'CVT',
+    seats: '7 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~6.0 L/100km',
+    pros: ['7 chỗ giá hợp lý', 'Trang bị Toyota Safety Sense', 'Tiết kiệm nhiên liệu', 'Gầm cao, thiết kế trẻ trung'],
+    cons: ['Động cơ hơi yếu khi đầy 7 người', 'Cách âm chưa tốt', 'Không có bản máy dầu', 'Vật liệu nội thất bình dân'],
+  },
+  'Toyota Yaris Cross': {
+    engine: '1.5L xăng / Hybrid',
+    power: '90 – 116 mã lực',
+    gearbox: 'CVT / e-CVT (hybrid)',
+    seats: '5 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~4.0 – 5.5 L/100km',
+    pros: ['Có bản hybrid rất tiết kiệm', 'Gầm cao, dáng SUV trẻ', 'Nhiều công nghệ an toàn', 'Dễ lái trong phố'],
+    cons: ['Giá cao trong phân khúc', 'Khoang hành lý & ghế sau hẹp', 'Cách âm tầm trung', 'Bản xăng tăng tốc thường'],
+  },
+  'Toyota Corolla Cross': {
+    engine: '1.8L xăng / Hybrid',
+    power: '122 – 140 mã lực',
+    gearbox: 'CVT / e-CVT (hybrid)',
+    seats: '5 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~5.0 – 6.5 L/100km',
+    pros: ['Rộng rãi, gầm cao', 'Bản hybrid tiết kiệm', 'An toàn TSS đầy đủ', 'Vận hành êm ái'],
+    cons: ['Giá cao', 'Một số chi tiết nhựa cứng', 'Cách âm gầm chưa tốt', 'Bản xăng hơi ồn khi tăng tốc'],
+  },
+  'Toyota Innova Cross': {
+    engine: '2.0L xăng / Hybrid',
+    power: '172 – 186 mã lực (hệ hybrid)',
+    gearbox: 'CVT / e-CVT (hybrid)',
+    seats: '7 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~5.5 – 7.0 L/100km',
+    pros: ['7 chỗ rộng rãi', 'Bản hybrid mạnh & tiết kiệm', 'Nhiều trang bị cao cấp', 'Gầm cao thực dụng'],
+    cons: ['Giá cao hơn thế hệ cũ', 'Chuyển sang dẫn động cầu trước', 'Thân xe lớn, khó đỗ', 'Bản hybrid giá khá cao'],
+  },
+  'Toyota Camry': {
+    engine: '2.0L / 2.5L / 2.5L Hybrid',
+    power: '167 – 203 mã lực',
+    gearbox: 'AT 6–8 cấp / e-CVT',
+    seats: '5 chỗ',
+    drive: 'Cầu trước (FWD)',
+    fuel: '~6.5 – 7.5 L/100km (hybrid ~4.5)',
+    pros: ['Sang trọng, êm ái', 'Cách âm tốt', 'Bản hybrid tiết kiệm', 'Trang bị an toàn cao'],
+    cons: ['Giá cao', 'Gầm thấp', 'Thiên về thoải mái hơn thể thao', 'Chi phí bảo dưỡng cao hơn xe phổ thông'],
+  },
+  'Toyota Fortuner': {
+    engine: '2.7L xăng / 2.4L–2.8L dầu',
+    power: '150 – 204 mã lực',
+    gearbox: 'AT 6 cấp / số sàn',
+    seats: '7 chỗ',
+    drive: 'Cầu sau (RWD) / 2 cầu (4WD)',
+    fuel: '~7.5 – 9.0 L/100km',
+    pros: ['Bền bỉ, gầm cao off-road tốt', '7 chỗ rộng rãi', 'Giữ giá tốt', 'Bản máy dầu khỏe, kéo tải tốt'],
+    cons: ['Cách âm tầm trung', 'Vô-lăng nặng ở tốc độ thấp', 'Tiêu hao nhiên liệu cao', 'Lái không êm như xe gầm thấp'],
+  },
+  'Toyota Land Cruiser': {
+    engine: '3.3L V6 dầu / 3.5L V6 xăng twin-turbo',
+    power: '305 – 415 mã lực',
+    gearbox: 'AT 10 cấp',
+    seats: '7 chỗ',
+    drive: '2 cầu toàn thời gian (4WD)',
+    fuel: '~9.0 – 12.0 L/100km',
+    pros: ['Off-road đỉnh cao', 'Bền bỉ huyền thoại', 'Giữ giá cực tốt', 'Mạnh mẽ & sang trọng'],
+    cons: ['Giá rất cao', 'Tiêu hao nhiên liệu lớn', 'Thân xe to, khó đỗ phố', 'Phí nuôi xe cao'],
+  },
+};
+
 // Ảnh minh hoạ SVG inline (không phụ thuộc mạng ngoài) — đổi màu theo từng xe.
 function carThumb(color: string): string {
   return `<svg viewBox="0 0 120 60" width="96" height="48" role="img" aria-label="xe">
@@ -125,7 +230,9 @@ const rows = toyotaCars
       <td class="price">${c.price}</td>
       <td class="act">
         <button class="btn3d" type="button"
-          onclick="open3d('${c.model ?? CAR_MODEL}', '${c.name}')">↻ Xem 3D</button>
+          onclick="open3d('${c.model ?? CAR_MODEL}', '${c.name}')">↻ 3D</button>
+        <button class="btnspec" type="button"
+          onclick="openSpec('${c.name}')">📋 Thông số</button>
       </td>
     </tr>`,
   )
@@ -280,6 +387,49 @@ const page = /* html */ `<!doctype html>
       }
       .btn3d:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); }
       .btn3d:active { transform: translateY(0); }
+      .btnspec {
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        margin-top: 0.35rem;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.15s ease;
+      }
+      .btnspec:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.28); }
+      .btnspec:active { transform: translateY(0); }
+      /* ---- Bảng thông số trong popup ---- */
+      .spec-tbl { width: 100%; border-collapse: collapse; margin-bottom: 1rem; min-width: 0; }
+      .spec-tbl th, .spec-tbl td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: 0.95rem;
+      }
+      .spec-tbl th {
+        width: 38%;
+        color: var(--accent);
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .spec-tbl td { font-weight: 500; }
+      .proscons { display: flex; gap: 1rem; flex-wrap: wrap; text-align: left; }
+      .proscons > div {
+        flex: 1 1 200px;
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .proscons h4 { margin: 0 0 0.5rem; font-size: 1rem; }
+      .proscons .pros h4 { color: #4ade80; }
+      .proscons .cons h4 { color: #fbbf24; }
+      .proscons ul { margin: 0; padding-left: 1.1rem; }
+      .proscons li { margin: 0.25rem 0; font-size: 0.9rem; line-height: 1.4; }
       /* ---- 3D modal ---- */
       .modal3d[hidden] { display: none; }
       .modal3d {
@@ -344,11 +494,35 @@ const page = /* html */ `<!doctype html>
       }
       @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
       .lightbox img {
-        max-width: 96vw;
+        max-width: min(60vw, 820px);
         max-height: 84vh;
         object-fit: contain;
         border-radius: 12px;
         box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+      }
+      .lightbox .lb-inner {
+        display: flex;
+        gap: 1.2rem;
+        align-items: center;
+        justify-content: center;
+        max-width: 96vw;
+        max-height: 86vh;
+        cursor: default;
+      }
+      .lb-spec {
+        width: min(34vw, 360px);
+        max-height: 84vh;
+        overflow-y: auto;
+        text-align: left;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+      }
+      @media (max-width: 820px) {
+        .lightbox .lb-inner { flex-direction: column; align-items: stretch; overflow-y: auto; }
+        .lightbox img { max-width: 92vw; max-height: 46vh; }
+        .lb-spec { width: auto; max-height: none; }
       }
       .lightbox .cap { font-size: 0.95rem; opacity: 0.85; }
       .lightbox .close {
@@ -390,7 +564,7 @@ const page = /* html */ `<!doctype html>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Ảnh</th><th>Mẫu xe</th><th>Phân khúc</th><th>Giá tham khảo</th><th>3D</th></tr>
+          <tr><th>Ảnh</th><th>Mẫu xe</th><th>Phân khúc</th><th>Giá tham khảo</th><th>Tùy chọn</th></tr>
         </thead>
         <tbody>
           ${rows}
@@ -429,8 +603,19 @@ const page = /* html */ `<!doctype html>
 
     <div id="lightbox" class="lightbox" hidden onclick="closeImg()">
       <button class="close" type="button" aria-label="Đóng">✕</button>
-      <img id="lb-img" src="" alt="" referrerpolicy="no-referrer" />
+      <div class="lb-inner" onclick="event.stopPropagation()">
+        <img id="lb-img" src="" alt="" referrerpolicy="no-referrer" />
+        <aside id="lb-spec" class="lb-spec"></aside>
+      </div>
       <div id="lb-cap" class="cap"></div>
+    </div>
+
+    <div id="specbox" class="modal3d" hidden>
+      <div class="card3d">
+        <button class="close" type="button" onclick="closeSpec()" aria-label="Đóng">✕</button>
+        <h3 id="spec-title">Thông số</h3>
+        <div id="spec-body"></div>
+      </div>
     </div>
 
     <script>
@@ -462,6 +647,7 @@ const page = /* html */ `<!doctype html>
         var box = document.getElementById('lightbox');
         var img = document.getElementById('lb-img');
         var cap = document.getElementById('lb-cap');
+        var spec = document.getElementById('lb-spec');
         // Đổi thumbnail 330px sang bản lớn 1280px (size Wikimedia cho phép).
         function bigSrc(src) {
           return src.replace('/330px-', '/1280px-');
@@ -470,6 +656,7 @@ const page = /* html */ `<!doctype html>
           img.src = bigSrc(src);
           img.alt = name;
           cap.textContent = name;
+          spec.innerHTML = window.buildSpecHtml ? window.buildSpecHtml(name) : '';
           box.hidden = false;
         };
         window.closeImg = function () {
@@ -478,6 +665,58 @@ const page = /* html */ `<!doctype html>
         };
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') window.closeImg();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var SPECS = ${JSON.stringify(carSpecs).replace(/</g, '\\u003c')};
+        var box = document.getElementById('specbox');
+        var title = document.getElementById('spec-title');
+        var body = document.getElementById('spec-body');
+        function esc(s) {
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        window.buildSpecHtml = function (name) {
+          var s = SPECS[name];
+          if (!s) return '';
+          var specRows = [
+            ['Động cơ', s.engine],
+            ['Công suất', s.power],
+            ['Hộp số', s.gearbox],
+            ['Số chỗ', s.seats],
+            ['Dẫn động', s.drive],
+            ['Tiêu hao', s.fuel],
+          ]
+            .map(function (r) {
+              return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
+            })
+            .join('');
+          var pros = s.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+          var cons = s.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+          return (
+            '<table class="spec-tbl">' + specRows + '</table>' +
+            '<div class="proscons">' +
+            '<div class="pros"><h4>✅ Ưu điểm</h4><ul>' + pros + '</ul></div>' +
+            '<div class="cons"><h4>⚠️ Nhược điểm</h4><ul>' + cons + '</ul></div>' +
+            '</div>'
+          );
+        };
+        window.openSpec = function (name) {
+          if (!SPECS[name]) return;
+          body.innerHTML = window.buildSpecHtml(name);
+          title.textContent = name + ' — Thông số kỹ thuật';
+          box.hidden = false;
+        };
+        window.closeSpec = function () {
+          box.hidden = true;
+        };
+        box.addEventListener('click', function (e) {
+          if (e.target === box) window.closeSpec();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') window.closeSpec();
         });
       })();
     </script>
