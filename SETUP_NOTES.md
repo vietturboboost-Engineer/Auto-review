@@ -253,7 +253,7 @@ Workflow `AI Code Review` (`.github/workflows/ai-review.yml`) gọi script `.git
 
 | Provider | Secret cần thêm | `AI_PROVIDER` | Model mặc định | Ghi chú |
 |---|---|---|---|---|
-| **Gemini** (khuyến nghị) | `GEMINI_API_KEY` | `gemini` (đã là mặc định) | `gemini-1.5-flash` | Có free tier |
+| **Gemini** (khuyến nghị) | `GEMINI_API_KEY` | `gemini` (đã là mặc định) | `gemini-2.5-flash` | Có free tier |
 | OpenAI | `OPENAI_API_KEY` | `openai` | `gpt-4o-mini` | Trả phí theo dùng |
 | Anthropic | `ANTHROPIC_API_KEY` | `anthropic` | `claude-3-5-haiku-latest` | Trả phí theo dùng |
 

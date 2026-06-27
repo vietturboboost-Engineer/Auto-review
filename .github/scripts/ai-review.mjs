@@ -15,7 +15,7 @@
  * Supported providers (set AI_PROVIDER env var):
  *   - openai     -> uses OPENAI_API_KEY (default model: gpt-4o-mini, structured outputs)
  *   - anthropic  -> uses ANTHROPIC_API_KEY (default model: claude-3-5-haiku-latest)
- *   - gemini     -> uses GEMINI_API_KEY (default model: gemini-1.5-flash)
+ *   - gemini     -> uses GEMINI_API_KEY (default model: gemini-2.5-flash)
  */
 
 import { Octokit } from "@octokit/rest";
@@ -121,7 +121,7 @@ const PROVIDERS = {
     call: callAnthropic,
   },
   gemini: {
-    defaultModel: "gemini-1.5-flash",
+    defaultModel: "gemini-2.5-flash",
     keyEnv: "GEMINI_API_KEY",
     key: GEMINI_API_KEY,
     call: callGemini,
