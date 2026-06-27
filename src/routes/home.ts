@@ -26,7 +26,7 @@ const toyotaCars: Car[] = [
     price: '360 – 405 triệu',
     color: '#ef476f',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/2014_Daihatsu_Ayla_1.0_X_B100RS_%2820190615%29.jpg/320px-2014_Daihatsu_Ayla_1.0_X_B100RS_%2820190615%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/2014_Daihatsu_Ayla_1.0_X_B100RS_%2820190615%29.jpg/330px-2014_Daihatsu_Ayla_1.0_X_B100RS_%2820190615%29.jpg',
   },
   {
     name: 'Toyota Vios',
@@ -34,7 +34,7 @@ const toyotaCars: Car[] = [
     price: '458 – 545 triệu',
     color: '#118ab2',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Toyota_Vios_1.5_VVT-i_G_%28IV%29_%E2%80%93_f_13032025.jpg/320px-Toyota_Vios_1.5_VVT-i_G_%28IV%29_%E2%80%93_f_13032025.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Toyota_Vios_1.5_VVT-i_G_%28IV%29_%E2%80%93_f_13032025.jpg/330px-Toyota_Vios_1.5_VVT-i_G_%28IV%29_%E2%80%93_f_13032025.jpg',
   },
   {
     name: 'Toyota Veloz Cross',
@@ -42,7 +42,7 @@ const toyotaCars: Car[] = [
     price: '658 – 698 triệu',
     color: '#06d6a0',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/2022_Toyota_Avanza_1.5_G_Toyota_Safety_Sense_W101RE_%2820220403%29.jpg/320px-2022_Toyota_Avanza_1.5_G_Toyota_Safety_Sense_W101RE_%2820220403%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/2022_Toyota_Avanza_1.5_G_Toyota_Safety_Sense_W101RE_%2820220403%29.jpg/330px-2022_Toyota_Avanza_1.5_G_Toyota_Safety_Sense_W101RE_%2820220403%29.jpg',
   },
   {
     name: 'Toyota Yaris Cross',
@@ -50,7 +50,7 @@ const toyotaCars: Car[] = [
     price: '730 – 838 triệu',
     color: '#ffd166',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Toyota_Yaris_Cross_Hybrid_%28XP210%29_1X7A1846.jpg/320px-Toyota_Yaris_Cross_Hybrid_%28XP210%29_1X7A1846.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Toyota_Yaris_Cross_Hybrid_%28XP210%29_1X7A1846.jpg/330px-Toyota_Yaris_Cross_Hybrid_%28XP210%29_1X7A1846.jpg',
   },
   {
     name: 'Toyota Corolla Cross',
@@ -58,7 +58,7 @@ const toyotaCars: Car[] = [
     price: '820 – 935 triệu',
     color: '#8338ec',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg/320px-2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg/330px-2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg',
   },
   {
     name: 'Toyota Innova Cross',
@@ -66,7 +66,7 @@ const toyotaCars: Car[] = [
     price: '810 triệu – 1,0 tỷ',
     color: '#fb5607',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Toyota_Innova_Zenix_2.0_V_%28III%29_%E2%80%93_f_22032025.jpg/320px-Toyota_Innova_Zenix_2.0_V_%28III%29_%E2%80%93_f_22032025.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Toyota_Innova_Zenix_2.0_V_%28III%29_%E2%80%93_f_22032025.jpg/330px-Toyota_Innova_Zenix_2.0_V_%28III%29_%E2%80%93_f_22032025.jpg',
   },
   {
     name: 'Toyota Camry',
@@ -74,7 +74,7 @@ const toyotaCars: Car[] = [
     price: '1,105 – 1,495 tỷ',
     color: '#3a86ff',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/2018_Toyota_Camry_%28ASV70R%29_Ascent_sedan_%282018-08-27%29_01.jpg/320px-2018_Toyota_Camry_%28ASV70R%29_Ascent_sedan_%282018-08-27%29_01.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/2018_Toyota_Camry_%28ASV70R%29_Ascent_sedan_%282018-08-27%29_01.jpg/330px-2018_Toyota_Camry_%28ASV70R%29_Ascent_sedan_%282018-08-27%29_01.jpg',
   },
   {
     name: 'Toyota Fortuner',
@@ -82,7 +82,7 @@ const toyotaCars: Car[] = [
     price: '1,055 – 1,470 tỷ',
     color: '#2a9d8f',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/2015_Toyota_Fortuner_%28New_Zealand%29.jpg/320px-2015_Toyota_Fortuner_%28New_Zealand%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/2015_Toyota_Fortuner_%28New_Zealand%29.jpg/330px-2015_Toyota_Fortuner_%28New_Zealand%29.jpg',
   },
   {
     name: 'Toyota Land Cruiser',
@@ -90,7 +90,7 @@ const toyotaCars: Car[] = [
     price: '4,030 – 4,600 tỷ',
     color: '#e09f3e',
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/2021_Toyota_Land_Cruiser_300_3.4_ZX_%28Colombia%29_front_view_04.png/320px-2021_Toyota_Land_Cruiser_300_3.4_ZX_%28Colombia%29_front_view_04.png',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/2021_Toyota_Land_Cruiser_300_3.4_ZX_%28Colombia%29_front_view_04.png/330px-2021_Toyota_Land_Cruiser_300_3.4_ZX_%28Colombia%29_front_view_04.png',
   },
 ];
 
@@ -107,9 +107,11 @@ function carThumb(color: string): string {
 }
 
 // Ảnh thật + fallback SVG: nếu <img> lỗi mạng, ẩn ảnh và hiện SVG minh hoạ kế bên.
+// Bấm vào ảnh -> mở lightbox xem ảnh lớn (1280px).
 function carPhoto(c: Car): string {
   return `<img class="photo" src="${c.image}" alt="${c.name}" width="120" height="68"
-      loading="lazy" referrerpolicy="no-referrer"
+      loading="lazy" referrerpolicy="no-referrer" title="Bấm để phóng to"
+      onclick="openImg(this.src, '${c.name}')"
       onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
     <span class="fallback" style="display:none">${carThumb(c.color)}</span>`;
 }
@@ -253,6 +255,12 @@ const page = /* html */ `<!doctype html>
         object-fit: cover;
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.1);
+        cursor: zoom-in;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      td.thumb img.photo:hover {
+        transform: scale(1.06);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       }
       td.name { font-weight: 600; white-space: nowrap; }
       td.type { opacity: 0.85; font-size: 0.92rem; }
@@ -318,6 +326,45 @@ const page = /* html */ `<!doctype html>
         transition: background 0.15s ease;
       }
       .modal3d .close:hover { background: rgba(255, 255, 255, 0.3); }
+      /* ---- Lightbox ảnh ---- */
+      .lightbox[hidden] { display: none; }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.8rem;
+        padding: 1.5rem;
+        background: rgba(3, 8, 18, 0.92);
+        cursor: zoom-out;
+        animation: fade 0.18s ease;
+      }
+      @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+      .lightbox img {
+        max-width: 96vw;
+        max-height: 84vh;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+      }
+      .lightbox .cap { font-size: 0.95rem; opacity: 0.85; }
+      .lightbox .close {
+        position: absolute;
+        top: 1rem;
+        right: 1.2rem;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: none;
+        font-size: 1.3rem;
+        cursor: pointer;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .lightbox .close:hover { background: rgba(255, 255, 255, 0.32); }
       .note { font-size: 0.8rem; opacity: 0.7; margin-top: 0.6rem; max-width: 60ch; }
       footer { margin-top: 2rem; opacity: 0.7; font-size: 0.85rem; }
       a { color: var(--accent); text-decoration: none; font-weight: 600; }
@@ -380,6 +427,12 @@ const page = /* html */ `<!doctype html>
       </div>
     </div>
 
+    <div id="lightbox" class="lightbox" hidden onclick="closeImg()">
+      <button class="close" type="button" aria-label="Đóng">✕</button>
+      <img id="lb-img" src="" alt="" referrerpolicy="no-referrer" />
+      <div id="lb-cap" class="cap"></div>
+    </div>
+
     <script>
       (function () {
         var modal = document.getElementById('viewer3d');
@@ -400,6 +453,31 @@ const page = /* html */ `<!doctype html>
         });
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') window.close3d();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var box = document.getElementById('lightbox');
+        var img = document.getElementById('lb-img');
+        var cap = document.getElementById('lb-cap');
+        // Đổi thumbnail 330px sang bản lớn 1280px (size Wikimedia cho phép).
+        function bigSrc(src) {
+          return src.replace('/330px-', '/1280px-');
+        }
+        window.openImg = function (src, name) {
+          img.src = bigSrc(src);
+          img.alt = name;
+          cap.textContent = name;
+          box.hidden = false;
+        };
+        window.closeImg = function () {
+          box.hidden = true;
+          img.src = '';
+        };
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') window.closeImg();
         });
       })();
     </script>
