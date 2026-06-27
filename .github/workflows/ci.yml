@@ -69,11 +69,14 @@ jobs:
 
       - name: Job summary
         if: always()
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
           {
             echo "## CI summary"
             echo ""
-            echo "- Commit: \`${{ github.sha }}\`"
-            echo "- Branch: \`${{ github.ref_name }}\`"
+            echo "- Commit: \`${COMMIT_SHA}\`"
+            echo "- Branch: \`${BRANCH_NAME}\`"
             echo "- Node: $(node -v)"
           } >> "$GITHUB_STEP_SUMMARY"
