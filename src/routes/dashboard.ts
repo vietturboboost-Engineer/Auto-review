@@ -77,7 +77,7 @@ function vehicleCard(v: Vehicle): string {
             : 'vn-no';
   return (
     `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment + ' ' + v.tags.join(' ')).toLowerCase())}">` +
-    `<div class="vthumb"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span><span class="vlogo" style="color:${color}">${escapeHtml(brand?.wordmark ?? v.brand)}</span></div>` +
+    `<div class="vthumb" data-act="detail" data-id="${v.id}" title="Xem chi tiết"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span><span class="vlogo" style="color:${color}">${escapeHtml(brand?.wordmark ?? v.brand)}</span></div>` +
     `<div class="vbody">` +
     `<div class="vbrand" style="--bc:${color}">${countryFlag(brand?.country ?? '')} ${escapeHtml(v.brand)} <span class="vcountry">· ${escapeHtml(brand?.country ?? '')}</span></div>` +
     `<h3 class="vname">${escapeHtml(v.model)} <span>${escapeHtml(v.trim)}</span></h3>` +
@@ -194,8 +194,9 @@ section{padding:26px 0}
 .vcard{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
   display:flex;flex-direction:column;transition:transform .14s ease,box-shadow .14s ease}
 .vcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-.vthumb{position:relative;aspect-ratio:16/9;background:#0c0c10;overflow:hidden}
-.vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vthumb{position:relative;aspect-ratio:16/9;background:#0c0c10;overflow:hidden;cursor:pointer}
+.vthumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+.vthumb:hover img{transform:scale(1.05)}
 .vnbadge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:800;padding:4px 9px;
   border-radius:999px;backdrop-filter:blur(4px);background:rgba(10,10,14,.62);color:#fff;
   border:1px solid rgba(255,255,255,.18);box-shadow:0 4px 14px rgba(0,0,0,.35)}
@@ -241,11 +242,11 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 
 /* Modal */
 .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);overflow-y:auto;padding:24px 14px}
+  background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);overflow-y:auto;padding:16px 12px}
 .modal.show{display:flex}
 .sheet{background:linear-gradient(180deg,var(--surface),var(--card));border:1px solid var(--line);
-  border-radius:22px;width:100%;max-width:920px;box-shadow:var(--shadow);overflow:hidden;margin:auto;
-  display:flex;flex-direction:column;height:min(88vh,800px)}
+  border-radius:22px;width:100%;max-width:1240px;box-shadow:var(--shadow);overflow:hidden;margin:auto;
+  display:flex;flex-direction:column;height:min(94vh,960px)}
 .sheet-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
 .sheet-head h3{margin:0;font-size:18px;flex:1}
 .closebtn{border:1px solid var(--line);background:var(--card);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px}
@@ -255,6 +256,18 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .tab.active{color:var(--ink);background:var(--accent)}
 .tabpane{display:none}
 .tabpane.active{display:block}
+.ovgrid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:start;margin-bottom:14px}
+.ovimg{width:100%;height:100%;min-height:240px;max-height:400px;object-fit:cover;border-radius:14px}
+.ovinfo{min-width:0}
+.proscons{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.pccol{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card)}
+.pccol h4{margin:0 0 8px;font-size:14px}
+.pccol ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.pccol li{font-size:13px;line-height:1.5}
+.pc-good h4{color:var(--good)}
+.pc-bad h4{color:var(--bad)}
+@media(max-width:760px){.proscons{grid-template-columns:1fr}}
+@media(max-width:760px){.ovgrid{grid-template-columns:1fr}.ovimg{max-height:260px}}
 
 /* tables */
 .dtbl{width:100%;border-collapse:collapse;font-size:14px}
@@ -508,14 +521,22 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       + '</div>'
       + '<div class="sheet-body">'
       +   '<div class="tabpane active" data-pane="ov">'
-      +     '<img src="'+esc(v.image)+'" alt="" style="width:100%;max-height:280px;object-fit:cover;border-radius:14px;margin-bottom:12px">'
-      +     '<div class="vprice" style="font-size:20px">'+esc(v.price.label)+'</div>'
-      +     '<div class="vmeta" style="margin:8px 0">'+stars(v.reliability)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+' · '+v.seats+' chỗ</div>'
-      +     '<table class="dtbl">'
-      +       row('Động cơ', v.engine) + row('Hộp số', v.transmission) + row('Dẫn động', v.driveType)
-      +       row('Công suất', v.horsepower+' hp / '+v.torque+' Nm') + row('Tiêu hao', v.fuelEconomy)
-      +       row('Bảo hành', v.warranty)
-      +     '</table>'
+      +     '<div class="ovgrid">'
+      +       '<img class="ovimg" src="'+esc(v.image)+'" alt="">'
+      +       '<div class="ovinfo">'
+      +         '<div class="vprice" style="font-size:20px">'+esc(v.price.label)+'</div>'
+      +         '<div class="vmeta" style="margin:8px 0">'+stars(v.reliability)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+' · '+v.seats+' chỗ</div>'
+      +         '<table class="dtbl">'
+      +           row('Động cơ', v.engine) + row('Hộp số', v.transmission) + row('Dẫn động', v.driveType)
+      +           row('Công suất', v.horsepower+' hp / '+v.torque+' Nm') + row('Tiêu hao', v.fuelEconomy)
+      +           row('Bảo hành', v.warranty)
+      +         '</table>'
+      +       '</div>'
+      +     '</div>'
+      +     '<div class="proscons">'
+      +       '<div class="pccol pc-good"><h4>✅ Ưu điểm</h4><ul>'+(v.pros||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
+      +       '<div class="pccol pc-bad"><h4>⚠️ Nhược điểm</h4><ul>'+(v.cons||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
+      +     '</div>'
       +     '<p style="margin-top:14px"><b>An toàn</b></p>'+tags(v.safetyFeatures)
       +     '<p><b>Công nghệ</b></p>'+tags(v.techFeatures)
       +     '<p><b>Lưu ý thường gặp</b></p>'+tags(v.commonIssues)
