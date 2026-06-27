@@ -1140,6 +1140,30 @@ const page = /* html */ `<!doctype html>
         font-size: 0.8rem;
       }
       .rec-toggle { display: flex; gap: 0.6rem; margin: 0.4rem 0 1rem; flex-wrap: wrap; }
+      .ai-box {
+        text-align: left;
+        margin-top: 1rem;
+        border: 1px solid rgba(255, 209, 102, 0.35);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        background: linear-gradient(160deg, rgba(255, 209, 102, 0.07), rgba(255, 255, 255, 0.02));
+      }
+      .ai-box.ai-loading { opacity: 0.85; font-size: 0.92rem; }
+      .ai-box.ai-warn { border-color: rgba(255, 107, 107, 0.45); background: rgba(255, 107, 107, 0.08); font-size: 0.9rem; }
+      .ai-head { font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+      .ai-badge {
+        font-size: 0.68rem;
+        background: var(--surface);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        padding: 0.12rem 0.55rem;
+        opacity: 0.85;
+        font-weight: 600;
+      }
+      .ai-text p { margin: 0.4rem 0; font-size: 0.9rem; line-height: 1.6; }
+      .ai-text h5 { margin: 0.7rem 0 0.3rem; color: var(--accent); font-size: 0.95rem; }
+      .ai-text ul { margin: 0.3rem 0; padding-left: 1.2rem; font-size: 0.9rem; }
+      .ai-text li { margin: 0.2rem 0; line-height: 1.5; }
       @media (max-width: 560px) {
         .proscons { grid-template-columns: 1fr; }
       }
@@ -1988,6 +2012,7 @@ const page = /* html */ `<!doctype html>
           var dailyKm = num('dailyKm', 0);
           var weeklyKm = num('weeklyKm', 0);
           var annualKm = num('annualKm', 0);
+          var cityPct = num('cityPct', 70);
           var weekend = document.getElementById('q-weekend').value;
           var longTrip = document.getElementById('q-longTrip').value;
           var road = radio('road');
@@ -2003,7 +2028,8 @@ const page = /* html */ `<!doctype html>
           var minSeats = parseInt(document.getElementById('q-minSeats').value, 10) || 0;
           var mustHave = checks('features');
           var keepYears = clamp(num('keepYears', 7), 1, 15);
-          var notes = txt('notes').toLowerCase();
+          var notesRaw = txt('notes');
+          var notes = notesRaw.toLowerCase();
           var imp = {
             fuel: num('impFuel', 3), rel: num('impRel', 3), maint: num('impMaint', 3),
             safety: num('impSafety', 3), comfort: num('impComfort', 3), perf: num('impPerf', 3),
@@ -2118,7 +2144,25 @@ const page = /* html */ `<!doctype html>
           });
 
           results.sort(function (a, b) { return b.overall - a.overall; });
-          return { results: results, ctx: { neededSeats: neededSeats, budgetMax: budgetMax } };
+          var profile = [
+            'Thu nhập ~' + income + ' tr/tháng, ngân sách đi lại ~' + transBudget + ' tr/tháng.',
+            'Gia đình ' + familySize + ' người' + (children > 0 ? ', ' + children + ' con nhỏ' : '') + '; ' +
+              (parking === 'Không' ? 'không có chỗ đỗ.' : 'có chỗ đỗ.'),
+            'Đi ~' + Math.round(kmYear) + ' km/năm, ~' + cityPct + '% trong phố; cuối tuần: ' + weekend +
+              '; đường dài: ' + longTrip + '; đường: ' + road + '; thường chở ' + passengers + ' người.',
+            'Ngân sách xe tối đa ' + budgetMax + ' tr; hình thức ' + financing +
+              (loanAmount > 0 ? ', vay ' + loanAmount + ' tr' : '') + '.',
+            'Kiểu dáng thích: ' + (bodyTypes.join(', ') || 'không nêu') + '; nhiên liệu: ' + fuelPref +
+              '; hộp số: ' + transmission + '; tối thiểu ' + minSeats + ' chỗ.',
+            mustHave.length ? ('Trang bị bắt buộc: ' + mustHave.join(', ') + '.') : '',
+            'Ưu tiên 1-5 — tiết kiệm:' + imp.fuel + ', bền:' + imp.rel + ', bảo dưỡng:' + imp.maint +
+              ', an toàn:' + imp.safety + ', tiện nghi:' + imp.comfort + ', vận hành:' + imp.perf +
+              ', công nghệ:' + imp.tech + ', giữ giá:' + imp.resale + ', hành lý:' + imp.cargo +
+              ', thương hiệu:' + imp.brand + '.',
+            'Dự định giữ xe ' + keepYears + ' năm.',
+            notesRaw ? ('Ghi chú thêm: ' + notesRaw) : '',
+          ].filter(function (s) { return s; }).join(' ');
+          return { results: results, profile: profile, ctx: { neededSeats: neededSeats, budgetMax: budgetMax } };
         }
         function maintTier(car) {
           var p = (car.priceMin + car.priceMax) / 2;
@@ -2181,8 +2225,10 @@ const page = /* html */ `<!doctype html>
           var html = '<div class="rec-toggle">' +
             '<button type="button" class="ghost" onclick="window.backToForm()">↩ Sửa câu trả lời</button>' +
             '<button type="button" class="primary" onclick="window.toggleRecoCompare()">⚖️ So sánh 3 xe</button>' +
+            '<button type="button" class="primary" onclick="window.runDeepAI()">🧠 Phân tích chuyên sâu (AI)</button>' +
             '</div>';
           html += '<div id="rec-compare" hidden></div>';
+          html += '<div id="ai-deep"></div>';
           html += '<div class="rec-list">';
           top.forEach(function (item, i) {
             var car = item.car;
@@ -2240,6 +2286,16 @@ const page = /* html */ `<!doctype html>
             '(xăng ~23.500đ/L, bảo hiểm ~1,5%/năm, lãi vay ~10,5%/năm) — số thực tế tùy đại lý, khu vực &amp; thời điểm.</p>';
           result.innerHTML = html;
           window._recoTop = top;
+          window._recoProfile = data.profile || '';
+          window._recoPayload = top.map(function (t) {
+            var c = t.car;
+            return {
+              name: c.name, price: c.price, body: c.body, seats: c.seats,
+              engine: c.engine, gearbox: c.gearbox, fuelStr: c.fuelStr,
+              fuelLkm: c.fuelLkm, hp: c.hp, drive: c.drive, warranty: c.warranty,
+              overall: t.overall, monthly: Math.round(t.cost.total),
+            };
+          });
         }
         // ---- So sánh 3 xe gợi ý ----
         window.toggleRecoCompare = function () {
@@ -2274,6 +2330,51 @@ const page = /* html */ `<!doctype html>
           html += '</tbody></table>';
           el.innerHTML = html;
           el.hidden = false;
+        };
+        // Chuyển markdown đơn giản từ AI -> HTML an toàn.
+        function mdToHtml(t) {
+          var safe = esc(t).replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+          var lines = safe.split(/\\n/);
+          var html = '';
+          var inList = false;
+          lines.forEach(function (ln) {
+            if (/^\\s*[-*\u2022]\\s+/.test(ln)) {
+              if (!inList) { html += '<ul>'; inList = true; }
+              html += '<li>' + ln.replace(/^\\s*[-*\u2022]\\s+/, '') + '</li>';
+            } else {
+              if (inList) { html += '</ul>'; inList = false; }
+              if (/^\\s*#{1,3}\\s+/.test(ln)) html += '<h5>' + ln.replace(/^\\s*#{1,3}\\s+/, '') + '</h5>';
+              else if (ln.trim()) html += '<p>' + ln + '</p>';
+            }
+          });
+          if (inList) html += '</ul>';
+          return html;
+        }
+        // Gọi AI thật (Gemini) qua backend; có fallback khi thiếu key/lỗi mạng.
+        window.runDeepAI = function () {
+          var el = document.getElementById('ai-deep');
+          if (!el) return;
+          el.innerHTML = '<div class="ai-box ai-loading">🧠 Đang nhờ AI phân tích chuyên sâu…</div>';
+          fetch('/api/recommend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile: window._recoProfile || '', cars: window._recoPayload || [] }),
+          })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (res) {
+              if (res.j && res.j.ok && res.j.analysis) {
+                el.innerHTML = '<div class="ai-box"><div class="ai-head">🧠 Phân tích chuyên sâu bằng AI ' +
+                  '<span class="ai-badge">' + esc(res.j.model || 'AI') + '</span></div>' +
+                  '<div class="ai-text">' + mdToHtml(res.j.analysis) + '</div></div>';
+              } else {
+                var msg = res.j && res.j.error ? res.j.error : 'Không gọi được AI.';
+                el.innerHTML = '<div class="ai-box ai-warn">⚠️ ' + esc(msg) +
+                  '<br/><span style="opacity:.8">Bạn vẫn có đầy đủ kết quả gợi ý offline ở trên.</span></div>';
+              }
+            })
+            .catch(function (e) {
+              el.innerHTML = '<div class="ai-box ai-warn">⚠️ Lỗi kết nối tới máy chủ: ' + esc(e.message) + '</div>';
+            });
         };
         window.runReco = function () {
           var data = analyze();
