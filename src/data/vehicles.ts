@@ -40,6 +40,40 @@ export interface VehicleRatings {
 export type FuelType = 'Xăng' | 'Hybrid' | 'Dầu' | 'Điện';
 export type DriveType = 'FWD' | 'RWD' | 'AWD' | '4WD';
 
+/** Tình trạng phân phối tại Việt Nam. */
+export type VnStatus = 'on-sale' | 'limited' | 'discontinued' | 'upcoming' | 'global-only';
+
+/** Dữ liệu thị trường Việt Nam (tách riêng, có thể cập nhật độc lập với dữ liệu toàn cầu). */
+export interface VietnamMarket {
+  /** Có bán tại Việt Nam hay không. */
+  available: boolean;
+  /** Phân phối chính hãng (true) hay chỉ nhập tư nhân (false). */
+  official: boolean;
+  /** Lắp ráp trong nước (CKD) / nhập khẩu nguyên chiếc (CBU) / không áp dụng. */
+  assembly: 'CKD' | 'CBU' | '—';
+  /** Nhà phân phối chính thức. */
+  distributor: string;
+  /** Năm đầu tiên ra mắt tại VN (null nếu chưa bán). */
+  firstYear: number | null;
+  status: VnStatus;
+  /** Nhãn trạng thái có emoji (hiển thị trong chi tiết). */
+  statusLabel: string;
+  /** Badge ngắn gắn trên thẻ xe. */
+  badge: string;
+  /** Giá lăn bánh ước tính. */
+  onRoadPrice: string;
+  /** Các phiên bản phân phối tại VN. */
+  trims: string[];
+  /** Bảo hành chính hãng tại VN. */
+  warrantyVn: string;
+  /** Mạng lưới đại lý chính hãng. */
+  dealerNetwork: string;
+  /** Thời gian chờ giao xe ước tính. */
+  waitTime: string;
+  /** Ghi chú thị trường VN (danh sách gạch đầu dòng). */
+  notes: string[];
+}
+
 export interface Vehicle {
   id: string;
   brand: string;
@@ -85,6 +119,8 @@ export interface Vehicle {
   reliability: number;
   image: string;
   ratings: VehicleRatings;
+  /** Dữ liệu thị trường Việt Nam (suy ra tự động, có thể cập nhật độc lập). */
+  vietnam: VietnamMarket;
   /** Tùy chọn: lịch bảo dưỡng / phụ tùng riêng. Nếu bỏ trống -> dùng mặc định. */
   maintenanceSchedule?: MaintenanceItem[];
   partsCatalog?: PartItem[];
@@ -271,6 +307,151 @@ function deriveOwnership(pmin: number, fuel: FuelType): string {
   return `~${lo} – ${hi} triệu/năm`;
 }
 
+// ===== Thị trường Việt Nam =====
+interface VnBrandInfo {
+  distributor: string;
+  assembly: 'CKD' | 'CBU';
+  firstYear: number;
+  status?: VnStatus;
+}
+
+// Các hãng được phân phối CHÍNH HÃNG tại VN (hãng không có trong danh sách -> chưa bán chính hãng).
+const vnBrands: Record<string, VnBrandInfo> = {
+  toyota: { distributor: 'Toyota Việt Nam (TMV)', assembly: 'CKD', firstYear: 1996 },
+  honda: { distributor: 'Honda Việt Nam', assembly: 'CKD', firstYear: 2006 },
+  mitsubishi: { distributor: 'Mitsubishi Motors Việt Nam', assembly: 'CBU', firstYear: 1994 },
+  hyundai: { distributor: 'TC Motor (Hyundai Thành Công)', assembly: 'CKD', firstYear: 2009 },
+  kia: { distributor: 'THACO AUTO', assembly: 'CKD', firstYear: 2007 },
+  mazda: { distributor: 'THACO AUTO', assembly: 'CKD', firstYear: 2011 },
+  nissan: { distributor: 'Nissan Việt Nam (TanChong)', assembly: 'CBU', firstYear: 2010 },
+  subaru: { distributor: 'Motor Image Việt Nam', assembly: 'CBU', firstYear: 2010 },
+  suzuki: { distributor: 'Việt Nam Suzuki', assembly: 'CKD', firstYear: 1996 },
+  ford: { distributor: 'Ford Việt Nam', assembly: 'CKD', firstYear: 1997 },
+  isuzu: { distributor: 'Isuzu Việt Nam', assembly: 'CKD', firstYear: 1997 },
+  chevrolet: { distributor: 'GM Việt Nam (đã ngừng, VinFast tiếp nhận)', assembly: 'CKD', firstYear: 2016, status: 'discontinued' },
+  'mercedes-benz': { distributor: 'Mercedes-Benz Việt Nam (MBV)', assembly: 'CKD', firstYear: 1995 },
+  bmw: { distributor: 'THACO BMW', assembly: 'CBU', firstYear: 2018 },
+  audi: { distributor: 'Audi Việt Nam', assembly: 'CBU', firstYear: 2008 },
+  volvo: { distributor: 'Volvo Car Việt Nam', assembly: 'CBU', firstYear: 2016 },
+  lexus: { distributor: 'Lexus Việt Nam', assembly: 'CBU', firstYear: 2013 },
+  mini: { distributor: 'THACO (MINI)', assembly: 'CBU', firstYear: 2018 },
+  volkswagen: { distributor: 'Volkswagen Việt Nam', assembly: 'CBU', firstYear: 2008 },
+  peugeot: { distributor: 'THACO AUTO', assembly: 'CKD', firstYear: 2013 },
+  vinfast: { distributor: 'VinFast', assembly: 'CKD', firstYear: 2019 },
+  byd: { distributor: 'BYD Auto Việt Nam', assembly: 'CBU', firstYear: 2024 },
+  porsche: { distributor: 'Porsche Việt Nam', assembly: 'CBU', firstYear: 2007 },
+  jeep: { distributor: 'Jeep Việt Nam', assembly: 'CBU', firstYear: 2021 },
+  'land-rover': { distributor: 'Jaguar Land Rover Việt Nam (Phú Thái Mobility)', assembly: 'CBU', firstYear: 2014 },
+  'range-rover': { distributor: 'Jaguar Land Rover Việt Nam (Phú Thái Mobility)', assembly: 'CBU', firstYear: 2014 },
+  jaguar: { distributor: 'Jaguar Land Rover Việt Nam (Phú Thái Mobility)', assembly: 'CBU', firstYear: 2014 },
+  maserati: { distributor: 'Maserati Việt Nam', assembly: 'CBU', firstYear: 2016 },
+  bentley: { distributor: 'Bentley Hà Nội (S&S Automobile)', assembly: 'CBU', firstYear: 2014 },
+  'rolls-royce': { distributor: 'Rolls-Royce Motor Cars Hà Nội', assembly: 'CBU', firstYear: 2014, status: 'limited' },
+  ferrari: { distributor: 'Ferrari Việt Nam', assembly: 'CBU', firstYear: 2023 },
+  lamborghini: { distributor: 'Lamborghini Việt Nam', assembly: 'CBU', firstYear: 2017 },
+  mg: { distributor: 'MG Việt Nam (SAIC)', assembly: 'CBU', firstYear: 2020 },
+  haval: { distributor: 'GWM Việt Nam', assembly: 'CBU', firstYear: 2023 },
+  tank: { distributor: 'GWM Việt Nam', assembly: 'CBU', firstYear: 2024 },
+  chery: { distributor: 'Chery (Omoda & Jaecoo) Việt Nam', assembly: 'CKD', firstYear: 2025 },
+  geely: { distributor: 'Geely Việt Nam (Tasco Auto)', assembly: 'CKD', firstYear: 2025 },
+};
+
+const VN_STATUS_LABEL: Record<VnStatus, string> = {
+  'on-sale': '🟢 Đang mở bán tại VN',
+  limited: '🟡 Số lượng hạn chế',
+  discontinued: '🔵 Đã ngừng phân phối',
+  upcoming: '⚫ Sắp ra mắt tại VN',
+  'global-only': '🔴 Chưa bán chính hãng tại VN',
+};
+const VN_BADGE: Record<VnStatus, string> = {
+  'on-sale': '🟢 Có bán tại VN',
+  limited: '🟡 Hạn chế',
+  discontinued: '🔵 Đã ngừng',
+  upcoming: '⚫ Sắp ra mắt',
+  'global-only': '🔴 Chưa bán tại VN',
+};
+
+const VN_MASS_BRANDS = new Set([
+  'toyota', 'honda', 'hyundai', 'kia', 'mazda', 'ford', 'mitsubishi', 'vinfast', 'suzuki', 'isuzu',
+]);
+
+function onRoadLabel(min: number, max: number): string {
+  // Lăn bánh ≈ giá niêm yết + ~12% (lệ phí trước bạ, biển số, đăng kiểm, bảo hiểm).
+  return priceLabel(Math.round(min * 1.12), Math.round(max * 1.12));
+}
+
+function deriveVietnam(o: Mk, r: VehicleRatings, warranty: string): VietnamMarket {
+  const vb = vnBrands[o.brandSlug];
+  if (!vb) {
+    return {
+      available: false, official: false, assembly: '—',
+      distributor: 'Chưa có nhà phân phối chính hãng',
+      firstYear: null, status: 'global-only',
+      statusLabel: VN_STATUS_LABEL['global-only'], badge: VN_BADGE['global-only'],
+      onRoadPrice: '—', trims: [o.trim],
+      warrantyVn: 'Không có bảo hành chính hãng tại VN',
+      dealerNetwork: 'Không có (chỉ nhập khẩu tư nhân)',
+      waitTime: 'Tùy đơn nhập khẩu',
+      notes: [
+        '❌ Chưa được phân phối chính hãng tại Việt Nam.',
+        'Chỉ mua được qua đơn vị nhập khẩu tư nhân (xe nhập, giá cao hơn).',
+        'Phụ tùng chính hãng khó tìm, thời gian chờ lâu.',
+        'Không có bảo hành chính hãng; chi phí bảo dưỡng có thể cao hơn.',
+      ],
+    };
+  }
+  const status = vb.status ?? 'on-sale';
+  const partsEasy = VN_MASS_BRANDS.has(o.brandSlug) || vb.assembly === 'CKD';
+  const luxury = o.pmin >= 3000;
+  const dealerNetwork = VN_MASS_BRANDS.has(o.brandSlug)
+    ? 'Mạng lưới đại lý rộng khắp toàn quốc'
+    : luxury
+      ? 'Showroom chính hãng tại Hà Nội & TP.HCM'
+      : 'Đại lý chính hãng tại các thành phố lớn';
+  const notes: string[] = [
+    `✔ Phân phối chính hãng bởi ${vb.distributor}.`,
+    vb.assembly === 'CKD' ? '✔ Lắp ráp trong nước (CKD).' : '✔ Nhập khẩu nguyên chiếc (CBU).',
+    `✔ Có mặt tại Việt Nam từ năm ${vb.firstYear}.`,
+    partsEasy ? '✔ Phụ tùng & dịch vụ chính hãng phổ biến.' : '• Phụ tùng nhập, chi phí cao hơn.',
+    r.resale >= 4 ? '✔ Giữ giá tốt tại thị trường VN.' : '• Khả năng giữ giá ở mức trung bình.',
+    `✔ Bảo hành chính hãng: ${warranty}.`,
+  ];
+  if (status === 'discontinued') {
+    notes.unshift('🔵 Mẫu xe đã ngừng phân phối chính hãng — chủ yếu mua xe đã qua sử dụng.');
+  } else if (status === 'limited') {
+    notes.unshift('🟡 Số lượng hạn chế, thường nhận đặt hàng theo yêu cầu.');
+  }
+  return {
+    available: status !== 'discontinued',
+    official: true,
+    assembly: vb.assembly,
+    distributor: vb.distributor,
+    firstYear: vb.firstYear,
+    status,
+    statusLabel: VN_STATUS_LABEL[status],
+    badge: VN_BADGE[status],
+    onRoadPrice: onRoadLabel(o.pmin, o.pmax),
+    trims: [o.trim],
+    warrantyVn: warranty,
+    dealerNetwork,
+    waitTime: status === 'limited' ? 'Đặt hàng 2–6 tháng' : 'Có sẵn / 2–6 tuần',
+    notes,
+  };
+}
+
+// Cập nhật riêng dữ liệu thị trường VN cho từng xe (độc lập với dữ liệu toàn cầu).
+const vietnamOverrides: Record<string, Partial<VietnamMarket>> = {
+  'toyota-corolla-cross': { firstYear: 2020 },
+  'ford-everest': {
+    notes: [
+      '✔ Phân phối chính hãng bởi Ford Việt Nam.',
+      '✔ Một trong những SUV 7 chỗ bán chạy nhất Việt Nam.',
+      '✔ Phụ tùng dễ tìm, cộng đồng người dùng lớn.',
+      '✔ Giữ giá tốt; phù hợp điều kiện đường sá VN.',
+    ],
+  },
+};
+
 interface Mk {
   id: string; brandSlug: string; model: string; gen: string; year?: number; trim: string;
   engine: string; trans: string; fuel: FuelType; drive: DriveType; seats: number; segment: string;
@@ -281,6 +462,8 @@ interface Mk {
   /** Tùy chọn ghi đè các trường mở rộng (mặc định tự suy ra). */
   bodyType?: string; clearance?: number; fluids?: string[];
   pros?: string[]; cons?: string[]; suitableFor?: string[]; ownership?: string;
+  /** Tùy chọn ghi đè dữ liệu thị trường VN. */
+  vn?: Partial<VietnamMarket>;
 }
 
 function mk(o: Mk): Vehicle {
@@ -288,6 +471,11 @@ function mk(o: Mk): Vehicle {
   const safety = o.safety ?? (o.pmin >= 700 ? [...DEFAULT_SAFETY.slice(0, 2), ...DEFAULT_ADAS] : DEFAULT_SAFETY);
   const r = ratings({ reliability: o.rel, ...o.r });
   const bodyType = o.bodyType ?? deriveBodyType(o.segment, o.seats);
+  const warranty = o.warranty ?? warrantyBySlug[o.brandSlug] ?? '3 năm / 100.000 km';
+  const vnBase = deriveVietnam(o, r, warranty);
+  const vietnam: VietnamMarket = { ...vnBase, ...vietnamOverrides[o.id], ...(o.vn ?? {}) };
+  vietnam.statusLabel = VN_STATUS_LABEL[vietnam.status];
+  vietnam.badge = VN_BADGE[vietnam.status];
   return {
     id: o.id,
     brand: brand?.name ?? o.brandSlug,
@@ -305,7 +493,7 @@ function mk(o: Mk): Vehicle {
     bodyType,
     groundClearance: o.clearance ?? deriveClearance(bodyType),
     price: { min: o.pmin, max: o.pmax, currency: 'VND', label: priceLabel(o.pmin, o.pmax) },
-    warranty: o.warranty ?? warrantyBySlug[o.brandSlug] ?? '3 năm / 100.000 km',
+    warranty,
     fuelEconomy: o.econ,
     dimensions: { length: o.dims[0], width: o.dims[1], height: o.dims[2], wheelbase: o.dims[3] },
     cargo: o.cargo,
@@ -323,6 +511,7 @@ function mk(o: Mk): Vehicle {
     reliability: o.rel,
     image: o.image ?? ph(o.brandSlug, o.model),
     ratings: r,
+    vietnam,
   };
 }
 

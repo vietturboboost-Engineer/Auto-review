@@ -54,9 +54,20 @@ function brandChip(b: { slug: string; name: string; color: string; wordmark: str
 function vehicleCard(v: Vehicle): string {
   const brand = brands.find((b) => b.slug === v.brandSlug);
   const color = brand?.color ?? '#ffd166';
+  const vn = v.vietnam;
+  const vnClass =
+    vn.status === 'on-sale'
+      ? 'vn-on'
+      : vn.status === 'limited'
+        ? 'vn-lim'
+        : vn.status === 'discontinued'
+          ? 'vn-dis'
+          : vn.status === 'upcoming'
+            ? 'vn-up'
+            : 'vn-no';
   return (
-    `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment).toLowerCase())}">` +
-    `<div class="vthumb"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"></div>` +
+    `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment).toLowerCase())}">` +
+    `<div class="vthumb"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span></div>` +
     `<div class="vbody">` +
     `<div class="vbrand" style="color:${color}">${escapeHtml(v.brand)}</div>` +
     `<h3 class="vname">${escapeHtml(v.model)} <span>${escapeHtml(v.trim)}</span></h3>` +
@@ -165,8 +176,16 @@ section{padding:26px 0}
 .vcard{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
   display:flex;flex-direction:column;transition:transform .14s ease,box-shadow .14s ease}
 .vcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-.vthumb{aspect-ratio:16/9;background:#0c0c10;overflow:hidden}
+.vthumb{position:relative;aspect-ratio:16/9;background:#0c0c10;overflow:hidden}
 .vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vnbadge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:800;padding:4px 9px;
+  border-radius:999px;backdrop-filter:blur(4px);background:rgba(10,10,14,.62);color:#fff;
+  border:1px solid rgba(255,255,255,.18);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.vnbadge.vn-on{background:rgba(28,120,70,.82);border-color:rgba(120,230,170,.4)}
+.vnbadge.vn-lim{background:rgba(150,110,10,.82);border-color:rgba(255,210,110,.4)}
+.vnbadge.vn-dis{background:rgba(30,80,150,.82);border-color:rgba(130,180,255,.4)}
+.vnbadge.vn-up{background:rgba(60,60,70,.82);border-color:rgba(180,180,200,.4)}
+.vnbadge.vn-no{background:rgba(150,40,40,.82);border-color:rgba(255,140,140,.4)}
 .vbody{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .vbrand{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
 .vname{margin:0;font-size:17px;font-weight:800}
@@ -212,6 +231,9 @@ section{padding:26px 0}
 .dtbl th{color:var(--muted);font-weight:600;width:40%}
 .taglist{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
 .tag{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.vn-status{font-size:15px;font-weight:800;padding:10px 14px;border-radius:12px;margin-bottom:12px;
+  background:var(--surface);border:1px solid var(--line)}
+.vn-notes{margin:6px 0 0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px}
 .best{color:var(--good);font-weight:800}
 .cmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .cmp-tbl th,.cmp-tbl td{border:1px solid var(--line);padding:9px;text-align:center}
@@ -276,6 +298,14 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
     <div class="filters">
       <select id="f-segment"><option value="">Tất cả phân khúc</option>${segmentOptions}</select>
       <select id="f-fuel"><option value="">Mọi nhiên liệu</option>${fuelOptions}</select>
+      <select id="f-vn">
+        <option value="">🇻🇳 Mọi tình trạng VN</option>
+        <option value="available">🟢 Đang bán tại VN</option>
+        <option value="official">✅ Phân phối chính hãng</option>
+        <option value="ckd">🏭 Lắp ráp trong nước (CKD)</option>
+        <option value="cbu">🚢 Nhập khẩu (CBU)</option>
+        <option value="none">🔴 Chưa bán tại VN</option>
+      </select>
       <button class="clearbtn" id="f-clear">Xoá lọc</button>
       <span class="count" id="count"></span>
     </div>
@@ -334,14 +364,24 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   });
 
   /* ---------- Filtering ---------- */
-  var state = { brand:'', segment:'', fuel:'', q:'' };
+  var state = { brand:'', segment:'', fuel:'', vn:'', q:'' };
   var cards = Array.prototype.slice.call(document.querySelectorAll('.vcard'));
+  function vnMatch(c){
+    if(!state.vn) return true;
+    if(state.vn==='available') return c.getAttribute('data-vn-available')==='1';
+    if(state.vn==='official') return c.getAttribute('data-vn-status')!=='global-only';
+    if(state.vn==='ckd') return c.getAttribute('data-vn-assembly')==='CKD';
+    if(state.vn==='cbu') return c.getAttribute('data-vn-assembly')==='CBU';
+    if(state.vn==='none') return c.getAttribute('data-vn-status')==='global-only';
+    return true;
+  }
   function applyFilters(){
     var n=0;
     cards.forEach(function(c){
       var ok = (!state.brand || c.getAttribute('data-brand')===state.brand)
         && (!state.segment || c.getAttribute('data-segment')===state.segment)
         && (!state.fuel || c.getAttribute('data-fuel')===state.fuel)
+        && vnMatch(c)
         && (!state.q || c.getAttribute('data-search').indexOf(state.q)>=0);
       c.style.display = ok ? '' : 'none';
       if(ok) n++;
@@ -352,9 +392,10 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   $('search').addEventListener('input', function(e){ state.q=e.target.value.trim().toLowerCase(); applyFilters(); });
   $('f-segment').addEventListener('change', function(e){ state.segment=e.target.value; applyFilters(); });
   $('f-fuel').addEventListener('change', function(e){ state.fuel=e.target.value; applyFilters(); });
+  $('f-vn').addEventListener('change', function(e){ state.vn=e.target.value; applyFilters(); });
   $('f-clear').onclick = function(){
-    state={brand:'',segment:'',fuel:'',q:''};
-    $('search').value=''; $('f-segment').value=''; $('f-fuel').value='';
+    state={brand:'',segment:'',fuel:'',vn:'',q:''};
+    $('search').value=''; $('f-segment').value=''; $('f-fuel').value=''; $('f-vn').value='';
     setBrandActive(''); applyFilters();
   };
   function setBrandActive(slug){
@@ -394,6 +435,24 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   /* ---------- Vehicle detail ---------- */
   function row(k,v){ return '<tr><th>'+esc(k)+'</th><td>'+esc(v)+'</td></tr>'; }
   function tags(arr){ return '<div class="taglist">'+(arr||[]).map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>'; }
+  function vnPane(m){
+    m = m || {};
+    var notes = (m.notes||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('');
+    var assembly = m.assembly==='CKD' ? 'Lắp ráp trong nước (CKD)' : m.assembly==='CBU' ? 'Nhập khẩu nguyên chiếc (CBU)' : '—';
+    return ''
+      + '<div class="vn-status">'+esc(m.statusLabel||'')+'</div>'
+      + '<table class="dtbl">'
+      +   row('Nhà phân phối', m.distributor||'—')
+      +   row('Hình thức', assembly)
+      +   row('Ra mắt tại VN', m.firstYear ? m.firstYear : 'Chưa bán chính hãng')
+      +   row('Giá lăn bánh (ước tính)', m.onRoadPrice||'—')
+      +   row('Bảo hành chính hãng', m.warrantyVn||'—')
+      +   row('Đại lý', m.dealerNetwork||'—')
+      +   row('Thời gian giao xe', m.waitTime||'—')
+      + '</table>'
+      + '<p style="margin-top:12px"><b>Ghi chú thị trường Việt Nam</b></p><ul class="vn-notes">'+notes+'</ul>'
+      + '<p class="muted" style="margin-top:10px;font-size:12px">⚠ Thông tin thị trường VN mang tính tham khảo — giá, phiên bản và tình trạng phân phối thay đổi theo thời điểm và đại lý. Nên xác nhận lại với đại lý chính hãng.</p>';
+  }
   function detailHtml(v){
     var c = brandColor[v.brandSlug] || 'var(--accent)';
     var ms = (v.maintenanceSchedule||[]).map(function(m){
@@ -411,6 +470,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       +   '<button class="tab" data-tab="maint">Bảo dưỡng</button>'
       +   '<button class="tab" data-tab="parts">Phụ tùng</button>'
       +   '<button class="tab" data-tab="cost">Chi phí sở hữu</button>'
+      +   '<button class="tab" data-tab="vn">🇻🇳 Thị trường VN</button>'
       + '</div>'
       + '<div class="sheet-body">'
       +   '<div class="tabpane active" data-pane="ov">'
@@ -441,6 +501,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       +     row('Nhiên liệu/năng lượng', v.fuelType==='Điện' ? 'Thấp (sạc điện)' : 'Theo mức tiêu hao '+v.fuelEconomy)
       +     row('Khuyến nghị', v.reliability>=4 ? 'Chi phí vận hành ổn định, dễ bán lại.' : 'Cân nhắc chi phí phụ tùng/dịch vụ.')
       +   '</table></div>'
+      +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
   function openDetail(id){ var v=byId[id]; if(v){ openModal(detailHtml(v)); } }
@@ -571,15 +632,23 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
     max+=25;
     var pAvg = reco.prios.length ? reco.prios.reduce(function(a,k){return a+(v.ratings[k]||3);},0)/reco.prios.length : 3;
     s += (pAvg/5)*25;
+    // Ưu tiên thị trường Việt Nam: xe bán chính hãng + giữ giá + dễ phụ tùng được cộng điểm
+    max+=20;
+    var vn=v.vietnam||{};
+    if(vn.status==='on-sale'){ s+=20; why.push('đang bán chính hãng tại VN'); }
+    else if(vn.status==='limited'){ s+=14; why.push('có bán tại VN (hạn chế)'); }
+    else if(vn.status==='upcoming'){ s+=10; why.push('sắp ra mắt tại VN'); }
+    else if(vn.status==='discontinued'){ s+=6; }
+    else { s+=0; } // global-only: không cộng điểm
     var pct=Math.round(Math.max(0,Math.min(100, s/max*100)));
     if(v.ratings.safety>=5) why.push('an toàn cao');
     if(v.ratings.fuelEcon>=5) why.push('rất tiết kiệm');
     if(v.reliability>=5) why.push('bền bỉ');
-    return { pct:pct, why:why.slice(0,3) };
+    return { pct:pct, why:why.slice(0,3), vnStatus:(vn.statusLabel||''), vnAvail:!!vn.available };
   }
   var lastTop=[];
   function runReco(){
-    var scored=V.map(function(v){ var r=scoreVehicle(v); return {v:v, pct:r.pct, why:r.why}; });
+    var scored=V.map(function(v){ var r=scoreVehicle(v); return {v:v, pct:r.pct, why:r.why, vnStatus:r.vnStatus, vnAvail:r.vnAvail}; });
     scored.sort(function(a,b){ return b.pct-a.pct; });
     lastTop=scored.slice(0,3);
     var html=lastTop.map(function(it){
@@ -588,8 +657,10 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
         + '<div style="flex:1"><div class="vbrand" style="color:'+c+'">'+esc(v.brand)+'</div>'
         + '<h3 class="vname" style="margin:2px 0">'+esc(v.model)+' <span>'+esc(v.trim)+'</span></h3>'
         + '<div class="muted" style="font-size:13px">'+esc(v.price.label)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+'</div>'
+        + '<div class="muted" style="font-size:12px;margin-top:3px">'+esc(it.vnStatus)+'</div>'
         + '<div class="matchbar"><i style="width:'+it.pct+'%"></i></div>'
         + (it.why.length? '<div class="muted" style="font-size:12px;margin-top:6px">✔ '+esc(it.why.join(' · '))+'</div>':'')
+        + (it.vnAvail? '' : '<div style="font-size:12px;margin-top:4px;color:var(--bad)">⚠ Chưa bán chính hãng tại VN — cân nhắc nhập khẩu, phụ tùng & bảo hành.</div>')
         + '<div class="vactions"><button class="btn btn-ghost" data-act="detail" data-id="'+esc(v.id)+'">Chi tiết</button></div>'
         + '</div><div class="pct">'+it.pct+'%</div></div>';
     }).join('');
@@ -606,10 +677,11 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   function runDeepAI(){
     var box=$('ai-deep');
     box.innerHTML='<div class="ai-box muted">Đang hỏi AI…</div>';
-    var profile='Ngân sách tối đa '+reco.budget+' triệu; nhu cầu '+reco.need+'; tối thiểu '+reco.seats+' chỗ; nhiên liệu '+(reco.fuel||'bất kỳ')+'; ưu tiên '+reco.prios.join(', ')+'.';
+    var profile='Ngân sách tối đa '+reco.budget+' triệu; nhu cầu '+reco.need+'; tối thiểu '+reco.seats+' chỗ; nhiên liệu '+(reco.fuel||'bất kỳ')+'; ưu tiên '+reco.prios.join(', ')+'. Người dùng mua xe tại Việt Nam: ưu tiên xe đang bán chính hãng, có bảo hành & phụ tùng chính hãng, chi phí bảo dưỡng hợp lý và giữ giá tốt.';
     var cars=lastTop.map(function(it){ var v=it.v; return {
       name:v.brand+' '+v.model+' '+v.trim, price:v.price.label, overall:it.pct, body:v.segment,
-      seats:v.seats, engine:v.engine, gearbox:v.transmission, fuelStr:v.fuelType, monthly:0
+      seats:v.seats, engine:v.engine, gearbox:v.transmission, fuelStr:v.fuelType, monthly:0,
+      vnStatus:(v.vietnam&&v.vietnam.statusLabel)||'', vnAvailable:!!(v.vietnam&&v.vietnam.available)
     };});
     fetch('/api/recommend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:profile,cars:cars})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
