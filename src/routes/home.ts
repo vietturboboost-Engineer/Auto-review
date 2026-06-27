@@ -2,6 +2,64 @@ import { Router, type Request, type Response } from 'express';
 
 export const homeRouter = Router();
 
+interface Car {
+  name: string;
+  type: string;
+  price: string;
+  color: string;
+}
+
+// Giá tham khảo thị trường Việt Nam (có thể thay đổi theo thời điểm & đại lý).
+const toyotaCars: Car[] = [
+  { name: 'Toyota Wigo', type: 'Hatchback đô thị', price: '360 – 405 triệu', color: '#ef476f' },
+  { name: 'Toyota Vios', type: 'Sedan hạng B', price: '458 – 545 triệu', color: '#118ab2' },
+  { name: 'Toyota Veloz Cross', type: 'MPV 7 chỗ', price: '658 – 698 triệu', color: '#06d6a0' },
+  { name: 'Toyota Yaris Cross', type: 'SUV đô thị', price: '730 – 838 triệu', color: '#ffd166' },
+  {
+    name: 'Toyota Corolla Cross',
+    type: 'SUV hạng C',
+    price: '820 – 935 triệu',
+    color: '#8338ec',
+  },
+  {
+    name: 'Toyota Innova Cross',
+    type: 'MPV cao cấp',
+    price: '810 triệu – 1,0 tỷ',
+    color: '#fb5607',
+  },
+  { name: 'Toyota Camry', type: 'Sedan hạng D', price: '1,105 – 1,495 tỷ', color: '#3a86ff' },
+  { name: 'Toyota Fortuner', type: 'SUV 7 chỗ', price: '1,055 – 1,470 tỷ', color: '#2a9d8f' },
+  {
+    name: 'Toyota Land Cruiser',
+    type: 'SUV hạng sang',
+    price: '4,030 – 4,600 tỷ',
+    color: '#e09f3e',
+  },
+];
+
+// Ảnh minh hoạ SVG inline (không phụ thuộc mạng ngoài) — đổi màu theo từng xe.
+function carThumb(color: string): string {
+  return `<svg viewBox="0 0 120 60" width="96" height="48" role="img" aria-label="xe">
+    <rect x="2" y="34" width="116" height="14" rx="7" fill="rgba(0,0,0,0.15)"/>
+    <path d="M14 38 q4 -18 24 -20 l30 -1 q14 0 24 14 l10 2 q6 1 6 7 q0 4 -5 4 l-90 0 q-5 0 -5 -4 z" fill="${color}"/>
+    <path d="M40 20 l24 0 q10 0 16 10 l-40 0 z" fill="rgba(255,255,255,0.85)"/>
+    <path d="M36 22 q3 -8 10 -8 l-2 16 l-12 0 q0 -5 4 -8 z" fill="rgba(255,255,255,0.85)"/>
+    <circle cx="34" cy="46" r="8" fill="#222"/><circle cx="34" cy="46" r="3.5" fill="#bbb"/>
+    <circle cx="92" cy="46" r="8" fill="#222"/><circle cx="92" cy="46" r="3.5" fill="#bbb"/>
+  </svg>`;
+}
+
+const rows = toyotaCars
+  .map(
+    (c) => `<tr>
+      <td class="thumb">${carThumb(c.color)}</td>
+      <td class="name">${c.name}</td>
+      <td class="type">${c.type}</td>
+      <td class="price">${c.price}</td>
+    </tr>`,
+  )
+  .join('');
+
 const page = /* html */ `<!doctype html>
 <html lang="vi">
   <head>
@@ -27,12 +85,14 @@ const page = /* html */ `<!doctype html>
         justify-content: center;
         text-align: center;
         overflow-x: hidden;
+        padding: 2rem 1rem;
       }
       h1 {
         font-size: clamp(2rem, 6vw, 4rem);
         margin: 0.2em 0;
         text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       }
+      h2 { font-size: clamp(1.3rem, 4vw, 2rem); margin: 2rem 0 0.4rem; }
       p.lead { font-size: clamp(1rem, 3vw, 1.4rem); opacity: 0.92; max-width: 32ch; }
       .road {
         position: relative;
@@ -89,6 +149,36 @@ const page = /* html */ `<!doctype html>
       .card:hover { transform: translateY(-6px); }
       .card .emoji { font-size: 2rem; }
       .card .label { font-size: 0.95rem; opacity: 0.9; margin-top: 0.3rem; }
+      .table-wrap {
+        width: 100%;
+        max-width: 760px;
+        overflow-x: auto;
+        margin-top: 0.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(6px);
+      }
+      table { width: 100%; border-collapse: collapse; min-width: 520px; }
+      thead th {
+        text-align: left;
+        font-size: 0.85rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.9rem 1rem;
+        color: var(--accent);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+      tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+      tbody tr { transition: background 0.15s ease; }
+      tbody tr:hover { background: rgba(255, 255, 255, 0.08); }
+      tbody tr:last-child td { border-bottom: none; }
+      td.thumb { width: 110px; }
+      td.thumb svg { display: block; }
+      td.name { font-weight: 600; white-space: nowrap; }
+      td.type { opacity: 0.85; font-size: 0.92rem; }
+      td.price { font-weight: 700; color: var(--accent); white-space: nowrap; }
+      .note { font-size: 0.8rem; opacity: 0.7; margin-top: 0.6rem; max-width: 60ch; }
       footer { margin-top: 2rem; opacity: 0.7; font-size: 0.85rem; }
       a { color: var(--accent); text-decoration: none; font-weight: 600; }
       a:hover { text-decoration: underline; }
@@ -108,6 +198,22 @@ const page = /* html */ `<!doctype html>
       <div class="card"><div class="emoji">🔧</div><div class="label">Bảo dưỡng tận tâm</div></div>
       <div class="card"><div class="emoji">⚡</div><div class="label">Xe điện xanh</div></div>
     </div>
+
+    <h2>🛞 Bảng giá xe Toyota</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ảnh</th><th>Mẫu xe</th><th>Phân khúc</th><th>Giá tham khảo</th></tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      * Giá niêm yết tham khảo tại thị trường Việt Nam, chưa gồm thuế trước bạ &amp; phí lăn bánh.
+      Vui lòng liên hệ đại lý để có báo giá chính xác.
+    </p>
 
     <footer>
       API đang chạy ngon lành — kiểm tra tại <a href="/health">/health</a> 💚

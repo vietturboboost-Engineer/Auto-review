@@ -16,4 +16,11 @@ describe('GET /', () => {
     expect(res.text).toContain('Garage Vui Vẻ');
     expect(res.text).toContain('/health');
   });
+
+  it('renders the Toyota price table', async () => {
+    const res = await request(app).get('/');
+    expect(res.text).toContain('Bảng giá xe Toyota');
+    expect(res.text).toContain('Toyota Vios');
+    expect(res.text).toContain('<svg');
+  });
 });
