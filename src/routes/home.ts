@@ -703,8 +703,10 @@ const page = /* html */ `<!doctype html>
       src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
     <style>
       :root {
-        --bg1: #1e3c72;
-        --bg2: #2a5298;
+        --bg1: #060608;
+        --bg2: #16161b;
+        --surface: #1c1c22;
+        --ink: #0a0a0c;
         --accent: #ffd166;
       }
       * { box-sizing: border-box; }
@@ -713,7 +715,11 @@ const page = /* html */ `<!doctype html>
         min-height: 100vh;
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         color: #fff;
-        background: linear-gradient(135deg, var(--bg1), var(--bg2));
+        background:
+          radial-gradient(1100px 620px at 50% -12%, rgba(120, 130, 160, 0.18), transparent 62%),
+          radial-gradient(900px 500px at 100% 0%, rgba(255, 209, 102, 0.06), transparent 60%),
+          linear-gradient(160deg, var(--bg1), var(--bg2));
+        background-attachment: fixed;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -894,7 +900,7 @@ const page = /* html */ `<!doctype html>
         padding: 0.35rem 0.5rem;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        background: #16243f;
+        background: var(--surface);
         color: #fff;
       }
       .maint-scroll { max-height: 56vh; overflow: auto; border-radius: 12px; }
@@ -909,7 +915,7 @@ const page = /* html */ `<!doctype html>
       .mtable thead th {
         position: sticky;
         top: 0;
-        background: #16243f;
+        background: var(--surface);
         color: var(--accent);
         font-size: 0.74rem;
         text-transform: uppercase;
@@ -944,7 +950,7 @@ const page = /* html */ `<!doctype html>
         padding: 0.4rem 0.7rem;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        background: #16243f;
+        background: var(--surface);
         color: #fff;
       }
       .catalog-filters select {
@@ -953,7 +959,7 @@ const page = /* html */ `<!doctype html>
         padding: 0.4rem 0.5rem;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        background: #16243f;
+        background: var(--surface);
         color: #fff;
       }
       .cat-count { font-size: 0.8rem; opacity: 0.75; }
@@ -986,7 +992,7 @@ const page = /* html */ `<!doctype html>
         padding: 0.45rem 0.6rem;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        background: #16243f;
+        background: var(--surface);
         color: #fff;
       }
       .cmp-pickers .vs { font-weight: 700; color: var(--accent); }
@@ -1046,7 +1052,7 @@ const page = /* html */ `<!doctype html>
         padding: 0.45rem 0.6rem;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        background: #16243f;
+        background: var(--surface);
         color: #fff;
       }
       .reco-opts { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; }
@@ -1175,23 +1181,23 @@ const page = /* html */ `<!doctype html>
         align-items: center;
         justify-content: center;
         padding: 1rem;
-        background: rgba(5, 12, 24, 0.72);
+        background: rgba(0, 0, 0, 0.78);
         backdrop-filter: blur(4px);
       }
       .modal3d .card3d {
         position: relative;
         width: min(92vw, 760px);
-        background: linear-gradient(160deg, #16243f, #0d1b2a);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(160deg, #1b1b21, #0a0a0c);
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 20px;
         padding: 1rem 1rem 1.2rem;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
       }
       .modal3d h3 { margin: 0.2rem 0 0.6rem; font-size: 1.2rem; }
       .modal3d model-viewer {
         width: 100%;
         height: min(60vh, 440px);
-        background: radial-gradient(circle at 50% 35%, #2a3f63, #0d1b2a 70%);
+        background: radial-gradient(circle at 50% 35%, #26262e, #0a0a0c 70%);
         border-radius: 14px;
         --poster-color: transparent;
       }
