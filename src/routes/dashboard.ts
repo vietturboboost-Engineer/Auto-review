@@ -256,9 +256,12 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .tab.active{color:var(--ink);background:var(--accent)}
 .tabpane{display:none}
 .tabpane.active{display:block}
-.ovgrid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:start;margin-bottom:14px}
-.ovimg{width:100%;height:100%;min-height:240px;max-height:400px;object-fit:cover;border-radius:14px}
+.ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
+.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
+.ovh{margin:14px 0 7px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.ovh b{color:var(--accent2)}
+.ovside{display:flex;flex-direction:column;gap:14px;min-width:0}
 .proscons{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
 .pccol{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card)}
 .pccol h4{margin:0 0 8px;font-size:14px}
@@ -533,15 +536,19 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       +         '</table>'
       +       '</div>'
       +     '</div>'
-      +     '<div class="proscons">'
-      +       '<div class="pccol pc-good"><h4>✅ Ưu điểm</h4><ul>'+(v.pros||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
-      +       '<div class="pccol pc-bad"><h4>⚠️ Nhược điểm</h4><ul>'+(v.cons||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
+      +     '<div class="ovgrid">'
+      +       '<div class="ovside">'
+      +         '<div class="pccol pc-good"><h4>✅ Ưu điểm</h4><ul>'+(v.pros||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
+      +         '<div class="pccol pc-bad"><h4>⚠️ Nhược điểm</h4><ul>'+(v.cons||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
+      +       '</div>'
+      +       '<div class="ovinfo">'
+      +         '<p class="ovh" style="margin-top:0"><b>An toàn</b></p>'+tags(v.safetyFeatures)
+      +         '<p class="ovh"><b>Công nghệ</b></p>'+tags(v.techFeatures)
+      +         '<p class="ovh"><b>Lưu ý thường gặp</b></p>'+tags(v.commonIssues)
+      +         '<p class="ovh"><b>Phù hợp với</b></p>'+tags(v.suitableFor||[])
+      +         '<p class="ovh"><b>Từ khóa</b></p>'+tags(v.tags||[])
+      +       '</div>'
       +     '</div>'
-      +     '<p style="margin-top:14px"><b>An toàn</b></p>'+tags(v.safetyFeatures)
-      +     '<p><b>Công nghệ</b></p>'+tags(v.techFeatures)
-      +     '<p><b>Lưu ý thường gặp</b></p>'+tags(v.commonIssues)
-      +     '<p><b>Phù hợp với</b></p>'+tags(v.suitableFor||[])
-      +     '<p><b>Từ khóa</b></p>'+tags(v.tags||[])
       +     '<div class="vactions"><button class="btn btn-ghost" data-act="compare" data-id="'+esc(v.id)+'">⚖️ Thêm vào so sánh</button></div>'
       +   '</div>'
       +   '<div class="tabpane" data-pane="spec"><table class="dtbl">'
