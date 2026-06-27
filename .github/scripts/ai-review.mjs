@@ -6,10 +6,13 @@
  *   1. Skip if PR is draft or has a skip label / `[skip ai-review]` keyword.
  *   2. Fetch the unified PR diff and the PR metadata (title/body) for context.
  *   3. Filter out lock files, binaries, generated paths, oversized patches.
- *   4. Build a Senior-Engineer-style system prompt (with PR context + project rules).
- *   5. Review remaining files in parallel (bounded concurrency, retry on 429/5xx).
+ *   4. Build a Senior-Engineer-style system prompt (with PR context + project rules +
+ *      a list of previously-resolved issues so they are not re-reported).
+ *   5. Review remaining files in parallel (bounded concurrency, retry on 429/5xx),
+ *      adding file-type-specific focus areas (frontend / backend / tests / CI-infra).
  *   6. Upsert a single sticky summary comment on the PR (updated in place across runs).
- *   7. Post NEW inline review comments only (dedup by path:line:body against previous runs).
+ *   7. Post NEW inline review comments only — dedup against still-OPEN threads only,
+ *      so a regression on a resolved thread can be flagged again.
  *   8. Mirror the summary into GitHub Actions step summary for visibility.
  *
  * Supported providers (set AI_PROVIDER env var):
@@ -208,9 +211,13 @@ async function main() {
 
   log(`Reviewing ${Math.min(reviewable.length, MAX_FILES_NUM)} of ${reviewable.length} changed files (concurrency=${CONCURRENCY}).`);
 
+  // Fetch existing AI review threads to (a) skip duplicates of still-open issues and
+  // (b) tell the model which previously-flagged issues the author marked as resolved.
+  const existingThreads = await fetchExistingThreads();
+
   // Build the system prompt ONCE with PR context; reused for every file review.
   const prContext = buildPRContext(pr, reviewable);
-  const systemPrompt = buildSystemPrompt(prContext);
+  const systemPrompt = buildSystemPrompt(prContext, existingThreads.resolvedIssues);
 
   // Pre-filter files that are too large to send to the model.
   const toReview = [];
@@ -277,8 +284,9 @@ async function main() {
     return;
   }
 
-  // Skip inline comments that already exist verbatim (avoid spam on repeated runs).
-  const { newComments, dedupedCount } = await dedupInlineComments(allComments);
+  // Skip inline comments that already exist on a still-open thread (avoid spam on repeated runs).
+  // Resolved threads are NOT treated as duplicates, so a regression can be re-flagged.
+  const { newComments, dedupedCount } = dedupInlineComments(allComments, existingThreads.activeKeys);
   if (dedupedCount > 0) log(`Skipped ${dedupedCount} duplicate inline comments already posted.`);
   if (newComments.length === 0) {
     log("All inline comments were duplicates; nothing new to post.");
@@ -400,11 +408,17 @@ function buildSummary({ totalFiles, reviewedFiles, skippedTooLarge, aiErrors, se
     .join("\n");
 }
 
-function buildSystemPrompt(prContextBlock) {
+function buildSystemPrompt(prContextBlock, resolvedIssues = []) {
   const projectRulesBlock = projectRules
     ? `\n\nProject-specific rules (apply these in addition to the general checks):\n${projectRules}`
     : "";
   const prBlock = prContextBlock ? `\n\n${prContextBlock}` : "";
+  const resolvedBlock =
+    resolvedIssues.length > 0
+      ? `\n\nPreviously reported issues that the author marked as RESOLVED. ` +
+        `Do NOT report these again UNLESS the problem is clearly still present in this diff:\n` +
+        resolvedIssues.map((h) => `- ${h}`).join("\n")
+      : "";
 
   return (
     `You are a Senior Software Engineer and Code Reviewer. ` +
@@ -437,6 +451,7 @@ function buildSystemPrompt(prContextBlock) {
     `- Only target lines that were ADDED or are clearly visible in the patch.\n` +
     `- Write all comment text (issue, reason, suggested_fix) in ${REVIEW_LANGUAGE}. Keep code examples in their original language.` +
     prBlock +
+    resolvedBlock +
     projectRulesBlock
   );
 }
@@ -460,9 +475,57 @@ function buildPRContext(pr, reviewableFiles) {
     .join("\n\n");
 }
 
+// Classify a changed file by path so the model gets file-type-specific focus areas.
+function reviewProfile(filePath) {
+  const p = String(filePath).toLowerCase();
+  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(p)) {
+    return {
+      label: "tests",
+      guidance:
+        "Focus areas for this test file: assertions must be meaningful (not trivially passing), " +
+        "missing edge cases, flakiness (timing / order dependence), and correct async handling.",
+    };
+  }
+  if (/\.(css|scss|sass|less|html?|vue|svelte)$/.test(p) || /\.[cm]?[jt]sx$/.test(p)) {
+    return {
+      label: "frontend/UI",
+      guidance:
+        "Focus areas for this UI file: accessibility (a11y), semantic markup, responsive/layout " +
+        "pitfalls, XSS via unescaped or dangerously-inserted HTML, and component state/effect correctness.",
+    };
+  }
+  if (
+    /(^|\/)dockerfile$/.test(p) ||
+    /\.ya?ml$/.test(p) ||
+    /\.github\/workflows\//.test(p)
+  ) {
+    return {
+      label: "CI/infra/config",
+      guidance:
+        "Focus areas for this config/CI file: command or shell injection via untrusted inputs " +
+        "(e.g. branch names, PR titles), secret leakage, over-broad permissions, unpinned or " +
+        "insecure actions / base images, and reproducibility.",
+    };
+  }
+  if (/\.[cm]?[jt]s$/.test(p)) {
+    return {
+      label: "backend/logic",
+      guidance:
+        "Focus areas for this code file: correctness and edge cases, input validation at trust " +
+        "boundaries, error handling, injection/security, async and resource safety, and clear API contracts.",
+    };
+  }
+  return { label: "general", guidance: "" };
+}
+
 async function reviewFile(filePath, patchText, systemPrompt) {
+  const profile = reviewProfile(filePath);
+  const profileLine = profile.guidance
+    ? `This file is classified as **${profile.label}**. ${profile.guidance}\n\n`
+    : "";
   const user =
     `Review this patch for file: ${filePath}\n\n` +
+    profileLine +
     "Each diff line is prefixed with its line number in the new file followed by `+` (added), `-` (removed), or ` ` (context).\n\n" +
     "Respond with STRICT JSON, no markdown fences, no prose, exactly this shape:\n" +
     `{\n` +
@@ -732,31 +795,99 @@ function normalizeBodyForKey(body) {
     .slice(0, 240);
 }
 
-async function dedupInlineComments(newComments) {
-  let existing = [];
-  try {
-    existing = await octokit.paginate(octokit.pulls.listReviewComments, {
-      owner,
-      repo,
-      pull_number: prNumber,
-      per_page: 100,
-    });
-  } catch (err) {
-    log(`Could not list existing review comments (${err.message}); skipping dedup.`);
-    return { newComments, dedupedCount: 0 };
-  }
-  const existingKeys = new Set();
-  for (const c of existing) {
-    if (c.user?.type === "Bot" && (c.body || "").includes(BOT_MARKER)) {
-      const line = c.line ?? c.original_line;
-      existingKeys.add(`${c.path}:${line}:${normalizeBodyForKey(c.body)}`);
+// GraphQL: fetch review threads with their resolution state (not exposed by the REST API).
+const REVIEW_THREADS_QUERY = `
+  query ($owner: String!, $repo: String!, $num: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo) {
+      pullRequest(number: $num) {
+        reviewThreads(first: 100, after: $cursor) {
+          nodes {
+            isResolved
+            comments(first: 1) { nodes { path line originalLine body } }
+          }
+          pageInfo { hasNextPage endCursor }
+        }
+      }
     }
+  }`;
+
+// Pull the short "Issue:" headline out of a previously posted bot comment.
+function extractIssueHeader(body) {
+  const m = String(body || "").match(/\*\*Issue:\*\*\s*(.+)/);
+  return m ? m[1].trim().slice(0, 160) : null;
+}
+
+/**
+ * Classify existing AI review threads into:
+ *   - activeKeys     : Set of path:line:body keys for STILL-OPEN bot comments (used to dedup).
+ *   - resolvedIssues : headlines of bot comments on RESOLVED threads (fed back to the model
+ *                      so it only re-reports them if the problem is clearly still present).
+ * Falls back to a REST-only "everything is active" view if GraphQL is unavailable.
+ */
+async function fetchExistingThreads() {
+  const activeKeys = new Set();
+  const resolvedIssues = [];
+  const resolvedSeen = new Set();
+  try {
+    let cursor = null;
+    for (let page = 0; page < 20; page++) {
+      const data = await octokit.graphql(REVIEW_THREADS_QUERY, {
+        owner,
+        repo,
+        num: prNumber,
+        cursor,
+      });
+      const container = data?.repository?.pullRequest?.reviewThreads;
+      for (const t of container?.nodes ?? []) {
+        const first = t.comments?.nodes?.[0];
+        if (!first) continue;
+        const body = first.body || "";
+        if (!body.includes(BOT_MARKER)) continue;
+        if (t.isResolved) {
+          const header = extractIssueHeader(body);
+          if (header && !resolvedSeen.has(header)) {
+            resolvedSeen.add(header);
+            resolvedIssues.push(header);
+          }
+        } else {
+          const line = first.line ?? first.originalLine;
+          activeKeys.add(`${first.path}:${line}:${normalizeBodyForKey(body)}`);
+        }
+      }
+      if (!container?.pageInfo?.hasNextPage) break;
+      cursor = container.pageInfo.endCursor;
+    }
+    log(`Existing AI threads: ${activeKeys.size} active, ${resolvedIssues.length} resolved.`);
+    return { activeKeys, resolvedIssues };
+  } catch (err) {
+    log(`GraphQL review threads unavailable (${err.message}); falling back to REST dedup.`);
+    try {
+      const existing = await octokit.paginate(octokit.pulls.listReviewComments, {
+        owner,
+        repo,
+        pull_number: prNumber,
+        per_page: 100,
+      });
+      for (const c of existing) {
+        if (c.user?.type === "Bot" && (c.body || "").includes(BOT_MARKER)) {
+          const line = c.line ?? c.original_line;
+          activeKeys.add(`${c.path}:${line}:${normalizeBodyForKey(c.body)}`);
+        }
+      }
+    } catch (e2) {
+      log(`Could not list review comments either (${e2.message}); skipping dedup.`);
+    }
+    return { activeKeys, resolvedIssues };
   }
+}
+
+// Drop comments that duplicate a still-open bot thread; resolved threads do not block re-posting.
+function dedupInlineComments(newComments, activeKeys) {
   const filtered = [];
   let deduped = 0;
   for (const c of newComments) {
     const key = `${c.path}:${c.line}:${normalizeBodyForKey(c.body)}`;
-    if (existingKeys.has(key)) deduped++;
+    if (activeKeys.has(key)) deduped++;
     else filtered.push(c);
   }
   return { newComments: filtered, dedupedCount: deduped };
