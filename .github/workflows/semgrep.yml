@@ -1,0 +1,43 @@
+name: Semgrep
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
+jobs:
+  semgrep:
+    name: Semgrep scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: semgrep ci --sarif --output=semgrep.sarif
+        env:
+          # Free rule sets pulled from Semgrep Registry
+          SEMGREP_RULES: >-
+            p/default
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+          # Optional: connect to Semgrep AppSec Platform by setting SEMGREP_APP_TOKEN secret
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+        continue-on-error: true

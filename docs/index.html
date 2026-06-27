@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto-Review API</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        max-width: 760px;
+        margin: 2.5rem auto;
+        padding: 0 1.25rem;
+        line-height: 1.65;
+      }
+      h1,
+      h2 {
+        border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+        padding-bottom: 0.3rem;
+      }
+      code {
+        background: color-mix(in srgb, currentColor 8%, transparent);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.92em;
+      }
+      pre {
+        background: color-mix(in srgb, currentColor 6%, transparent);
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        background: color-mix(in srgb, #2da44e 20%, transparent);
+        color: #2da44e;
+        font-size: 0.85em;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Auto-Review API</h1>
+    <p>
+      Sample Node.js + TypeScript API with a full CI/CD pipeline (GitHub Actions &rarr; GHCR
+      &rarr; SSH deploy).
+    </p>
+
+    <h2>Endpoints</h2>
+    <ul>
+      <li>
+        <code>GET /health</code> <span class="badge">live</span> &mdash; returns service status,
+        uptime and timestamp.
+      </li>
+    </ul>
+
+    <h2>Local development</h2>
+    <pre><code>npm install
+npm run dev</code></pre>
+
+    <h2>Run with Docker</h2>
+    <pre><code>docker run --rm -p 3000:3000 \
+  ghcr.io/&lt;owner&gt;/&lt;repo&gt;:latest</code></pre>
+
+    <h2>CI/CD pipeline</h2>
+    <ol>
+      <li><strong>CI</strong> on every PR: lint, format-check, typecheck, test+coverage, build.</li>
+      <li><strong>Docker Publish</strong> on push to <code>main</code> and version tags: build &amp; push image to GHCR.</li>
+      <li><strong>Deploy</strong> after a successful publish: SSH to server, pull image, restart container, health-check.</li>
+      <li><strong>Pages</strong> on changes to <code>docs/</code>: deploy this site.</li>
+    </ol>
+
+    <p>
+      Repository:
+      <a href="https://github.com/">https://github.com/&lt;owner&gt;/&lt;repo&gt;</a>
+    </p>
+  </body>
+</html>

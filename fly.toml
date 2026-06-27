@@ -1,0 +1,50 @@
+# Fly.io app configuration
+# Docs: https://fly.io/docs/reference/configuration/
+#
+# First-time setup (chạy local):
+#   1. brew install flyctl    # hoặc: curl -L https://fly.io/install.sh | sh
+#   2. flyctl auth login
+#   3. flyctl apps create <unique-app-name>     # tên này phải unique toàn cầu
+#   4. Sửa `app` bên dưới cho khớp tên vừa tạo
+#   5. flyctl tokens create deploy -x 999999h   # token để CI dùng
+#   6. Thêm value vào GitHub Secrets dưới tên `FLY_API_TOKEN`
+#   7. Push code → GitHub Actions deploy luôn.
+
+app = "my-cool-api-xyz123"
+primary_region = "sin"  # sin=Singapore, nrt=Tokyo, sjc=San Jose, fra=Frankfurt, lhr=London
+
+# Image được build bởi docker-publish.yml và push lên GHCR.
+# deploy.yml chạy `flyctl deploy --image ghcr.io/<owner>/<repo>:<tag>`
+# nên không cần [build] section ở đây.
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Auto-stop khi idle để max free tier hours.
+  # Container ngủ → request đầu tiên cold start ~1-2s rồi tự wake.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 100
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
+
+# Free-tier eligible: shared-cpu-1x với 256MB RAM. Có thể chạy tối đa 3 cái free.
+# Tăng memory_mb lên 512/1024 nếu app dùng nhiều RAM (sẽ tính phí phần vượt free tier).
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

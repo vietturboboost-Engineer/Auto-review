@@ -1,0 +1,70 @@
+name: Deploy (Fly.io)
+
+on:
+  workflow_run:
+    workflows: ['Docker Publish']
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (e.g. latest, v1.2.3, sha-abc1234)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fly-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy image to Fly.io
+    # Run when triggered manually or after a successful Docker Publish on main.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    timeout-minutes: 10
+
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      IMAGE_TAG: ${{ github.event.inputs.image_tag || 'latest' }}
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.event.inputs.image_tag || 'latest' }}
+
+    steps:
+      - name: Checkout (needed for fly.toml)
+        uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy image to Fly.io
+        run: |
+          echo ">> Deploying $IMAGE"
+          flyctl deploy \
+            --image "$IMAGE" \
+            --remote-only \
+            --wait-timeout 300 \
+            --strategy rolling
+
+      - name: Show app status
+        if: always()
+        run: flyctl status || true
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          {
+            echo "## Deployment"
+            echo ""
+            echo "- Platform: Fly.io"
+            echo "- Image: \`$IMAGE\`"
+            echo "- App URL: ${{ vars.PRODUCTION_URL }}"
+            echo "- Status: \`${{ job.status }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
