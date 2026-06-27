@@ -20,7 +20,7 @@ describe('Vehicle data layer', () => {
 
   it('trả lịch bảo dưỡng EV khác xe xăng', () => {
     const ev = getVehicle('tesla-model3');
-    const gas = getVehicle('toyota-vios-g');
+    const gas = getVehicle('toyota-vios');
     expect(ev).toBeDefined();
     expect(gas).toBeDefined();
     const evSched = getMaintenanceSchedule(ev!);
@@ -50,7 +50,7 @@ describe('JSON API đa hãng', () => {
   });
 
   it('GET /api/vehicles/:id trả chi tiết kèm lịch bảo dưỡng & phụ tùng', async () => {
-    const res = await request(app).get('/api/vehicles/toyota-vios-g');
+    const res = await request(app).get('/api/vehicles/toyota-vios');
     expect(res.status).toBe(200);
     expect(res.body.vehicle.model).toBe('Vios');
     expect(Array.isArray(res.body.vehicle.maintenanceSchedule)).toBe(true);

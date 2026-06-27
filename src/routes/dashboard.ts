@@ -308,7 +308,13 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function $(id){ return document.getElementById(id); }
   function stars(n){ var f=Math.max(0,Math.min(5,Math.round(n))); return '★★★★★'.slice(0,f)+'☆☆☆☆☆'.slice(0,5-f); }
-  function fmtVnd(n){ return (Math.round(n)).toLocaleString('vi-VN') + 'đ'; }
+
+  /* Ảnh dự phòng nếu URL gốc lỗi (hiếm) -> không bao giờ hiện icon ảnh vỡ. */
+  var FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#26262e"/><path d="M40 120 q10 -40 55 -44 l70 -2 q34 0 52 30 l24 4 q14 2 14 16 q0 9 -11 9 l-200 0 q-11 0 -11 -9 z" fill="#3a3a44"/><circle cx="95" cy="118" r="16" fill="#15151a"/><circle cx="210" cy="118" r="16" fill="#15151a"/><text x="160" y="158" font-family="Arial" font-size="13" fill="#9a9aa6" text-anchor="middle">Ảnh đang cập nhật</text></svg>');
+  document.addEventListener('error', function(e){
+    var t = e.target;
+    if(t && t.tagName === 'IMG' && !t.getAttribute('data-fb')){ t.setAttribute('data-fb','1'); t.src = FALLBACK; }
+  }, true);
 
   /* ---------- Theme ---------- */
   var root = document.documentElement;
