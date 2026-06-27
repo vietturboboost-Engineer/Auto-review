@@ -2598,7 +2598,7 @@ export const vehicles: Vehicle[] = [
     torque: 250,
     rel: 4,
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/VinFast_VF_7_Auto_Zuerich_2024.jpg/330px-VinFast_VF_7_Auto_Zuerich_2024.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/VinFast_VF_7_Eco_Crimson_Red.jpg/960px-VinFast_VF_7_Eco_Crimson_Red.jpg',
     issues: ['Phần mềm OTA tiếp tục được cải thiện.'],
     r: { fuelEcon: 5, tech: 5, safety: 5, family: 5, brandRep: 4 },
   }),
@@ -2625,7 +2625,7 @@ export const vehicles: Vehicle[] = [
     torque: 500,
     rel: 4,
     image:
-      'https://xe5s.vn/blog-xe/so-sanh-xe/so-sanh-vinfast-vf7-eco-vs-vinfast-mpv7-5-cho-cam-xuc-hay-7-cho-trach-nhiem-1063.html',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/VinFast_VF7%2C_front_NYIAS_2022.jpg/960px-VinFast_VF7%2C_front_NYIAS_2022.jpg',
     issues: ['Phần mềm OTA tiếp tục được cải thiện.'],
     r: { fuelEcon: 5, tech: 5, performance: 5, safety: 5, family: 5, brandRep: 4 },
   }),
@@ -2651,7 +2651,8 @@ export const vehicles: Vehicle[] = [
     hp: 54,
     torque: 110,
     rel: 4,
-    image: 'https://vinfastauto.com/themes/porto/img/vehicles/ecvan/ecvan-white.png',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Newone_-_VinFast_EC_Van_Xanh_SM_GSM_005.jpg/960px-Newone_-_VinFast_EC_Van_Xanh_SM_GSM_005.jpg',
     issues: ['Phù hợp vận chuyển đô thị, tải trọng giới hạn.'],
     r: { fuelEcon: 5, cargo: 5, tech: 3, brandRep: 4 },
   }),
@@ -2677,7 +2678,8 @@ export const vehicles: Vehicle[] = [
     hp: 27,
     torque: 65,
     rel: 4,
-    image: 'https://vinfastauto.com/themes/porto/img/vehicles/minio-green/minio-green-white.png',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Newone-GreenSM_VinFast_Minio_Green_01.jpg/960px-Newone-GreenSM_VinFast_Minio_Green_01.jpg',
     issues: ['Phạm vi hoạt động phù hợp chủ yếu trong đô thị.'],
     r: { fuelEcon: 5, tech: 3, cargo: 2, family: 2, brandRep: 4 },
   }),
@@ -2703,7 +2705,8 @@ export const vehicles: Vehicle[] = [
     hp: 134,
     torque: 135,
     rel: 4,
-    image: 'https://vinfastauto.com/themes/porto/img/vehicles/herio-green/herio-green-white.png',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/VinFast_Herio_Green_GreenGSM_taxi_01.jpg/960px-VinFast_Herio_Green_GreenGSM_taxi_01.jpg',
     issues: ['Trang bị được tối ưu cho xe dịch vụ.'],
     r: { fuelEcon: 5, tech: 3, family: 3, brandRep: 4 },
   }),
@@ -2729,7 +2732,8 @@ export const vehicles: Vehicle[] = [
     hp: 150,
     torque: 242,
     rel: 4,
-    image: 'https://vinfastauto.com/themes/porto/img/vehicles/nerio-green/nerio-green-white.png',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/VinFast_Nerio_Green_GreenGSM_taxi.jpg/960px-VinFast_Nerio_Green_GreenGSM_taxi.jpg',
     issues: ['Trang bị tối ưu cho xe dịch vụ.'],
     r: { fuelEcon: 5, tech: 4, safety: 4, family: 4, brandRep: 4 },
   }),
@@ -2755,7 +2759,8 @@ export const vehicles: Vehicle[] = [
     hp: 201,
     torque: 280,
     rel: 4,
-    image: 'https://vinfastauto.com/themes/porto/img/vehicles/limo-green/limo-green-white.png',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/VinFast_Limo_Green_silver.jpg/960px-VinFast_Limo_Green_silver.jpg',
     issues: ['Thiết kế hướng đến xe dịch vụ và gia đình.'],
     r: { fuelEcon: 5, comfort: 4, cargo: 5, family: 5, tech: 4, brandRep: 4 },
   }),
