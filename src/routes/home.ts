@@ -533,6 +533,125 @@ const compareData = toyotaCars.map((c) => ({
   cons: carSpecs[c.name].cons,
 }));
 
+// ===== Dữ liệu cho "Gợi ý xe AI" =====
+// Số liệu tham khảo (giá triệu VND, tiêu hao L/100km, công suất mã lực, khoang hành lý lít).
+// Điểm 1–5 là đánh giá định tính tương đối giữa các xe Toyota để chấm điểm gợi ý.
+interface RecoMeta {
+  body: 'Hatchback' | 'Sedan' | 'MPV' | 'SUV';
+  seats: number;
+  priceMin: number;
+  priceMax: number;
+  fuelLkm: number;
+  hp: number;
+  cargo: number;
+  warranty: string;
+  trans: string;
+  fuelTypes: string[];
+  hybrid: boolean;
+  ratings: {
+    safety: number;
+    reliability: number;
+    comfort: number;
+    performance: number;
+    tech: number;
+    resale: number;
+    cargo: number;
+    fuelEcon: number;
+    brandRep: number;
+    family: number;
+  };
+  features: string[];
+}
+
+const recoMeta: Record<string, RecoMeta> = {
+  'Toyota Wigo': {
+    body: 'Hatchback', seats: 5, priceMin: 360, priceMax: 405, fuelLkm: 5.0, hp: 87, cargo: 300,
+    warranty: '3 năm / 100.000 km', trans: 'CVT / Số sàn', fuelTypes: ['Xăng'], hybrid: false,
+    ratings: { safety: 2, reliability: 4, comfort: 2, performance: 2, tech: 2, resale: 3, cargo: 2, fuelEcon: 5, brandRep: 4, family: 2 },
+    features: ['Apple CarPlay', 'Android Auto', 'Rear Camera'],
+  },
+  'Toyota Vios': {
+    body: 'Sedan', seats: 5, priceMin: 458, priceMax: 545, fuelLkm: 5.5, hp: 107, cargo: 506,
+    warranty: '3 năm / 100.000 km', trans: 'CVT / Số sàn', fuelTypes: ['Xăng'], hybrid: false,
+    ratings: { safety: 3, reliability: 5, comfort: 3, performance: 3, tech: 3, resale: 5, cargo: 3, fuelEcon: 5, brandRep: 5, family: 3 },
+    features: ['Apple CarPlay', 'Android Auto', 'Rear Camera', 'Cruise Control'],
+  },
+  'Toyota Veloz Cross': {
+    body: 'MPV', seats: 7, priceMin: 658, priceMax: 698, fuelLkm: 6.0, hp: 105, cargo: 405,
+    warranty: '3 năm / 100.000 km', trans: 'CVT', fuelTypes: ['Xăng'], hybrid: false,
+    ratings: { safety: 4, reliability: 4, comfort: 3, performance: 3, tech: 3, resale: 4, cargo: 4, fuelEcon: 4, brandRep: 4, family: 5 },
+    features: ['ADAS', 'Apple CarPlay', 'Android Auto', 'Rear Camera', 'Cruise Control'],
+  },
+  'Toyota Yaris Cross': {
+    body: 'SUV', seats: 5, priceMin: 730, priceMax: 838, fuelLkm: 4.8, hp: 116, cargo: 390,
+    warranty: '3 năm / 100.000 km', trans: 'CVT / e-CVT', fuelTypes: ['Xăng', 'Hybrid'], hybrid: true,
+    ratings: { safety: 4, reliability: 4, comfort: 3, performance: 3, tech: 4, resale: 4, cargo: 3, fuelEcon: 5, brandRep: 4, family: 3 },
+    features: ['ADAS', 'Apple CarPlay', 'Android Auto', 'Rear Camera', 'Cruise Control', 'Adaptive Cruise Control', 'Blind Spot Monitor'],
+  },
+  'Toyota Corolla Cross': {
+    body: 'SUV', seats: 5, priceMin: 820, priceMax: 935, fuelLkm: 5.8, hp: 140, cargo: 440,
+    warranty: '3 năm / 100.000 km', trans: 'CVT / e-CVT', fuelTypes: ['Xăng', 'Hybrid'], hybrid: true,
+    ratings: { safety: 5, reliability: 4, comfort: 4, performance: 4, tech: 4, resale: 4, cargo: 4, fuelEcon: 4, brandRep: 4, family: 4 },
+    features: ['ADAS', 'Apple CarPlay', 'Android Auto', 'Rear Camera', 'Cruise Control', 'Adaptive Cruise Control', 'Blind Spot Monitor', 'Leather Seats', 'Sunroof'],
+  },
+  'Toyota Innova Cross': {
+    body: 'MPV', seats: 7, priceMin: 810, priceMax: 1000, fuelLkm: 6.2, hp: 186, cargo: 300,
+    warranty: '3 năm / 100.000 km', trans: 'CVT / e-CVT', fuelTypes: ['Xăng', 'Hybrid'], hybrid: true,
+    ratings: { safety: 5, reliability: 4, comfort: 4, performance: 4, tech: 4, resale: 4, cargo: 5, fuelEcon: 4, brandRep: 4, family: 5 },
+    features: ['ADAS', 'Apple CarPlay', 'Android Auto', 'Rear Camera', '360 Camera', 'Cruise Control', 'Adaptive Cruise Control', 'Blind Spot Monitor', 'Leather Seats', 'Ventilated Seats'],
+  },
+  'Toyota Camry': {
+    body: 'Sedan', seats: 5, priceMin: 1105, priceMax: 1495, fuelLkm: 7.0, hp: 203, cargo: 524,
+    warranty: '3 năm / 100.000 km', trans: 'AT / e-CVT', fuelTypes: ['Xăng', 'Hybrid'], hybrid: true,
+    ratings: { safety: 5, reliability: 4, comfort: 5, performance: 4, tech: 5, resale: 4, cargo: 4, fuelEcon: 3, brandRep: 5, family: 3 },
+    features: ['ADAS', 'Apple CarPlay', 'Android Auto', 'Rear Camera', '360 Camera', 'Cruise Control', 'Adaptive Cruise Control', 'Blind Spot Monitor', 'Leather Seats', 'Ventilated Seats', 'Sunroof'],
+  },
+  'Toyota Fortuner': {
+    body: 'SUV', seats: 7, priceMin: 1055, priceMax: 1470, fuelLkm: 8.5, hp: 204, cargo: 716,
+    warranty: '3 năm / 100.000 km', trans: 'AT / Số sàn', fuelTypes: ['Dầu', 'Xăng'], hybrid: false,
+    ratings: { safety: 4, reliability: 5, comfort: 3, performance: 4, tech: 3, resale: 5, cargo: 5, fuelEcon: 2, brandRep: 5, family: 5 },
+    features: ['Apple CarPlay', 'Android Auto', 'Rear Camera', '360 Camera', 'Cruise Control', 'Leather Seats', 'Blind Spot Monitor'],
+  },
+  'Toyota Land Cruiser': {
+    body: 'SUV', seats: 7, priceMin: 4030, priceMax: 4600, fuelLkm: 11.0, hp: 415, cargo: 1100,
+    warranty: '3 năm / 100.000 km', trans: 'AT 10 cấp', fuelTypes: ['Dầu', 'Xăng'], hybrid: false,
+    ratings: { safety: 5, reliability: 5, comfort: 5, performance: 5, tech: 5, resale: 5, cargo: 5, fuelEcon: 1, brandRep: 5, family: 5 },
+    features: ['ADAS', 'Apple CarPlay', 'Android Auto', 'Rear Camera', '360 Camera', 'Cruise Control', 'Adaptive Cruise Control', 'Blind Spot Monitor', 'Leather Seats', 'Ventilated Seats', 'Sunroof'],
+  },
+};
+
+// Gộp dữ liệu để nhúng vào client cho engine gợi ý xe.
+const recoCars = toyotaCars.map((c) => {
+  const m = recoMeta[c.name];
+  const s = carSpecs[c.name];
+  return {
+    name: c.name,
+    type: c.type,
+    image: c.image,
+    price: c.price,
+    priceMin: m.priceMin,
+    priceMax: m.priceMax,
+    body: m.body,
+    seats: m.seats,
+    fuelLkm: m.fuelLkm,
+    hp: m.hp,
+    cargo: m.cargo,
+    warranty: m.warranty,
+    trans: m.trans,
+    fuelTypes: m.fuelTypes,
+    hybrid: m.hybrid,
+    ratings: m.ratings,
+    features: m.features,
+    engine: s.engine,
+    power: s.power,
+    gearbox: s.gearbox,
+    drive: s.drive,
+    fuelStr: s.fuel,
+    pros: s.pros,
+    cons: s.cons,
+  };
+});
+
 // Ảnh minh hoạ SVG inline (không phụ thuộc mạng ngoài) — đổi màu theo từng xe.
 function carThumb(color: string): string {
   return `<svg viewBox="0 0 120 60" width="96" height="48" role="img" aria-label="xe">
@@ -885,6 +1004,139 @@ const page = /* html */ `<!doctype html>
       .cmp-tbl img { width: 100%; max-width: 200px; border-radius: 10px; display: block; margin: 0 auto; }
       .cmp-tbl ul { margin: 0; padding-left: 1.1rem; }
       .cmp-tbl li { margin: 0.2rem 0; }
+      /* ---- Gợi ý xe AI ---- */
+      .btnreco {
+        font: inherit;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #0d1b2a;
+        background: linear-gradient(135deg, #ffd166, #ff9f1c);
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 1.2rem;
+        margin-right: 0.5rem;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(255, 159, 28, 0.35);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+      .btnreco:hover { transform: translateY(-1px); box-shadow: 0 9px 22px rgba(255, 159, 28, 0.5); }
+      .reco-card { width: min(96vw, 960px) !important; }
+      .reco-scroll { max-height: 72vh; overflow: auto; padding-right: 0.3rem; }
+      .reco-intro { font-size: 0.88rem; opacity: 0.85; margin: 0 0 1rem; text-align: left; }
+      .reco-sec { margin: 0 0 1.2rem; text-align: left; }
+      .reco-sec > h4 {
+        margin: 0 0 0.7rem;
+        font-size: 1rem;
+        color: var(--accent);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        padding-bottom: 0.4rem;
+      }
+      .reco-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.8rem 1rem;
+      }
+      .reco-q { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.86rem; }
+      .reco-q > span.qlabel { font-weight: 600; }
+      .reco-q input[type='number'],
+      .reco-q input[type='text'],
+      .reco-q select {
+        font: inherit;
+        font-size: 0.88rem;
+        padding: 0.45rem 0.6rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: #16243f;
+        color: #fff;
+      }
+      .reco-opts { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; }
+      .reco-opts label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.84rem;
+        cursor: pointer;
+      }
+      .reco-range { display: flex; align-items: center; gap: 0.6rem; }
+      .reco-range input[type='range'] { flex: 1; accent-color: var(--accent); }
+      .reco-range output { min-width: 2.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+      .reco-rate { display: flex; align-items: center; gap: 0.5rem; }
+      .reco-rate input[type='range'] { flex: 1; accent-color: var(--accent); }
+      .reco-rate output { min-width: 1.4rem; text-align: center; font-weight: 700; color: var(--accent); }
+      .reco-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.4rem; }
+      .reco-actions button {
+        font: inherit;
+        font-weight: 700;
+        font-size: 0.92rem;
+        border-radius: 999px;
+        padding: 0.6rem 1.4rem;
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+      .reco-actions .primary { background: linear-gradient(135deg, #ffd166, #ff9f1c); color: #0d1b2a; border: none; }
+      .reco-actions .ghost { background: rgba(255, 255, 255, 0.1); color: #fff; }
+      /* --- Kết quả gợi ý --- */
+      .rec-list { display: flex; flex-direction: column; gap: 1.1rem; text-align: left; }
+      .rec-item {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 16px;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .rec-item.top { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.4); }
+      .rec-head { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+      .rec-head img { width: 180px; max-width: 40vw; border-radius: 12px; }
+      .rec-headinfo { flex: 1; min-width: 200px; }
+      .rec-rank {
+        display: inline-block;
+        font-size: 0.74rem;
+        font-weight: 700;
+        background: var(--accent);
+        color: #0d1b2a;
+        border-radius: 999px;
+        padding: 0.15rem 0.7rem;
+        margin-bottom: 0.35rem;
+      }
+      .rec-name { font-size: 1.2rem; font-weight: 700; margin: 0 0 0.2rem; }
+      .rec-meta { font-size: 0.84rem; opacity: 0.85; line-height: 1.5; }
+      .rec-overall { text-align: center; }
+      .rec-overall .big { font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+      .rec-overall .cap { font-size: 0.72rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.04em; }
+      .rec-why {
+        margin: 0.8rem 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--accent);
+        background: rgba(255, 209, 102, 0.08);
+        border-radius: 0 10px 10px 0;
+        font-size: 0.9rem;
+        line-height: 1.55;
+      }
+      .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem 1rem; margin: 0.6rem 0; }
+      .score-row { font-size: 0.8rem; }
+      .score-row .sr-top { display: flex; justify-content: space-between; margin-bottom: 0.2rem; }
+      .score-row .bar { height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+      .score-row .bar > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #06d6a0, #ffd166); }
+      .cost-tbl { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin: 0.4rem 0; }
+      .cost-tbl td { padding: 0.35rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+      .cost-tbl td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+      .cost-tbl tr.total td { font-weight: 800; color: var(--accent); border-top: 1px solid rgba(255, 255, 255, 0.25); }
+      .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 0.5rem 0; }
+      .proscons ul { margin: 0.2rem 0; padding-left: 1.1rem; font-size: 0.84rem; }
+      .proscons .pc-pro h5 { color: #06d6a0; margin: 0; }
+      .proscons .pc-con h5 { color: #ff6b6b; margin: 0; }
+      .rec-alt { font-size: 0.84rem; }
+      .rec-alt .chip {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        padding: 0.25rem 0.7rem;
+        margin: 0.2rem 0.3rem 0 0;
+        font-size: 0.8rem;
+      }
+      .rec-toggle { display: flex; gap: 0.6rem; margin: 0.4rem 0 1rem; flex-wrap: wrap; }
+      @media (max-width: 560px) {
+        .proscons { grid-template-columns: 1fr; }
+      }
       /* ---- Bảng thông số trong popup ---- */
       .spec-tbl { width: 100%; border-collapse: collapse; margin-bottom: 1rem; min-width: 0; }
       .spec-tbl th, .spec-tbl td {
@@ -1045,6 +1297,7 @@ const page = /* html */ `<!doctype html>
 
     <h2>🛞 Bảng giá xe Toyota</h2>
     <div class="toolbar">
+      <button class="btnreco" type="button" onclick="openReco()">🤖 Gợi ý xe AI</button>
       <button class="btnspec" type="button" onclick="openCompare()">⚖️ So sánh xe</button>
     </div>
     <div class="table-wrap">
@@ -1233,6 +1486,22 @@ const page = /* html */ `<!doctype html>
           <select id="cmp-b"></select>
         </div>
         <div id="cmp-body" class="cmp-body"></div>
+      </div>
+    </div>
+
+    <div id="recobox" class="modal3d" hidden>
+      <div class="card3d reco-card">
+        <button class="close" type="button" onclick="closeReco()" aria-label="Đóng">✕</button>
+        <h3>🤖 Gợi ý xe AI</h3>
+        <div class="reco-scroll">
+          <p class="reco-intro">
+            Trả lời vài câu hỏi về thu nhập, thói quen lái, ngân sách &amp; ưu tiên của bạn.
+            Hệ thống sẽ cân bằng nhiều yếu tố (không chỉ chọn xe rẻ nhất) để gợi ý Top 3 xe phù hợp,
+            kèm điểm số, chi phí sở hữu hằng tháng và lý do cụ thể.
+          </p>
+          <form id="reco-form" autocomplete="off"></form>
+          <div id="reco-result" hidden></div>
+        </div>
       </div>
     </div>
 
@@ -1546,6 +1815,488 @@ const page = /* html */ `<!doctype html>
         });
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape') window.closeCompare();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var RC = ${JSON.stringify(recoCars).replace(/</g, '\\u003c')};
+        var box = document.getElementById('recobox');
+        var form = document.getElementById('reco-form');
+        var result = document.getElementById('reco-result');
+        function esc(s) {
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function vnd(n) {
+          return Math.round(n).toLocaleString('vi-VN') + 'đ';
+        }
+        var FEATURES = ['ADAS', 'Sunroof', 'Apple CarPlay', 'Android Auto', '360 Camera',
+          'Leather Seats', 'Ventilated Seats', 'Cruise Control', 'Adaptive Cruise Control',
+          'Blind Spot Monitor', 'Rear Camera'];
+        var FEATURE_VI = {
+          'ADAS': 'Gói an toàn ADAS', 'Sunroof': 'Cửa sổ trời', 'Apple CarPlay': 'Apple CarPlay',
+          'Android Auto': 'Android Auto', '360 Camera': 'Camera 360', 'Leather Seats': 'Ghế da',
+          'Ventilated Seats': 'Ghế thông gió', 'Cruise Control': 'Ga tự động',
+          'Adaptive Cruise Control': 'Ga tự động thích ứng', 'Blind Spot Monitor': 'Cảnh báo điểm mù',
+          'Rear Camera': 'Camera lùi',
+        };
+        // ---- Bộ câu hỏi (schema) ----
+        var SECTIONS = [
+          { title: '👤 Thông tin cá nhân', qs: [
+            { id: 'income', t: 'number', label: 'Thu nhập / tháng (triệu)', ph: 'vd: 25' },
+            { id: 'transBudget', t: 'number', label: 'Ngân sách đi lại / tháng (triệu)', ph: 'vd: 6' },
+            { id: 'occupation', t: 'text', label: 'Nghề nghiệp', ph: 'vd: nhân viên văn phòng' },
+            { id: 'city', t: 'text', label: 'Tỉnh / Thành phố', ph: 'vd: TP.HCM' },
+            { id: 'familySize', t: 'number', label: 'Số thành viên gia đình', ph: 'vd: 4' },
+            { id: 'children', t: 'number', label: 'Số con nhỏ', ph: 'vd: 2' },
+            { id: 'parking', t: 'single', label: 'Có chỗ đỗ xe?', opts: ['Có', 'Không'] },
+            { id: 'homeType', t: 'single', label: 'Loại nhà ở', opts: ['Chung cư', 'Nhà phố'] },
+          ] },
+          { title: '🚗 Thói quen lái', qs: [
+            { id: 'dailyKm', t: 'number', label: 'Quãng đường / ngày (km)', ph: 'vd: 30' },
+            { id: 'weeklyKm', t: 'number', label: 'Quãng đường / tuần (km)', ph: 'vd: 200' },
+            { id: 'annualKm', t: 'number', label: 'Quãng đường / năm (km)', ph: 'vd: 15000' },
+            { id: 'cityPct', t: 'slider', label: 'Tỉ lệ đi phố (%)', min: 0, max: 100, def: 70, unit: '%' },
+            { id: 'weekend', t: 'dropdown', label: 'Đi chơi cuối tuần', opts: ['Hiếm khi', 'Thỉnh thoảng', 'Thường xuyên'] },
+            { id: 'longTrip', t: 'dropdown', label: 'Đi đường dài', opts: ['Hiếm khi', 'Vài lần / năm', 'Hàng tháng'] },
+            { id: 'road', t: 'single', label: 'Điều kiện đường', opts: ['Đường tốt', 'Hỗn hợp', 'Xấu / nhiều ổ gà'] },
+            { id: 'passengers', t: 'number', label: 'Số người thường chở', ph: 'vd: 4' },
+          ] },
+          { title: '💰 Ngân sách', qs: [
+            { id: 'budgetMax', t: 'number', label: 'Ngân sách tối đa cho xe (triệu)', ph: 'vd: 800' },
+            { id: 'downPayment', t: 'number', label: 'Trả trước (triệu)', ph: 'vd: 300' },
+            { id: 'loanAmount', t: 'number', label: 'Số tiền vay (triệu)', ph: 'vd: 500' },
+            { id: 'monthlyPay', t: 'number', label: 'Trả góp mong muốn / tháng (triệu)', ph: 'vd: 10' },
+            { id: 'financing', t: 'single', label: 'Hình thức mua', opts: ['Trả thẳng', 'Trả góp'] },
+          ] },
+          { title: '🎯 Sở thích xe', qs: [
+            { id: 'bodyTypes', t: 'multi', label: 'Kiểu dáng ưa thích', opts: ['Sedan', 'SUV', 'MPV', 'Hatchback', 'Pickup', 'EV'] },
+            { id: 'powertrain', t: 'multi', label: 'Hệ truyền động', opts: ['Hybrid', 'Xăng', 'Dầu'] },
+            { id: 'brand', t: 'text', label: 'Hãng ưa thích (tùy chọn)', ph: 'vd: Toyota' },
+            { id: 'transmission', t: 'single', label: 'Hộp số', opts: ['Số sàn', 'Tự động', 'Không quan trọng'] },
+            { id: 'fuelType', t: 'dropdown', label: 'Loại nhiên liệu', opts: ['Không quan trọng', 'Xăng', 'Hybrid', 'Dầu'] },
+            { id: 'minSeats', t: 'dropdown', label: 'Số chỗ tối thiểu', opts: ['4', '5', '7'] },
+            { id: 'features', t: 'multi', label: 'Trang bị bắt buộc phải có', opts: FEATURES, vi: FEATURE_VI },
+          ] },
+          { title: '🔑 Ưu tiên sở hữu (chấm 1–5)', intro: 'Kéo thanh trượt: 1 = không quan trọng, 5 = rất quan trọng.', qs: [
+            { id: 'keepYears', t: 'number', label: 'Dự định giữ xe (năm)', ph: 'vd: 7' },
+            { id: 'impFuel', t: 'rate', label: 'Tiết kiệm nhiên liệu' },
+            { id: 'impRel', t: 'rate', label: 'Độ bền / tin cậy' },
+            { id: 'impMaint', t: 'rate', label: 'Chi phí bảo dưỡng thấp' },
+            { id: 'impSafety', t: 'rate', label: 'An toàn' },
+            { id: 'impComfort', t: 'rate', label: 'Tiện nghi' },
+            { id: 'impPerf', t: 'rate', label: 'Vận hành / sức mạnh' },
+            { id: 'impTech', t: 'rate', label: 'Công nghệ' },
+            { id: 'impResale', t: 'rate', label: 'Giữ giá' },
+            { id: 'impCargo', t: 'rate', label: 'Khoang hành lý' },
+            { id: 'impBrand', t: 'rate', label: 'Thương hiệu' },
+          ] },
+          { title: '📝 Ghi chú thêm', qs: [
+            { id: 'notes', t: 'text', label: 'Bạn còn điều gì quan trọng muốn chia sẻ?', ph: 'vd: hay chở ba mẹ lớn tuổi, cần gầm cao...' },
+          ] },
+        ];
+        // ---- Render form ----
+        function renderForm() {
+          var html = '';
+          SECTIONS.forEach(function (sec) {
+            html += '<div class="reco-sec"><h4>' + esc(sec.title) + '</h4>';
+            if (sec.intro) html += '<p class="reco-intro" style="margin:-0.3rem 0 0.7rem">' + esc(sec.intro) + '</p>';
+            html += '<div class="reco-grid">';
+            sec.qs.forEach(function (q) {
+              if (q.t === 'single') {
+                html += '<div class="reco-q"><span class="qlabel">' + esc(q.label) + '</span><div class="reco-opts">';
+                q.opts.forEach(function (o, i) {
+                  html += '<label><input type="radio" name="q-' + q.id + '" value="' + esc(o) + '"' +
+                    (i === 0 ? ' checked' : '') + ' />' + esc(o) + '</label>';
+                });
+                html += '</div></div>';
+                return;
+              }
+              if (q.t === 'multi') {
+                html += '<div class="reco-q" style="grid-column:1/-1"><span class="qlabel">' + esc(q.label) +
+                  '</span><div class="reco-opts">';
+                q.opts.forEach(function (o) {
+                  var lbl = q.vi && q.vi[o] ? q.vi[o] : o;
+                  html += '<label><input type="checkbox" name="q-' + q.id + '" value="' + esc(o) + '" />' +
+                    esc(lbl) + '</label>';
+                });
+                html += '</div></div>';
+                return;
+              }
+              html += '<label class="reco-q"><span class="qlabel">' + esc(q.label) + '</span>';
+              if (q.t === 'number') {
+                html += '<input type="number" min="0" id="q-' + q.id + '" placeholder="' + esc(q.ph || '') + '" />';
+              } else if (q.t === 'text') {
+                html += '<input type="text" id="q-' + q.id + '" placeholder="' + esc(q.ph || '') + '" />';
+              } else if (q.t === 'dropdown') {
+                html += '<select id="q-' + q.id + '">';
+                q.opts.forEach(function (o) { html += '<option value="' + esc(o) + '">' + esc(o) + '</option>'; });
+                html += '</select>';
+              } else if (q.t === 'slider') {
+                html += '<span class="reco-range"><input type="range" id="q-' + q.id + '" min="' + q.min + '" max="' + q.max +
+                  '" value="' + q.def + '" oninput="this.nextElementSibling.value=this.value+\\'' + (q.unit || '') +
+                  '\\'" /><output>' + q.def + (q.unit || '') + '</output></span>';
+              } else if (q.t === 'rate') {
+                html += '<span class="reco-rate"><input type="range" id="q-' + q.id + '" min="1" max="5" value="3" ' +
+                  'oninput="this.nextElementSibling.value=this.value" /><output>3</output></span>';
+              }
+              html += '</label>';
+            });
+            html += '</div></div>';
+          });
+          html += '<div class="reco-actions">' +
+            '<button type="button" class="primary" onclick="window.runReco()">🔍 Phân tích &amp; Gợi ý</button>' +
+            '<button type="button" class="ghost" onclick="window.resetReco()">↺ Làm lại</button>' +
+            '</div>';
+          form.innerHTML = html;
+        }
+        // ---- Đọc giá trị ----
+        function num(id, dflt) {
+          var el = document.getElementById('q-' + id);
+          if (!el) return dflt;
+          var v = parseFloat(el.value);
+          return isNaN(v) ? dflt : v;
+        }
+        function txt(id) {
+          var el = document.getElementById('q-' + id);
+          return el ? el.value.trim() : '';
+        }
+        function radio(id) {
+          var el = form.querySelector('input[name="q-' + id + '"]:checked');
+          return el ? el.value : '';
+        }
+        function checks(id) {
+          var els = form.querySelectorAll('input[name="q-' + id + '"]:checked');
+          return Array.prototype.map.call(els, function (e) { return e.value; });
+        }
+        function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+        function pct(v) { return clamp(Math.round(v), 0, 100); }
+        // ---- Engine chấm điểm ----
+        function analyze() {
+          var income = num('income', 0);
+          var transBudget = num('transBudget', 0);
+          var familySize = num('familySize', 0);
+          var children = num('children', 0);
+          var parking = radio('parking');
+          var dailyKm = num('dailyKm', 0);
+          var weeklyKm = num('weeklyKm', 0);
+          var annualKm = num('annualKm', 0);
+          var weekend = document.getElementById('q-weekend').value;
+          var longTrip = document.getElementById('q-longTrip').value;
+          var road = radio('road');
+          var passengers = num('passengers', 0);
+          var budgetMax = num('budgetMax', 0);
+          var loanAmount = num('loanAmount', 0);
+          var monthlyPay = num('monthlyPay', 0);
+          var financing = radio('financing');
+          var bodyTypes = checks('bodyTypes');
+          var powertrain = checks('powertrain');
+          var transmission = radio('transmission');
+          var fuelPref = document.getElementById('q-fuelType').value;
+          var minSeats = parseInt(document.getElementById('q-minSeats').value, 10) || 0;
+          var mustHave = checks('features');
+          var keepYears = clamp(num('keepYears', 7), 1, 15);
+          var notes = txt('notes').toLowerCase();
+          var imp = {
+            fuel: num('impFuel', 3), rel: num('impRel', 3), maint: num('impMaint', 3),
+            safety: num('impSafety', 3), comfort: num('impComfort', 3), perf: num('impPerf', 3),
+            tech: num('impTech', 3), resale: num('impResale', 3), cargo: num('impCargo', 3),
+            brand: num('impBrand', 3),
+          };
+          // Số km/năm suy ra từ dữ liệu tốt nhất có.
+          var kmYear = annualKm > 0 ? annualKm : weeklyKm > 0 ? weeklyKm * 52 : dailyKm > 0 ? dailyKm * 320 : 15000;
+          var neededSeats = Math.max(passengers, familySize, minSeats);
+          // Ghi chú: bắt vài từ khóa.
+          var noteOff = /off-?road|địa hình|ổ gà|gầm cao|leo|núi|đường xấu/.test(notes);
+          var noteFamily = /gia đình|con nhỏ|ba mẹ|bố mẹ|ông bà|7 chỗ|đại gia đình/.test(notes);
+
+          function monthlyCost(car) {
+            var priceAvg = (car.priceMin + car.priceMax) / 2 * 1e6;
+            var fuelPrice = 23500;
+            var fuel = kmYear / 100 * car.fuelLkm * fuelPrice / 12;
+            var insurance = priceAvg * 0.015 / 12;
+            var maintYear = priceAvg < 500e6 ? 4.2e6 : priceAvg < 900e6 ? 6.0e6 : priceAvg < 1500e6 ? 9.0e6 : 18e6;
+            var maint = maintYear / 12;
+            var registration = 1560000 / 12;
+            var park = parking === 'Không' ? 1500000 : 0;
+            var loan = 0;
+            if (financing === 'Trả góp' && loanAmount > 0) {
+              var term = clamp(keepYears, 3, 8);
+              var r = 0.105 / 12;
+              var n = term * 12;
+              loan = loanAmount * 1e6 * r / (1 - Math.pow(1 + r, -n));
+            }
+            var total = fuel + insurance + maint + registration + park + loan;
+            return { fuel: fuel, insurance: insurance, maint: maint, registration: registration, park: park, loan: loan, total: total };
+          }
+
+          var results = RC.map(function (car) {
+            var R = car.ratings;
+            var cost = monthlyCost(car);
+            // Budget match.
+            var budgetScore;
+            if (budgetMax <= 0) budgetScore = 70;
+            else if (car.priceMax <= budgetMax) budgetScore = 100;
+            else if (car.priceMin <= budgetMax) budgetScore = 80;
+            else budgetScore = pct(100 - (car.priceMin - budgetMax) / budgetMax * 130);
+            // Khả năng chi trả theo ngân sách đi lại / thu nhập.
+            var afford;
+            var capMonthly = transBudget > 0 ? transBudget * 1e6 : income > 0 ? income * 1e6 * 0.30 : 0;
+            if (capMonthly <= 0) afford = 70;
+            else if (cost.total <= capMonthly) afford = 100;
+            else afford = pct(100 - (cost.total - capMonthly) / capMonthly * 110);
+            // Chi phí vận hành (nhiên liệu + bảo dưỡng).
+            var running = pct(R.fuelEcon / 5 * 60 + (6 - maintTier(car)) / 5 * 40);
+            var comfort = R.comfort / 5 * 100;
+            var safety = R.safety / 5 * 100;
+            var tech = R.tech / 5 * 100;
+            var reliability = R.reliability / 5 * 100;
+            var fuelEcon = R.fuelEcon / 5 * 100;
+            // Phù hợp gia đình: số chỗ vs nhu cầu + điểm family.
+            var seatScore = car.seats >= neededSeats ? 100 : pct(100 - (neededSeats - car.seats) * 28);
+            var family = pct(seatScore * 0.6 + R.family / 5 * 100 * 0.4);
+            // Trọng số từ mức độ ưu tiên (mặc định 3).
+            var subs = [
+              { key: 'budget', label: 'Phù hợp ngân sách', v: budgetScore, w: 5 },
+              { key: 'running', label: 'Chi phí vận hành', v: running, w: imp.maint },
+              { key: 'comfort', label: 'Tiện nghi', v: comfort, w: imp.comfort },
+              { key: 'family', label: 'Phù hợp gia đình', v: family, w: children > 0 || noteFamily ? 4.5 : 2 },
+              { key: 'safety', label: 'An toàn', v: safety, w: imp.safety },
+              { key: 'tech', label: 'Công nghệ', v: tech, w: imp.tech },
+              { key: 'reliability', label: 'Độ bền', v: reliability, w: imp.rel },
+              { key: 'fuelEcon', label: 'Tiết kiệm xăng', v: fuelEcon, w: imp.fuel },
+              { key: 'afford', label: 'Khả năng chi trả', v: afford, w: 4 },
+              { key: 'perf', label: 'Vận hành', v: R.performance / 5 * 100, w: imp.perf },
+              { key: 'resale', label: 'Giữ giá', v: R.resale / 5 * 100, w: imp.resale },
+              { key: 'cargo', label: 'Khoang hành lý', v: R.cargo / 5 * 100, w: imp.cargo },
+              { key: 'brand', label: 'Thương hiệu', v: R.brandRep / 5 * 100, w: imp.brand },
+            ];
+            var wsum = 0, vsum = 0;
+            subs.forEach(function (s) { wsum += s.w; vsum += s.v * s.w; });
+            var overall = vsum / wsum;
+            // Thưởng / phạt khớp sở thích.
+            var penalties = [];
+            if (bodyTypes.length) {
+              if (bodyTypes.indexOf(car.body) >= 0) overall += 6;
+              else if (bodyTypes.indexOf('Pickup') >= 0 || bodyTypes.indexOf('EV') >= 0) overall -= 2;
+              else overall -= 10;
+            }
+            if (minSeats && car.seats < minSeats) { overall -= 16; penalties.push('Ít hơn ' + minSeats + ' chỗ'); }
+            if (neededSeats > car.seats) { overall -= 8; penalties.push('Có thể chật khi chở ' + neededSeats + ' người'); }
+            if (transmission === 'Số sàn' && car.trans.indexOf('sàn') < 0) overall -= 4;
+            if (fuelPref && fuelPref !== 'Không quan trọng' && car.fuelTypes.indexOf(fuelPref) < 0) {
+              overall -= 6; penalties.push('Không có bản ' + fuelPref);
+            }
+            if (powertrain.length) {
+              var ptOk = powertrain.some(function (p) { return car.fuelTypes.indexOf(p) >= 0; });
+              if (!ptOk) overall -= 5;
+            }
+            if (noteOff && car.body === 'SUV' && /4WD|RWD|2 cầu/.test(car.drive)) overall += 4;
+            // Trang bị bắt buộc.
+            var missing = mustHave.filter(function (f) { return car.features.indexOf(f) < 0; });
+            overall -= missing.length * 4;
+            overall = pct(overall);
+
+            // Lý do (ngôn ngữ tự nhiên).
+            var why = buildWhy(car, {
+              children: children, familySize: familySize, neededSeats: neededSeats, weekend: weekend,
+              longTrip: longTrip, road: road, budgetMax: budgetMax, imp: imp, kmYear: kmYear,
+              noteOff: noteOff, noteFamily: noteFamily, bodyTypes: bodyTypes,
+            });
+
+            return {
+              car: car, overall: overall, subs: subs, cost: cost,
+              missing: missing, penalties: penalties, why: why, neededSeats: neededSeats,
+            };
+          });
+
+          results.sort(function (a, b) { return b.overall - a.overall; });
+          return { results: results, ctx: { neededSeats: neededSeats, budgetMax: budgetMax } };
+        }
+        function maintTier(car) {
+          var p = (car.priceMin + car.priceMax) / 2;
+          return p < 500 ? 1 : p < 900 ? 2 : p < 1500 ? 3 : 5;
+        }
+        function buildWhy(car, u) {
+          var parts = [];
+          var model = car.name.replace('Toyota ', '');
+          if (car.body === 'MPV' || (car.seats >= 7 && (u.children > 0 || u.noteFamily || u.neededSeats >= 6))) {
+            parts.push('với ' + car.seats + ' chỗ ngồi, ' + model + ' thoải mái cho gia đình' +
+              (u.children > 0 ? ' có ' + u.children + ' bé' : ''));
+          }
+          if (u.weekend === 'Thường xuyên' || u.longTrip === 'Hàng tháng') {
+            parts.push('phù hợp cho các chuyến đi chơi cuối tuần và đường dài bạn hay đi');
+          }
+          if (u.noteOff || u.road === 'Xấu / nhiều ổ gà') {
+            if (car.body === 'SUV') parts.push('gầm cao chịu được đường xấu');
+          }
+          if (u.imp.fuel >= 4 && car.ratings.fuelEcon >= 4) {
+            parts.push('rất tiết kiệm nhiên liệu (~' + car.fuelLkm + ' L/100km' + (car.hybrid ? ', có bản hybrid' : '') + ')');
+          }
+          if (u.imp.safety >= 4 && car.ratings.safety >= 4) parts.push('điểm an toàn cao');
+          if (u.imp.comfort >= 4 && car.ratings.comfort >= 4) parts.push('nội thất tiện nghi êm ái');
+          if (u.imp.resale >= 4 && car.ratings.resale >= 4) parts.push('giữ giá tốt khi bán lại');
+          if (u.budgetMax > 0 && car.priceMax <= u.budgetMax) parts.push('nằm gọn trong ngân sách của bạn');
+          if (!parts.length) parts.push('cân bằng tốt giữa chi phí, độ bền và nhu cầu sử dụng hằng ngày của bạn');
+          var s = model + ' phù hợp vì ' + parts.join(', ') + '.';
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+        // ---- Render kết quả ----
+        function altFor(target, all) {
+          return all.filter(function (r) { return r.car.name !== target.car.name; })
+            .map(function (r) {
+              var bodyClose = r.car.body === target.car.body ? 0 : 1;
+              var priceClose = Math.abs((r.car.priceMin + r.car.priceMax) - (target.car.priceMin + target.car.priceMax));
+              return { r: r, d: bodyClose * 5000 + priceClose };
+            })
+            .sort(function (a, b) { return a.d - b.d; })
+            .slice(0, 2).map(function (x) { return x.r.car; });
+        }
+        function scoreBar(label, v) {
+          return '<div class="score-row"><div class="sr-top"><span>' + esc(label) + '</span><strong>' +
+            Math.round(v) + '%</strong></div><div class="bar"><i style="width:' + Math.round(v) + '%"></i></div></div>';
+        }
+        function costTable(c) {
+          var rows = [['🏦 Trả góp', c.loan], ['⛽ Nhiên liệu', c.fuel], ['🛡️ Bảo hiểm', c.insurance],
+            ['🔧 Bảo dưỡng', c.maint], ['📋 Phí đường bộ', c.registration]];
+          if (c.park > 0) rows.push(['🅿️ Gửi xe', c.park]);
+          var html = '<table class="cost-tbl"><tbody>';
+          rows.forEach(function (r) {
+            if (r[1] <= 0) return;
+            html += '<tr><td>' + r[0] + '</td><td>' + vnd(r[1]) + '</td></tr>';
+          });
+          html += '<tr class="total"><td>Tổng / tháng</td><td>' + vnd(c.total) + '</td></tr></tbody></table>';
+          return html;
+        }
+        var SHOW_KEYS = ['budget', 'running', 'comfort', 'family', 'safety', 'tech', 'reliability', 'fuelEcon'];
+        function renderResult(data) {
+          var top = data.results.slice(0, 3);
+          var html = '<div class="rec-toggle">' +
+            '<button type="button" class="ghost" onclick="window.backToForm()">↩ Sửa câu trả lời</button>' +
+            '<button type="button" class="primary" onclick="window.toggleRecoCompare()">⚖️ So sánh 3 xe</button>' +
+            '</div>';
+          html += '<div id="rec-compare" hidden></div>';
+          html += '<div class="rec-list">';
+          top.forEach(function (item, i) {
+            var car = item.car;
+            var model = car.name.replace('Toyota ', '');
+            var alts = altFor(item, data.results);
+            html += '<div class="rec-item' + (i === 0 ? ' top' : '') + '">';
+            html += '<div class="rec-head">';
+            html += '<img src="' + car.image + '" alt="' + esc(car.name) + '" referrerpolicy="no-referrer" />';
+            html += '<div class="rec-headinfo"><span class="rec-rank">#' + (i + 1) +
+              (i === 0 ? ' • Phù hợp nhất' : '') + '</span>';
+            html += '<div class="rec-name">' + esc(car.name) + '</div>';
+            html += '<div class="rec-meta">Hãng: <strong>Toyota</strong> • Mẫu: ' + esc(model) +
+              ' • Đời: 2026<br/>Động cơ: ' + esc(car.engine) + '<br/>Hộp số: ' + esc(car.gearbox) +
+              '<br/>Nhiên liệu: ' + esc(car.fuelTypes.join(' / ')) + ' • ' + esc(car.price) + '</div></div>';
+            html += '<div class="rec-overall"><div class="big">' + item.overall + '%</div>' +
+              '<div class="cap">Mức phù hợp</div></div>';
+            html += '</div>'; // rec-head
+            html += '<div class="rec-why">💡 ' + esc(item.why) + '</div>';
+            // Điểm thành phần.
+            html += '<div class="score-grid">';
+            SHOW_KEYS.forEach(function (k) {
+              var s = item.subs.filter(function (x) { return x.key === k; })[0];
+              if (s) html += scoreBar(s.label, s.v);
+            });
+            html += '</div>';
+            // Chi phí.
+            html += '<h5 style="margin:0.6rem 0 0.2rem;color:var(--accent)">💵 Chi phí sở hữu / tháng (ước tính)</h5>';
+            html += costTable(item.cost);
+            // Pros / cons.
+            html += '<div class="proscons"><div class="pc-pro"><h5>✅ Ưu điểm</h5><ul>' +
+              car.pros.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul></div>';
+            var cons = car.cons.slice();
+            item.penalties.forEach(function (p) { cons.push(p); });
+            html += '<div class="pc-con"><h5>⚠️ Nhược điểm</h5><ul>' +
+              cons.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul></div></div>';
+            // Alternatives.
+            if (alts.length) {
+              html += '<div class="rec-alt">🔁 Lựa chọn tương tự: ' +
+                alts.map(function (a) { return '<span class="chip">' + esc(a.name.replace('Toyota ', '')) +
+                  ' • ' + esc(a.price) + '</span>'; }).join('') + '</div>';
+            }
+            html += '</div>'; // rec-item
+          });
+          html += '</div>';
+          // Ghi chú cân bằng / trade-off.
+          if (top.length >= 2 && top[0].overall - top[1].overall <= 6) {
+            html += '<p class="reco-intro" style="margin-top:1rem">⚖️ <strong>Đánh đổi:</strong> ' +
+              esc(top[0].car.name.replace('Toyota ', '')) + ' và ' + esc(top[1].car.name.replace('Toyota ', '')) +
+              ' rất sát nhau. Chọn ' + esc(top[0].car.name.replace('Toyota ', '')) +
+              ' nếu ưu tiên điểm tổng thể, hoặc cân nhắc ' + esc(top[1].car.name.replace('Toyota ', '')) +
+              ' nếu hợp gu hơn về kiểu dáng/giá.</p>';
+          }
+          html += '<p class="reco-intro" style="margin-top:0.6rem;font-size:0.8rem">' +
+            '* Gợi ý dựa trên dữ liệu tham khảo trong dải xe Toyota của trang. Chi phí là ước tính ' +
+            '(xăng ~23.500đ/L, bảo hiểm ~1,5%/năm, lãi vay ~10,5%/năm) — số thực tế tùy đại lý, khu vực &amp; thời điểm.</p>';
+          result.innerHTML = html;
+          window._recoTop = top;
+        }
+        // ---- So sánh 3 xe gợi ý ----
+        window.toggleRecoCompare = function () {
+          var el = document.getElementById('rec-compare');
+          if (!el) return;
+          if (!el.hidden) { el.hidden = true; el.innerHTML = ''; return; }
+          var top = window._recoTop || [];
+          var rows = [
+            ['Giá', function (c) { return c.price; }],
+            ['Tiêu hao', function (c) { return c.fuelLkm + ' L/100km'; }],
+            ['Khoang hành lý', function (c) { return c.cargo + ' L'; }],
+            ['Công suất', function (c) { return c.hp + ' mã lực'; }],
+            ['Số chỗ', function (c) { return c.seats + ' chỗ'; }],
+            ['Dẫn động', function (c) { return c.drive; }],
+            ['Bảo hành', function (c) { return c.warranty; }],
+            ['An toàn', function (c) { return '★'.repeat(c.ratings.safety); }],
+            ['Độ bền', function (c) { return '★'.repeat(c.ratings.reliability); }],
+          ];
+          var html = '<table class="cmp-tbl"><thead><tr><th></th>' +
+            top.map(function (t) { return '<th>' + esc(t.car.name.replace('Toyota ', '')) + '</th>'; }).join('') +
+            '</tr></thead><tbody>';
+          html += '<tr><td class="lbl">Chi phí / tháng</td>' +
+            top.map(function (t) { return '<td>' + vnd(t.cost.total) + '</td>'; }).join('') + '</tr>';
+          rows.forEach(function (r) {
+            var vals = top.map(function (t) { return r[1](t.car); });
+            var allSame = vals.every(function (v) { return v === vals[0]; });
+            html += '<tr><td class="lbl">' + esc(r[0]) + '</td>' +
+              vals.map(function (v) {
+                return '<td' + (allSame ? '' : ' style="color:var(--accent)"') + '>' + esc(v) + '</td>';
+              }).join('') + '</tr>';
+          });
+          html += '</tbody></table>';
+          el.innerHTML = html;
+          el.hidden = false;
+        };
+        window.runReco = function () {
+          var data = analyze();
+          form.hidden = true;
+          result.hidden = false;
+          renderResult(data);
+          box.querySelector('.reco-scroll').scrollTop = 0;
+        };
+        window.backToForm = function () {
+          result.hidden = true;
+          result.innerHTML = '';
+          form.hidden = false;
+          box.querySelector('.reco-scroll').scrollTop = 0;
+        };
+        window.resetReco = function () {
+          renderForm();
+        };
+        window.openReco = function () {
+          if (!form.children.length) renderForm();
+          form.hidden = false;
+          result.hidden = true;
+          box.hidden = false;
+        };
+        window.closeReco = function () { box.hidden = true; };
+        box.addEventListener('click', function (e) {
+          if (e.target === box) window.closeReco();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !box.hidden) window.closeReco();
         });
       })();
     </script>
