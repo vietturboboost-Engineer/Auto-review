@@ -5,8 +5,8 @@ import { brands } from '../data/brands.js';
 import { vehicles, getMaintenanceSchedule, getPartsCatalog, getVehicle } from '../data/vehicles.js';
 
 describe('Vehicle data layer', () => {
-  it('hỗ trợ đủ 23 hãng và mọi xe trỏ tới hãng hợp lệ', () => {
-    expect(brands.length).toBe(23);
+  it('hỗ trợ nhiều hãng và mọi xe trỏ tới hãng hợp lệ', () => {
+    expect(brands.length).toBeGreaterThanOrEqual(60);
     const slugs = new Set(brands.map((b) => b.slug));
     for (const v of vehicles) {
       expect(slugs.has(v.brandSlug)).toBe(true);
@@ -38,7 +38,7 @@ describe('JSON API đa hãng', () => {
     const res = await request(app).get('/api/brands');
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.brands.length).toBe(23);
+    expect(res.body.brands.length).toBe(brands.length);
     expect(res.body.brands[0]).toHaveProperty('count');
   });
 

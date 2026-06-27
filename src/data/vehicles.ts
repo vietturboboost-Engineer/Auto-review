@@ -54,6 +54,10 @@ export interface Vehicle {
   driveType: DriveType;
   seats: number;
   segment: string;
+  /** Kiểu thân xe: Sedan, SUV, MPV, Hatchback, Pickup, Coupe... (suy ra từ phân khúc nếu trống). */
+  bodyType: string;
+  /** Khoảng sáng gầm (mm). */
+  groundClearance: number;
   /** Giá theo triệu VND. */
   price: { min: number; max: number; currency: 'VND'; label: string };
   warranty: string;
@@ -66,8 +70,18 @@ export interface Vehicle {
   torque: number;
   safetyFeatures: string[];
   techFeatures: string[];
+  /** Dung dịch/dầu nhớt khuyến nghị (suy ra theo nhiên liệu nếu trống). */
+  recommendedFluids: string[];
   maintenanceCostPerYear: string;
+  /** Ước tính tổng chi phí sở hữu mỗi năm (khấu hao + nhiên liệu + bảo dưỡng + bảo hiểm). */
+  ownershipCost: string;
   commonIssues: string[];
+  /** Ưu điểm nổi bật (suy ra từ điểm đánh giá nếu trống). */
+  pros: string[];
+  /** Hạn chế cần cân nhắc (suy ra từ điểm đánh giá nếu trống). */
+  cons: string[];
+  /** Đối tượng phù hợp (suy ra theo phân khúc/số chỗ/nhiên liệu nếu trống). */
+  suitableFor: string[];
   reliability: number;
   image: string;
   ratings: VehicleRatings;
@@ -157,18 +171,123 @@ function maintByTier(pmin: number, fuel: FuelType): string {
   return '15 – 25 triệu';
 }
 
+// --- Ảnh placeholder dạng gradient theo màu thương hiệu (dùng cho xe chưa có ảnh thật) ---
+function ph(slug: string, model: string): string {
+  const b = getBrand(slug);
+  const color = b?.color ?? '#334155';
+  const wm = (b?.wordmark ?? slug).toUpperCase();
+  const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='480' height='270' viewBox='0 0 480 270'>` +
+    `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+    `<stop offset='0' stop-color='${color}'/><stop offset='1' stop-color='#0f172a'/>` +
+    `</linearGradient></defs><rect width='480' height='270' fill='url(#g)'/>` +
+    `<text x='40' y='150' fill='#ffffff' font-family='Arial,Helvetica,sans-serif' font-size='30' font-weight='700' opacity='0.95'>${esc(wm)}</text>` +
+    `<text x='40' y='190' fill='#ffffff' font-family='Arial,Helvetica,sans-serif' font-size='22' opacity='0.8'>${esc(model)}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+// --- Suy ra các trường mở rộng (kiểu thân xe, gầm, dung dịch, ưu/nhược, đối tượng, chi phí sở hữu) ---
+const RATING_PROS: Record<keyof VehicleRatings, string> = {
+  safety: 'An toàn tốt', reliability: 'Độ bền cao', comfort: 'Vận hành êm ái',
+  performance: 'Vận hành mạnh mẽ', tech: 'Công nghệ hiện đại', resale: 'Giữ giá tốt',
+  cargo: 'Khoang chứa rộng rãi', fuelEcon: 'Tiết kiệm nhiên liệu',
+  brandRep: 'Thương hiệu uy tín', family: 'Phù hợp gia đình',
+};
+const RATING_CONS: Record<keyof VehicleRatings, string> = {
+  safety: 'Trang bị an toàn cơ bản', reliability: 'Độ bền cần lưu ý',
+  comfort: 'Tiện nghi vừa phải', performance: 'Vận hành khiêm tốn',
+  tech: 'Công nghệ hạn chế', resale: 'Giữ giá thấp',
+  cargo: 'Khoang chứa khiêm tốn', fuelEcon: 'Tiêu hao nhiên liệu cao',
+  brandRep: 'Thương hiệu chưa phổ biến', family: 'Kém phù hợp gia đình',
+};
+
+function ratingKeys(r: VehicleRatings): (keyof VehicleRatings)[] {
+  return Object.keys(r) as (keyof VehicleRatings)[];
+}
+
+function derivePros(r: VehicleRatings): string[] {
+  return ratingKeys(r).filter((k) => r[k] >= 4).sort((a, b) => r[b] - r[a]).slice(0, 4).map((k) => RATING_PROS[k]);
+}
+
+function deriveCons(r: VehicleRatings): string[] {
+  return ratingKeys(r).filter((k) => r[k] <= 2).sort((a, b) => r[a] - r[b]).slice(0, 3).map((k) => RATING_CONS[k]);
+}
+
+function deriveBodyType(segment: string, seats: number): string {
+  const s = segment.toLowerCase();
+  if (s.includes('bán tải')) return 'Pickup';
+  if (s.includes('mpv')) return 'MPV';
+  if (s.includes('van')) return 'Van';
+  if (s.includes('suv') || s.includes('crossover')) return 'SUV';
+  if (s.includes('hatchback')) return 'Hatchback';
+  if (s.includes('wagon')) return 'Wagon';
+  if (s.includes('coupe')) return 'Coupe';
+  if (s.includes('mui trần') || s.includes('convertible')) return 'Convertible';
+  if (s.includes('siêu xe') || s.includes('thể thao') || s.includes('sport')) return 'Sports Car';
+  if (s.includes('sedan')) return 'Sedan';
+  return seats >= 7 ? 'MPV' : 'Sedan';
+}
+
+function deriveClearance(body: string): number {
+  switch (body) {
+    case 'Pickup': return 220;
+    case 'SUV': return 190;
+    case 'MPV': return 175;
+    case 'Van': return 170;
+    case 'Sports Car': return 110;
+    default: return 150;
+  }
+}
+
+function deriveFluids(fuel: FuelType): string[] {
+  if (fuel === 'Điện') {
+    return ['Nước làm mát pin & mô-tơ', 'Dầu hộp giảm tốc', 'Dầu phanh DOT 4', 'Nước rửa kính'];
+  }
+  const base = ['Nước làm mát động cơ (LLC)', 'Dầu phanh DOT 4', 'Dầu trợ lực/hộp số', 'Nước rửa kính'];
+  if (fuel === 'Dầu') return ['Dầu động cơ 5W-30 (diesel)', ...base];
+  if (fuel === 'Hybrid') return ['Dầu động cơ 0W-20', ...base];
+  return ['Dầu động cơ 5W-30', ...base];
+}
+
+function deriveSuitable(seats: number, fuel: FuelType, pmin: number, body: string): string[] {
+  const out: string[] = [];
+  if (seats >= 7) out.push('Gia đình đông thành viên');
+  if (body === 'Pickup') out.push('Chở hàng & off-road');
+  if (fuel === 'Điện') out.push('Di chuyển đô thị, chi phí thấp');
+  else if (fuel === 'Hybrid') out.push('Đi xa, tiết kiệm nhiên liệu');
+  if (pmin >= 2500) out.push('Doanh nhân & khách hàng cao cấp');
+  else if (pmin < 600) out.push('Người mua xe lần đầu');
+  if (body === 'SUV' && seats < 7) out.push('Gia đình trẻ năng động');
+  if (body === 'Sports Car') out.push('Người đam mê tốc độ');
+  if (out.length === 0) out.push('Sử dụng đa dụng hằng ngày');
+  return Array.from(new Set(out)).slice(0, 4);
+}
+
+function deriveOwnership(pmin: number, fuel: FuelType): string {
+  const energy = fuel === 'Điện' ? 6 : fuel === 'Hybrid' ? 12 : 18;
+  const lo = Math.round(pmin * 0.09 + energy);
+  const hi = Math.round(pmin * 0.13 + energy + 8);
+  return `~${lo} – ${hi} triệu/năm`;
+}
+
 interface Mk {
   id: string; brandSlug: string; model: string; gen: string; year?: number; trim: string;
   engine: string; trans: string; fuel: FuelType; drive: DriveType; seats: number; segment: string;
   pmin: number; pmax: number; warranty?: string; econ: string;
   dims: [number, number, number, number]; cargo: number; hp: number; torque: number;
   safety?: string[]; tech?: string[]; maintYear?: string; issues?: string[];
-  rel: number; image: string; r?: Partial<VehicleRatings>;
+  rel: number; image?: string; r?: Partial<VehicleRatings>;
+  /** Tùy chọn ghi đè các trường mở rộng (mặc định tự suy ra). */
+  bodyType?: string; clearance?: number; fluids?: string[];
+  pros?: string[]; cons?: string[]; suitableFor?: string[]; ownership?: string;
 }
 
 function mk(o: Mk): Vehicle {
   const brand = getBrand(o.brandSlug);
   const safety = o.safety ?? (o.pmin >= 700 ? [...DEFAULT_SAFETY.slice(0, 2), ...DEFAULT_ADAS] : DEFAULT_SAFETY);
+  const r = ratings({ reliability: o.rel, ...o.r });
+  const bodyType = o.bodyType ?? deriveBodyType(o.segment, o.seats);
   return {
     id: o.id,
     brand: brand?.name ?? o.brandSlug,
@@ -183,6 +302,8 @@ function mk(o: Mk): Vehicle {
     driveType: o.drive,
     seats: o.seats,
     segment: o.segment,
+    bodyType,
+    groundClearance: o.clearance ?? deriveClearance(bodyType),
     price: { min: o.pmin, max: o.pmax, currency: 'VND', label: priceLabel(o.pmin, o.pmax) },
     warranty: o.warranty ?? warrantyBySlug[o.brandSlug] ?? '3 năm / 100.000 km',
     fuelEconomy: o.econ,
@@ -192,11 +313,16 @@ function mk(o: Mk): Vehicle {
     torque: o.torque,
     safetyFeatures: safety,
     techFeatures: o.tech ?? DEFAULT_TECH,
+    recommendedFluids: o.fluids ?? deriveFluids(o.fuel),
     maintenanceCostPerYear: o.maintYear ?? maintByTier(o.pmin, o.fuel),
+    ownershipCost: o.ownership ?? deriveOwnership(o.pmin, o.fuel),
     commonIssues: o.issues ?? ['Số liệu tham khảo theo thị trường VN; nên lái thử & kiểm tra thực tế.'],
+    pros: o.pros ?? derivePros(r),
+    cons: o.cons ?? deriveCons(r),
+    suitableFor: o.suitableFor ?? deriveSuitable(o.seats, o.fuel, o.pmin, bodyType),
     reliability: o.rel,
-    image: o.image,
-    ratings: ratings({ reliability: o.rel, ...o.r }),
+    image: o.image ?? ph(o.brandSlug, o.model),
+    ratings: r,
   };
 }
 
@@ -323,6 +449,178 @@ export const vehicles: Vehicle[] = [
   mk({ id: 'vinfast-vf6', brandSlug: 'vinfast', model: 'VF 6', gen: '(2024)', trim: 'Plus', engine: 'Mô-tơ điện (trước)', trans: '1 cấp', fuel: 'Điện', drive: 'FWD', seats: 5, segment: 'SUV điện hạng B', pmin: 689, pmax: 769, econ: '~15 kWh/100km', dims: [4238, 1820, 1594, 2730], cargo: 423, hp: 174, torque: 250, rel: 3, image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/VinFast_VF_6_DSC_8468.jpg/330px-VinFast_VF_6_DSC_8468.jpg', issues: ['Phần mềm còn cập nhật.'], r: { fuelEcon: 4, tech: 4, safety: 4, family: 4, brandRep: 3 } }),
   mk({ id: 'vinfast-vf8', brandSlug: 'vinfast', model: 'VF 8', gen: '(2023)', trim: 'Plus', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'SUV điện hạng D', pmin: 1019, pmax: 1199, econ: '~19 kWh/100km', dims: [4750, 1934, 1667, 2950], cargo: 376, hp: 402, torque: 620, rel: 3, image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/VinFast_VF_8_DSC_8568.jpg/330px-VinFast_VF_8_DSC_8568.jpg', issues: ['Tiêu hao điện cao; phần mềm còn cập nhật.'], r: { tech: 4, performance: 5, safety: 4, family: 4, brandRep: 3 } }),
   mk({ id: 'vinfast-vf9', brandSlug: 'vinfast', model: 'VF 9', gen: '(2023)', trim: 'Plus', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 7, segment: 'SUV điện hạng E 7 chỗ', pmin: 1499, pmax: 1899, econ: '~20 kWh/100km', dims: [5120, 2000, 1721, 3150], cargo: 423, hp: 402, torque: 620, rel: 3, image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/VinFast_VF9%2C_front_NYIAS_2022.jpg/330px-VinFast_VF9%2C_front_NYIAS_2022.jpg', issues: ['Tiêu hao điện cao; phần mềm còn cập nhật.'], r: { tech: 4, performance: 5, comfort: 4, cargo: 5, family: 5, brandRep: 3 } }),
+
+  // ===== Acura (Nhật Bản – hạng sang) =====
+  mk({ id: 'acura-integra', brandSlug: 'acura', model: 'Integra', gen: 'DE4 (2023)', trim: 'A-Spec 1.5T', engine: '1.5L turbo', trans: 'CVT', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'Sedan hạng sang C', pmin: 1150, pmax: 1390, econ: '~6,8 L/100km', dims: [4717, 1834, 1415, 2735], cargo: 696, hp: 200, torque: 260, rel: 4, r: { performance: 4, tech: 4, brandRep: 4, resale: 4 } }),
+  mk({ id: 'acura-mdx', brandSlug: 'acura', model: 'MDX', gen: 'YE (2022)', trim: '3.5 SH-AWD', engine: '3.5L V6', trans: 'AT 10 cấp', fuel: 'Xăng', drive: 'AWD', seats: 7, segment: 'SUV hạng sang D 7 chỗ', pmin: 2890, pmax: 3290, econ: '~10,5 L/100km', dims: [5025, 1995, 1710, 2890], cargo: 481, hp: 290, torque: 355, rel: 4, r: { comfort: 5, tech: 4, family: 5, cargo: 4, brandRep: 4, fuelEcon: 2 } }),
+
+  // ===== Infiniti (Nhật Bản – hạng sang) =====
+  mk({ id: 'infiniti-qx60', brandSlug: 'infiniti', model: 'QX60', gen: 'L51 (2022)', trim: '3.5 Autograph', engine: '3.5L V6', trans: 'AT 9 cấp', fuel: 'Xăng', drive: 'AWD', seats: 7, segment: 'SUV hạng sang D 7 chỗ', pmin: 3290, pmax: 3690, econ: '~11 L/100km', dims: [5113, 1996, 1778, 2900], cargo: 419, hp: 295, torque: 366, rel: 4, r: { comfort: 5, family: 5, brandRep: 4, cargo: 4, fuelEcon: 2 } }),
+  mk({ id: 'infiniti-q50', brandSlug: 'infiniti', model: 'Q50', gen: 'V37 (2023)', trim: '3.0T Red Sport', engine: '3.0L V6 twin-turbo', trans: 'AT 7 cấp', fuel: 'Xăng', drive: 'RWD', seats: 5, segment: 'Sedan hạng sang D', pmin: 2090, pmax: 2390, econ: '~10 L/100km', dims: [4800, 1824, 1453, 2850], cargo: 500, hp: 405, torque: 475, rel: 4, r: { performance: 5, comfort: 4, brandRep: 4, fuelEcon: 2 } }),
+
+  // ===== Daihatsu (Nhật Bản) =====
+  mk({ id: 'daihatsu-rocky', brandSlug: 'daihatsu', model: 'Rocky', gen: 'A200 (2021)', trim: '1.0T ASA', engine: '1.0L turbo', trans: 'CVT', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng A', pmin: 420, pmax: 520, econ: '~5,5 L/100km', dims: [3995, 1710, 1620, 2525], cargo: 369, hp: 98, torque: 140, rel: 4, r: { fuelEcon: 5, tech: 3, resale: 3 } }),
+  mk({ id: 'daihatsu-terios', brandSlug: 'daihatsu', model: 'Terios', gen: 'F800 (2023 FL)', trim: '1.5 R', engine: '1.5L xăng', trans: 'CVT', fuel: 'Xăng', drive: 'RWD', seats: 7, segment: 'SUV hạng B 7 chỗ', pmin: 520, pmax: 620, econ: '~6,5 L/100km', dims: [4435, 1735, 1705, 2685], cargo: 230, hp: 103, torque: 136, rel: 4, r: { fuelEcon: 4, family: 4, reliability: 4 } }),
+
+  // ===== Genesis (Hàn Quốc – hạng sang) =====
+  mk({ id: 'genesis-g80', brandSlug: 'genesis', model: 'G80', gen: 'RG3 (2021)', trim: '2.5T AWD', engine: '2.5L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'Sedan hạng sang E', pmin: 2790, pmax: 3290, warranty: '5 năm / không giới hạn km', econ: '~9 L/100km', dims: [4995, 1925, 1465, 3010], cargo: 424, hp: 304, torque: 422, rel: 4, r: { comfort: 5, tech: 5, brandRep: 4, performance: 4 } }),
+  mk({ id: 'genesis-gv80', brandSlug: 'genesis', model: 'GV80', gen: 'JX1 (2021)', trim: '3.5T AWD', engine: '3.5L V6 turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 7, segment: 'SUV hạng sang E 7 chỗ', pmin: 3590, pmax: 4290, warranty: '5 năm / không giới hạn km', econ: '~11 L/100km', dims: [4945, 1975, 1715, 2955], cargo: 727, hp: 380, torque: 530, rel: 4, r: { comfort: 5, tech: 5, family: 5, cargo: 4, brandRep: 4, fuelEcon: 2 } }),
+
+  // ===== Porsche (Đức) =====
+  mk({ id: 'porsche-911', brandSlug: 'porsche', model: '911', gen: '992 (2024)', trim: 'Carrera S', engine: '3.0L flat-6 twin-turbo', trans: 'PDK 8 cấp', fuel: 'Xăng', drive: 'RWD', seats: 4, segment: 'Coupe thể thao', pmin: 8500, pmax: 12000, econ: '~10,5 L/100km', dims: [4519, 1852, 1300, 2450], cargo: 132, hp: 480, torque: 530, rel: 4, r: { performance: 5, tech: 5, brandRep: 5, resale: 5, comfort: 4, family: 1, cargo: 1, fuelEcon: 2 } }),
+  mk({ id: 'porsche-cayenne', brandSlug: 'porsche', model: 'Cayenne', gen: 'E3 FL (2024)', trim: '3.0 V6', engine: '3.0L V6 turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng sang E', pmin: 5500, pmax: 7500, econ: '~11 L/100km', dims: [4930, 1983, 1696, 2895], cargo: 772, hp: 353, torque: 500, rel: 4, r: { performance: 5, comfort: 5, tech: 5, brandRep: 5, cargo: 4, fuelEcon: 2 } }),
+  mk({ id: 'porsche-macan', brandSlug: 'porsche', model: 'Macan', gen: '95B FL (2022)', trim: '2.0', engine: '2.0L turbo', trans: 'PDK 7 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng sang D', pmin: 3500, pmax: 4500, econ: '~9,5 L/100km', dims: [4726, 1922, 1621, 2807], cargo: 488, hp: 265, torque: 400, rel: 4, r: { performance: 5, comfort: 4, tech: 4, brandRep: 5, fuelEcon: 2 } }),
+  mk({ id: 'porsche-taycan', brandSlug: 'porsche', model: 'Taycan', gen: 'J1 FL (2024)', trim: '4S', engine: 'Mô-tơ điện kép', trans: '2 cấp', fuel: 'Điện', drive: 'AWD', seats: 4, segment: 'Sedan điện hạng sang', pmin: 5800, pmax: 8500, econ: '~21 kWh/100km', dims: [4963, 1966, 1395, 2900], cargo: 407, hp: 530, torque: 710, rel: 4, r: { performance: 5, tech: 5, brandRep: 5, fuelEcon: 5, comfort: 4 } }),
+
+  // ===== Opel (Đức) =====
+  mk({ id: 'opel-astra', brandSlug: 'opel', model: 'Astra', gen: 'L (2022)', trim: '1.2T GS Line', engine: '1.2L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'Hatchback hạng C', pmin: 850, pmax: 1050, econ: '~6,0 L/100km', dims: [4374, 1860, 1470, 2675], cargo: 422, hp: 130, torque: 230, rel: 3, r: { tech: 4, comfort: 4, fuelEcon: 4 } }),
+  mk({ id: 'opel-mokka', brandSlug: 'opel', model: 'Mokka', gen: '(2021)', trim: '1.2T GS Line', engine: '1.2L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 820, pmax: 980, econ: '~6,2 L/100km', dims: [4151, 1791, 1531, 2557], cargo: 350, hp: 130, torque: 230, rel: 3, r: { tech: 4, fuelEcon: 4 } }),
+
+  // ===== GMC (Mỹ) =====
+  mk({ id: 'gmc-yukon', brandSlug: 'gmc', model: 'Yukon', gen: 'T1XX (2021)', trim: 'Denali 6.2 V8', engine: '6.2L V8', trans: 'AT 10 cấp', fuel: 'Xăng', drive: '4WD', seats: 7, segment: 'SUV cỡ lớn', pmin: 5200, pmax: 6200, econ: '~14 L/100km', dims: [5334, 2057, 1933, 3071], cargo: 722, hp: 420, torque: 624, rel: 3, r: { comfort: 5, cargo: 5, family: 5, performance: 4, fuelEcon: 1 } }),
+  mk({ id: 'gmc-sierra', brandSlug: 'gmc', model: 'Sierra 1500', gen: 'T1XX (2022 FL)', trim: 'Denali 6.2 V8', engine: '6.2L V8', trans: 'AT 10 cấp', fuel: 'Xăng', drive: '4WD', seats: 5, segment: 'Bán tải cỡ lớn', pmin: 4200, pmax: 5200, econ: '~13,5 L/100km', dims: [5890, 2063, 1925, 3745], cargo: 1300, hp: 420, torque: 624, rel: 3, r: { performance: 5, cargo: 5, comfort: 4, fuelEcon: 1 } }),
+
+  // ===== Cadillac (Mỹ) =====
+  mk({ id: 'cadillac-escalade', brandSlug: 'cadillac', model: 'Escalade', gen: 'T1XX (2021)', trim: '6.2 V8 Sport', engine: '6.2L V8', trans: 'AT 10 cấp', fuel: 'Xăng', drive: '4WD', seats: 7, segment: 'SUV cỡ lớn hạng sang', pmin: 7500, pmax: 9500, econ: '~15 L/100km', dims: [5382, 2059, 1948, 3071], cargo: 722, hp: 420, torque: 623, rel: 3, r: { comfort: 5, tech: 5, cargo: 5, family: 5, brandRep: 4, fuelEcon: 1 } }),
+  mk({ id: 'cadillac-lyriq', brandSlug: 'cadillac', model: 'Lyriq', gen: '(2023)', trim: 'RWD', engine: 'Mô-tơ điện đơn', trans: '1 cấp', fuel: 'Điện', drive: 'RWD', seats: 5, segment: 'SUV điện hạng sang D', pmin: 3500, pmax: 4200, econ: '~19 kWh/100km', dims: [4996, 1977, 1623, 3094], cargo: 793, hp: 340, torque: 440, rel: 3, r: { tech: 5, comfort: 5, fuelEcon: 5, cargo: 4, brandRep: 4 } }),
+
+  // ===== Jeep (Mỹ) =====
+  mk({ id: 'jeep-wrangler', brandSlug: 'jeep', model: 'Wrangler', gen: 'JL (2024 FL)', trim: 'Rubicon 2.0T', engine: '2.0L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: '4WD', seats: 5, segment: 'SUV off-road', pmin: 2890, pmax: 3690, econ: '~11,5 L/100km', dims: [4882, 1894, 1848, 3008], cargo: 898, hp: 272, torque: 400, rel: 3, r: { performance: 5, brandRep: 4, comfort: 3, fuelEcon: 2 } }),
+  mk({ id: 'jeep-grand-cherokee', brandSlug: 'jeep', model: 'Grand Cherokee', gen: 'WL (2022)', trim: '3.6 V6 Limited', engine: '3.6L V6', trans: 'AT 8 cấp', fuel: 'Xăng', drive: '4WD', seats: 5, segment: 'SUV hạng D', pmin: 3290, pmax: 4290, econ: '~12 L/100km', dims: [4914, 1979, 1795, 2964], cargo: 1067, hp: 293, torque: 353, rel: 3, r: { comfort: 4, cargo: 5, performance: 4, family: 4, fuelEcon: 2 } }),
+
+  // ===== RAM (Mỹ) =====
+  mk({ id: 'ram-1500', brandSlug: 'ram', model: '1500', gen: 'DT (2022)', trim: 'Laramie 5.7 V8', engine: '5.7L V8 HEMI', trans: 'AT 8 cấp', fuel: 'Xăng', drive: '4WD', seats: 5, segment: 'Bán tải cỡ lớn', pmin: 3900, pmax: 4900, econ: '~14 L/100km', dims: [5916, 2084, 1971, 3672], cargo: 1300, hp: 395, torque: 556, rel: 3, r: { performance: 5, cargo: 5, comfort: 4, fuelEcon: 1 } }),
+
+  // ===== Dodge (Mỹ) =====
+  mk({ id: 'dodge-durango', brandSlug: 'dodge', model: 'Durango', gen: 'WD (2021 FL)', trim: 'R/T 5.7 V8', engine: '5.7L V8 HEMI', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 7, segment: 'SUV hạng D 7 chỗ', pmin: 3290, pmax: 4290, econ: '~14 L/100km', dims: [5100, 1925, 1801, 3042], cargo: 487, hp: 360, torque: 529, rel: 3, r: { performance: 5, cargo: 4, family: 4, fuelEcon: 1 } }),
+  mk({ id: 'dodge-challenger', brandSlug: 'dodge', model: 'Challenger', gen: 'LA (2023)', trim: 'R/T Scat Pack 6.4', engine: '6.4L V8', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'RWD', seats: 5, segment: 'Coupe cơ bắp', pmin: 2790, pmax: 3590, econ: '~15 L/100km', dims: [5022, 1923, 1449, 2946], cargo: 459, hp: 485, torque: 644, rel: 3, r: { performance: 5, brandRep: 4, fuelEcon: 1, family: 2 } }),
+
+  // ===== Chrysler (Mỹ) =====
+  mk({ id: 'chrysler-pacifica', brandSlug: 'chrysler', model: 'Pacifica', gen: 'RU (2021 FL)', trim: 'Pinnacle', engine: '3.6L V6', trans: 'AT 9 cấp', fuel: 'Xăng', drive: 'FWD', seats: 7, segment: 'MPV hạng D', pmin: 2490, pmax: 3090, econ: '~11 L/100km', dims: [5176, 2022, 1798, 3089], cargo: 915, hp: 287, torque: 355, rel: 3, r: { comfort: 5, cargo: 5, family: 5, fuelEcon: 2 } }),
+
+  // ===== Lincoln (Mỹ) =====
+  mk({ id: 'lincoln-navigator', brandSlug: 'lincoln', model: 'Navigator', gen: 'U554 (2022 FL)', trim: 'Reserve 3.5TT', engine: '3.5L V6 twin-turbo', trans: 'AT 10 cấp', fuel: 'Xăng', drive: '4WD', seats: 7, segment: 'SUV cỡ lớn hạng sang', pmin: 6500, pmax: 8200, econ: '~14 L/100km', dims: [5644, 2077, 1940, 3416], cargo: 583, hp: 440, torque: 691, rel: 3, r: { comfort: 5, tech: 5, cargo: 5, family: 5, brandRep: 4, fuelEcon: 1 } }),
+  mk({ id: 'lincoln-aviator', brandSlug: 'lincoln', model: 'Aviator', gen: 'U611 (2023 FL)', trim: '3.0TT Reserve', engine: '3.0L V6 twin-turbo', trans: 'AT 10 cấp', fuel: 'Xăng', drive: 'AWD', seats: 7, segment: 'SUV hạng sang D 7 chỗ', pmin: 4290, pmax: 5290, econ: '~12,5 L/100km', dims: [5060, 2015, 1755, 3025], cargo: 535, hp: 400, torque: 562, rel: 3, r: { comfort: 5, tech: 4, family: 5, cargo: 4, fuelEcon: 2 } }),
+
+  // ===== Land Rover (Anh) =====
+  mk({ id: 'land-rover-defender', brandSlug: 'land-rover', model: 'Defender', gen: 'L663 (2023)', trim: '110 P300', engine: '2.0L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: '4WD', seats: 7, segment: 'SUV off-road hạng sang', pmin: 4200, pmax: 6500, econ: '~11 L/100km', dims: [5018, 2008, 1967, 3022], cargo: 786, hp: 300, torque: 400, rel: 3, r: { performance: 4, comfort: 4, brandRep: 4, cargo: 4, family: 4, fuelEcon: 2 } }),
+  mk({ id: 'land-rover-discovery', brandSlug: 'land-rover', model: 'Discovery', gen: 'L462 FL (2022)', trim: 'D300 R-Dynamic', engine: '3.0L turbo dầu', trans: 'AT 8 cấp', fuel: 'Dầu', drive: '4WD', seats: 7, segment: 'SUV hạng sang E 7 chỗ', pmin: 4500, pmax: 5800, econ: '~9 L/100km', dims: [4956, 2073, 1888, 2923], cargo: 1231, hp: 300, torque: 650, rel: 3, r: { comfort: 5, cargo: 5, family: 5, brandRep: 4, fuelEcon: 3 } }),
+
+  // ===== Range Rover (Anh) =====
+  mk({ id: 'range-rover-evoque', brandSlug: 'range-rover', model: 'Evoque', gen: 'L551 FL (2024)', trim: 'P250 Dynamic SE', engine: '2.0L turbo', trans: 'AT 9 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng sang C', pmin: 3290, pmax: 4290, econ: '~9 L/100km', dims: [4371, 1996, 1649, 2681], cargo: 591, hp: 249, torque: 365, rel: 3, r: { comfort: 4, tech: 4, brandRep: 4, fuelEcon: 3 } }),
+  mk({ id: 'range-rover-sport', brandSlug: 'range-rover', model: 'Sport', gen: 'L461 (2023)', trim: 'P400 Dynamic SE', engine: '3.0L I6 mild hybrid', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng sang E', pmin: 6800, pmax: 9500, econ: '~11 L/100km', dims: [4946, 2047, 1820, 2997], cargo: 835, hp: 400, torque: 550, rel: 3, r: { comfort: 5, performance: 5, tech: 5, brandRep: 5, cargo: 4, fuelEcon: 2 } }),
+  mk({ id: 'range-rover-autobiography', brandSlug: 'range-rover', model: 'Autobiography', gen: 'L460 (2023)', trim: 'P530 V8', engine: '4.4L V8 twin-turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV siêu sang', pmin: 11000, pmax: 16000, econ: '~13 L/100km', dims: [5052, 2047, 1870, 2997], cargo: 818, hp: 530, torque: 750, rel: 3, r: { comfort: 5, performance: 5, tech: 5, brandRep: 5, cargo: 4, fuelEcon: 1 } }),
+
+  // ===== Jaguar (Anh) =====
+  mk({ id: 'jaguar-f-pace', brandSlug: 'jaguar', model: 'F-Pace', gen: 'X761 FL (2021)', trim: 'P250 R-Dynamic', engine: '2.0L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng sang D', pmin: 3290, pmax: 4290, econ: '~9,5 L/100km', dims: [4747, 2071, 1664, 2874], cargo: 613, hp: 250, torque: 365, rel: 3, r: { performance: 4, comfort: 4, brandRep: 4, cargo: 4, fuelEcon: 2 } }),
+  mk({ id: 'jaguar-f-type', brandSlug: 'jaguar', model: 'F-Type', gen: 'X152 FL (2021)', trim: 'P450 R-Dynamic', engine: '5.0L V8 supercharged', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'RWD', seats: 2, segment: 'Coupe thể thao', pmin: 5500, pmax: 7500, econ: '~12 L/100km', dims: [4470, 1923, 1311, 2622], cargo: 336, hp: 450, torque: 580, rel: 3, r: { performance: 5, brandRep: 4, comfort: 4, family: 1, cargo: 1, fuelEcon: 1 } }),
+
+  // ===== Bentley (Anh – siêu sang) =====
+  mk({ id: 'bentley-bentayga', brandSlug: 'bentley', model: 'Bentayga', gen: '(2021 FL)', trim: 'V8', engine: '4.0L V8 twin-turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV siêu sang', pmin: 16000, pmax: 22000, econ: '~13 L/100km', dims: [5125, 1998, 1742, 2995], cargo: 484, hp: 550, torque: 770, rel: 3, r: { comfort: 5, performance: 5, tech: 5, brandRep: 5, fuelEcon: 1 } }),
+  mk({ id: 'bentley-continental-gt', brandSlug: 'bentley', model: 'Continental GT', gen: '(2024 FL)', trim: 'Speed W12', engine: '6.0L W12 twin-turbo', trans: 'DCT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 4, segment: 'Coupe siêu sang', pmin: 18000, pmax: 24000, econ: '~14 L/100km', dims: [4850, 1954, 1405, 2851], cargo: 358, hp: 659, torque: 900, rel: 3, r: { comfort: 5, performance: 5, tech: 5, brandRep: 5, fuelEcon: 1, family: 1 } }),
+
+  // ===== Rolls-Royce (Anh – siêu sang) =====
+  mk({ id: 'rolls-royce-cullinan', brandSlug: 'rolls-royce', model: 'Cullinan', gen: '(2024 Series II)', trim: 'V12', engine: '6.75L V12 twin-turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV siêu sang', pmin: 40000, pmax: 60000, econ: '~15 L/100km', dims: [5341, 2164, 1835, 3295], cargo: 600, hp: 571, torque: 850, rel: 3, r: { comfort: 5, tech: 5, brandRep: 5, cargo: 4, fuelEcon: 1 } }),
+  mk({ id: 'rolls-royce-ghost', brandSlug: 'rolls-royce', model: 'Ghost', gen: '(2021)', trim: 'V12', engine: '6.75L V12 twin-turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'Sedan siêu sang', pmin: 38000, pmax: 55000, econ: '~15 L/100km', dims: [5546, 1978, 1571, 3295], cargo: 490, hp: 571, torque: 850, rel: 3, r: { comfort: 5, tech: 5, brandRep: 5, fuelEcon: 1 } }),
+
+  // ===== Aston Martin (Anh) =====
+  mk({ id: 'aston-martin-dbx', brandSlug: 'aston-martin', model: 'DBX', gen: '(2023)', trim: '707', engine: '4.0L V8 twin-turbo', trans: 'AT 9 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV siêu sang thể thao', pmin: 16000, pmax: 22000, econ: '~14 L/100km', dims: [5039, 1998, 1680, 3060], cargo: 638, hp: 707, torque: 900, rel: 3, r: { performance: 5, comfort: 4, brandRep: 5, fuelEcon: 1 } }),
+  mk({ id: 'aston-martin-vantage', brandSlug: 'aston-martin', model: 'Vantage', gen: '(2024)', trim: 'V8', engine: '4.0L V8 twin-turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'RWD', seats: 2, segment: 'Coupe thể thao', pmin: 14000, pmax: 18000, econ: '~13 L/100km', dims: [4495, 1942, 1273, 2705], cargo: 270, hp: 665, torque: 800, rel: 3, r: { performance: 5, brandRep: 5, fuelEcon: 1, family: 1, cargo: 1 } }),
+
+  // ===== Lotus (Anh) =====
+  mk({ id: 'lotus-emira', brandSlug: 'lotus', model: 'Emira', gen: '(2023)', trim: 'V6 First Edition', engine: '3.5L V6 supercharged', trans: 'AT 6 cấp', fuel: 'Xăng', drive: 'RWD', seats: 2, segment: 'Coupe thể thao', pmin: 5500, pmax: 7000, econ: '~11 L/100km', dims: [4413, 1895, 1225, 2575], cargo: 208, hp: 400, torque: 430, rel: 3, r: { performance: 5, brandRep: 4, family: 1, cargo: 1, fuelEcon: 2 } }),
+  mk({ id: 'lotus-eletre', brandSlug: 'lotus', model: 'Eletre', gen: '(2024)', trim: 'R', engine: 'Mô-tơ điện kép', trans: '2 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'SUV điện hạng sang', pmin: 7000, pmax: 9500, econ: '~21 kWh/100km', dims: [5103, 2019, 1630, 3019], cargo: 688, hp: 905, torque: 985, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, brandRep: 4 } }),
+
+  // ===== McLaren (Anh – siêu xe) =====
+  mk({ id: 'mclaren-artura', brandSlug: 'mclaren', model: 'Artura', gen: '(2023)', trim: 'V6 Hybrid', engine: '3.0L V6 twin-turbo + điện', trans: 'DCT 8 cấp', fuel: 'Hybrid', drive: 'RWD', seats: 2, segment: 'Siêu xe', pmin: 14000, pmax: 18000, econ: '~9 L/100km', dims: [4539, 1976, 1193, 2640], cargo: 160, hp: 680, torque: 720, rel: 3, r: { performance: 5, tech: 5, brandRep: 5, family: 1, cargo: 1, fuelEcon: 2 } }),
+  mk({ id: 'mclaren-750s', brandSlug: 'mclaren', model: '750S', gen: '(2024)', trim: 'Coupe', engine: '4.0L V8 twin-turbo', trans: 'DCT 7 cấp', fuel: 'Xăng', drive: 'RWD', seats: 2, segment: 'Siêu xe', pmin: 20000, pmax: 26000, econ: '~12 L/100km', dims: [4569, 2161, 1196, 2670], cargo: 210, hp: 750, torque: 800, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, family: 1, cargo: 1, fuelEcon: 1 } }),
+
+  // ===== Polestar (Thụy Điển – điện) =====
+  mk({ id: 'polestar-2', brandSlug: 'polestar', model: 'Polestar 2', gen: '(2024 FL)', trim: 'Long Range Dual', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'Fastback điện hạng D', pmin: 1750, pmax: 2150, warranty: '5 năm / 100.000 km (pin 8 năm)', econ: '~18 kWh/100km', dims: [4606, 1859, 1479, 2735], cargo: 405, hp: 421, torque: 740, rel: 4, r: { performance: 5, tech: 5, fuelEcon: 5, safety: 5, brandRep: 4 } }),
+  mk({ id: 'polestar-3', brandSlug: 'polestar', model: 'Polestar 3', gen: '(2024)', trim: 'Long Range Dual', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'SUV điện hạng sang D', pmin: 3200, pmax: 4000, warranty: '5 năm / 100.000 km (pin 8 năm)', econ: '~22 kWh/100km', dims: [4900, 2120, 1614, 2985], cargo: 597, hp: 489, torque: 840, rel: 4, r: { performance: 5, tech: 5, comfort: 5, fuelEcon: 5, cargo: 4, safety: 5 } }),
+
+  // ===== Ferrari (Ý – siêu xe) =====
+  mk({ id: 'ferrari-roma', brandSlug: 'ferrari', model: 'Roma', gen: '(2023)', trim: 'V8', engine: '3.9L V8 twin-turbo', trans: 'DCT 8 cấp', fuel: 'Xăng', drive: 'RWD', seats: 4, segment: 'GT Coupe', pmin: 20000, pmax: 26000, econ: '~13 L/100km', dims: [4656, 1974, 1301, 2670], cargo: 272, hp: 620, torque: 760, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, comfort: 4, family: 1, fuelEcon: 1 } }),
+  mk({ id: 'ferrari-purosangue', brandSlug: 'ferrari', model: 'Purosangue', gen: '(2024)', trim: 'V12', engine: '6.5L V12', trans: 'DCT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 4, segment: 'SUV siêu xe', pmin: 40000, pmax: 55000, econ: '~17 L/100km', dims: [4973, 2028, 1589, 3018], cargo: 473, hp: 725, torque: 716, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, cargo: 3, fuelEcon: 1 } }),
+
+  // ===== Lamborghini (Ý – siêu xe) =====
+  mk({ id: 'lamborghini-urus', brandSlug: 'lamborghini', model: 'Urus', gen: 'SE (2024)', trim: 'Performante', engine: '4.0L V8 twin-turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV siêu xe', pmin: 16000, pmax: 24000, econ: '~14 L/100km', dims: [5112, 2016, 1638, 3003], cargo: 616, hp: 666, torque: 850, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, cargo: 4, fuelEcon: 1 } }),
+  mk({ id: 'lamborghini-revuelto', brandSlug: 'lamborghini', model: 'Revuelto', gen: '(2024)', trim: 'V12 HPEV', engine: '6.5L V12 + điện', trans: 'DCT 8 cấp', fuel: 'Hybrid', drive: 'AWD', seats: 2, segment: 'Hypercar', pmin: 50000, pmax: 70000, econ: '~13 L/100km', dims: [4947, 2033, 1160, 2779], cargo: 95, hp: 1015, torque: 725, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, family: 1, cargo: 1, fuelEcon: 1 } }),
+
+  // ===== Maserati (Ý) =====
+  mk({ id: 'maserati-grecale', brandSlug: 'maserati', model: 'Grecale', gen: '(2023)', trim: 'Modena', engine: '2.0L turbo mild hybrid', trans: 'AT 8 cấp', fuel: 'Hybrid', drive: 'AWD', seats: 5, segment: 'SUV hạng sang D', pmin: 5500, pmax: 7500, econ: '~10 L/100km', dims: [4846, 1948, 1670, 2901], cargo: 535, hp: 330, torque: 450, rel: 3, r: { performance: 4, comfort: 4, brandRep: 4, fuelEcon: 2 } }),
+  mk({ id: 'maserati-ghibli', brandSlug: 'maserati', model: 'Ghibli', gen: 'M157 FL (2022)', trim: 'GT', engine: '2.0L turbo mild hybrid', trans: 'AT 8 cấp', fuel: 'Hybrid', drive: 'RWD', seats: 5, segment: 'Sedan hạng sang E', pmin: 6000, pmax: 8000, econ: '~9,5 L/100km', dims: [4971, 1945, 1461, 2998], cargo: 500, hp: 330, torque: 450, rel: 3, r: { performance: 4, comfort: 4, brandRep: 4, fuelEcon: 2 } }),
+
+  // ===== Alfa Romeo (Ý) =====
+  mk({ id: 'alfa-romeo-stelvio', brandSlug: 'alfa-romeo', model: 'Stelvio', gen: '(2023 FL)', trim: '2.0T Veloce', engine: '2.0L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng sang D', pmin: 3290, pmax: 4290, econ: '~9 L/100km', dims: [4687, 1903, 1671, 2818], cargo: 525, hp: 280, torque: 400, rel: 3, r: { performance: 5, brandRep: 4, comfort: 4, fuelEcon: 2 } }),
+  mk({ id: 'alfa-romeo-giulia', brandSlug: 'alfa-romeo', model: 'Giulia', gen: '(2023 FL)', trim: '2.0T Veloce', engine: '2.0L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'RWD', seats: 5, segment: 'Sedan hạng sang D', pmin: 2990, pmax: 3890, econ: '~8,5 L/100km', dims: [4639, 1860, 1436, 2820], cargo: 480, hp: 280, torque: 400, rel: 3, r: { performance: 5, brandRep: 4, comfort: 4, fuelEcon: 2 } }),
+
+  // ===== Fiat (Ý) =====
+  mk({ id: 'fiat-500', brandSlug: 'fiat', model: '500', gen: '(2024)', trim: '1.0 Hybrid', engine: '1.0L mild hybrid', trans: 'MT 6 cấp', fuel: 'Hybrid', drive: 'FWD', seats: 4, segment: 'Hatchback mini', pmin: 550, pmax: 700, econ: '~4,8 L/100km', dims: [3571, 1627, 1488, 2300], cargo: 185, hp: 70, torque: 92, rel: 3, r: { fuelEcon: 5, tech: 3, cargo: 2, family: 2 } }),
+  mk({ id: 'fiat-500x', brandSlug: 'fiat', model: '500X', gen: '(2023 FL)', trim: '1.5 Hybrid', engine: '1.5L mild hybrid', trans: 'DCT 7 cấp', fuel: 'Hybrid', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 750, pmax: 950, econ: '~5,8 L/100km', dims: [4273, 1796, 1620, 2570], cargo: 350, hp: 130, torque: 240, rel: 3, r: { fuelEcon: 4, tech: 3 } }),
+
+  // ===== Pagani (Ý – hypercar) =====
+  mk({ id: 'pagani-utopia', brandSlug: 'pagani', model: 'Utopia', gen: '(2024)', trim: 'V12', engine: '6.0L V12 twin-turbo (AMG)', trans: 'MT 7 cấp', fuel: 'Xăng', drive: 'RWD', seats: 2, segment: 'Hypercar', pmin: 60000, pmax: 90000, econ: '~16 L/100km', dims: [4566, 2058, 1170, 2700], cargo: 80, hp: 864, torque: 1100, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, family: 1, cargo: 1, fuelEcon: 1 } }),
+
+  // ===== Renault (Pháp) =====
+  mk({ id: 'renault-captur', brandSlug: 'renault', model: 'Captur', gen: '(2024 FL)', trim: '1.3 TCe Techno', engine: '1.3L turbo', trans: 'AT 7 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 720, pmax: 880, econ: '~6,0 L/100km', dims: [4239, 1797, 1576, 2639], cargo: 422, hp: 140, torque: 260, rel: 3, r: { tech: 4, fuelEcon: 4, comfort: 4, resale: 2 } }),
+  mk({ id: 'renault-arkana', brandSlug: 'renault', model: 'Arkana', gen: '(2023)', trim: '1.3 TCe RS Line', engine: '1.3L turbo mild hybrid', trans: 'AT 7 cấp', fuel: 'Hybrid', drive: 'FWD', seats: 5, segment: 'SUV coupe hạng C', pmin: 880, pmax: 1090, econ: '~5,8 L/100km', dims: [4568, 1821, 1576, 2720], cargo: 480, hp: 140, torque: 260, rel: 3, r: { tech: 4, comfort: 4, fuelEcon: 4, resale: 2 } }),
+
+  // ===== Citroën (Pháp) =====
+  mk({ id: 'citroen-c3', brandSlug: 'citroen', model: 'C3', gen: '(2024)', trim: '1.2 Max', engine: '1.2L turbo', trans: 'AT 6 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'Hatchback hạng B', pmin: 480, pmax: 600, econ: '~5,8 L/100km', dims: [4015, 1755, 1610, 2540], cargo: 310, hp: 110, torque: 205, rel: 3, r: { comfort: 4, fuelEcon: 4, resale: 2 } }),
+  mk({ id: 'citroen-c5-aircross', brandSlug: 'citroen', model: 'C5 Aircross', gen: '(2023 FL)', trim: '1.6T Feel', engine: '1.6L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng C', pmin: 900, pmax: 1150, econ: '~6,8 L/100km', dims: [4500, 1859, 1689, 2730], cargo: 580, hp: 180, torque: 250, rel: 3, r: { comfort: 5, cargo: 4, tech: 4, resale: 2 } }),
+
+  // ===== DS (Pháp – hạng sang) =====
+  mk({ id: 'ds-7', brandSlug: 'ds', model: 'DS 7', gen: '(2023 FL)', trim: '1.6T Rivoli', engine: '1.6L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng sang C', pmin: 1250, pmax: 1650, econ: '~7,0 L/100km', dims: [4590, 1895, 1635, 2740], cargo: 555, hp: 180, torque: 250, rel: 3, r: { comfort: 5, tech: 4, brandRep: 3, resale: 2 } }),
+  mk({ id: 'ds-3', brandSlug: 'ds', model: 'DS 3', gen: '(2023 FL)', trim: '1.2T Performance Line', engine: '1.2L turbo', trans: 'AT 8 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 950, pmax: 1200, econ: '~6,2 L/100km', dims: [4118, 1791, 1534, 2558], cargo: 350, hp: 130, torque: 230, rel: 3, r: { comfort: 4, tech: 4, brandRep: 3, resale: 2 } }),
+
+  // ===== Bugatti (Pháp – hypercar) =====
+  mk({ id: 'bugatti-chiron', brandSlug: 'bugatti', model: 'Chiron', gen: '(2022)', trim: 'Super Sport', engine: '8.0L W16 quad-turbo', trans: 'DCT 7 cấp', fuel: 'Xăng', drive: 'AWD', seats: 2, segment: 'Hypercar', pmin: 80000, pmax: 130000, econ: '~22 L/100km', dims: [4544, 2038, 1212, 2711], cargo: 44, hp: 1600, torque: 1600, rel: 3, r: { performance: 5, brandRep: 5, tech: 5, family: 1, cargo: 1, fuelEcon: 1 } }),
+
+  // ===== MG (Trung Quốc) =====
+  mk({ id: 'mg-zs', brandSlug: 'mg', model: 'ZS', gen: '(2024)', trim: '1.5 Luxury', engine: '1.5L xăng', trans: 'CVT', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 519, pmax: 619, warranty: '5 năm / 150.000 km', econ: '~6,2 L/100km', dims: [4323, 1809, 1653, 2585], cargo: 359, hp: 113, torque: 150, rel: 3, r: { fuelEcon: 4, tech: 4, resale: 2 } }),
+  mk({ id: 'mg-mg5', brandSlug: 'mg', model: 'MG5', gen: '(2023)', trim: '1.5 Luxury', engine: '1.5L xăng', trans: 'CVT', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'Sedan hạng C', pmin: 459, pmax: 569, warranty: '5 năm / 150.000 km', econ: '~5,9 L/100km', dims: [4675, 1842, 1473, 2680], cargo: 401, hp: 114, torque: 150, rel: 3, r: { fuelEcon: 4, cargo: 4, resale: 2 } }),
+  mk({ id: 'mg-mg4', brandSlug: 'mg', model: 'MG4', gen: '(2024)', trim: 'Luxury EV', engine: 'Mô-tơ điện (sau)', trans: '1 cấp', fuel: 'Điện', drive: 'RWD', seats: 5, segment: 'Hatchback điện hạng C', pmin: 730, pmax: 880, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~16 kWh/100km', dims: [4287, 1836, 1504, 2705], cargo: 363, hp: 203, torque: 250, rel: 3, r: { performance: 4, tech: 4, fuelEcon: 5, resale: 2 } }),
+
+  // ===== Geely (Trung Quốc) =====
+  mk({ id: 'geely-coolray', brandSlug: 'geely', model: 'Coolray', gen: '(2024)', trim: '1.5T Premium', engine: '1.5L turbo', trans: 'DCT 7 cấp', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 538, pmax: 628, warranty: '5 năm / 150.000 km', econ: '~6,5 L/100km', dims: [4400, 1800, 1609, 2600], cargo: 330, hp: 177, torque: 255, rel: 3, r: { performance: 4, tech: 4, fuelEcon: 4, resale: 2 } }),
+  mk({ id: 'geely-monjaro', brandSlug: 'geely', model: 'Monjaro', gen: '(2024)', trim: '2.0T Flagship', engine: '2.0L turbo mild hybrid', trans: 'AT 8 cấp', fuel: 'Hybrid', drive: 'AWD', seats: 5, segment: 'SUV hạng D', pmin: 1150, pmax: 1469, warranty: '5 năm / 150.000 km', econ: '~8,0 L/100km', dims: [4770, 1895, 1689, 2845], cargo: 552, hp: 238, torque: 350, rel: 3, r: { comfort: 4, tech: 4, cargo: 4, family: 4, resale: 2 } }),
+
+  // ===== Zeekr (Trung Quốc – điện) =====
+  mk({ id: 'zeekr-001', brandSlug: 'zeekr', model: '001', gen: '(2024)', trim: 'Long Range AWD', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'Shooting brake điện', pmin: 1690, pmax: 2090, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~18 kWh/100km', dims: [4970, 1999, 1560, 3005], cargo: 539, hp: 544, torque: 686, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, comfort: 4, resale: 2 } }),
+  mk({ id: 'zeekr-x', brandSlug: 'zeekr', model: 'X', gen: '(2024)', trim: 'Privilege AWD', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'SUV điện hạng B', pmin: 1090, pmax: 1290, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~16 kWh/100km', dims: [4450, 1836, 1572, 2750], cargo: 362, hp: 422, torque: 543, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, resale: 2 } }),
+
+  // ===== Chery (Trung Quốc) =====
+  mk({ id: 'chery-omoda-5', brandSlug: 'chery', model: 'Omoda 5', gen: '(2024)', trim: '1.5T Flagship', engine: '1.5L turbo', trans: 'CVT', fuel: 'Xăng', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 539, pmax: 669, warranty: '5 năm / 150.000 km', econ: '~6,5 L/100km', dims: [4400, 1830, 1588, 2630], cargo: 360, hp: 156, torque: 230, rel: 3, r: { tech: 4, fuelEcon: 4, resale: 2 } }),
+  mk({ id: 'chery-tiggo-8', brandSlug: 'chery', model: 'Tiggo 8 Pro', gen: '(2024)', trim: '2.0T Flagship', engine: '2.0L turbo', trans: 'DCT 7 cấp', fuel: 'Xăng', drive: 'FWD', seats: 7, segment: 'SUV hạng C 7 chỗ', pmin: 858, pmax: 1058, warranty: '5 năm / 150.000 km', econ: '~7,5 L/100km', dims: [4722, 1860, 1745, 2710], cargo: 193, hp: 254, torque: 390, rel: 3, r: { comfort: 4, tech: 4, family: 4, cargo: 4, resale: 2 } }),
+
+  // ===== Haval (Trung Quốc) =====
+  mk({ id: 'haval-h6', brandSlug: 'haval', model: 'H6', gen: '(2023)', trim: '2.0T HEV', engine: '1.5L Hybrid', trans: 'DHT', fuel: 'Hybrid', drive: 'FWD', seats: 5, segment: 'SUV hạng C', pmin: 850, pmax: 1096, warranty: '5 năm / 150.000 km', econ: '~5,5 L/100km', dims: [4683, 1886, 1730, 2738], cargo: 600, hp: 243, torque: 530, rel: 3, r: { fuelEcon: 4, tech: 4, comfort: 4, family: 4, resale: 2 } }),
+  mk({ id: 'haval-jolion', brandSlug: 'haval', model: 'Jolion', gen: '(2023)', trim: '1.5 HEV', engine: '1.5L Hybrid', trans: 'DHT', fuel: 'Hybrid', drive: 'FWD', seats: 5, segment: 'SUV hạng B', pmin: 650, pmax: 779, warranty: '5 năm / 150.000 km', econ: '~5,0 L/100km', dims: [4472, 1841, 1574, 2700], cargo: 430, hp: 190, torque: 375, rel: 3, r: { fuelEcon: 5, tech: 4, resale: 2 } }),
+
+  // ===== Tank (Trung Quốc – off-road) =====
+  mk({ id: 'tank-300', brandSlug: 'tank', model: 'Tank 300', gen: '(2024)', trim: '2.0T HEV', engine: '2.0L turbo Hybrid', trans: 'AT 9 cấp', fuel: 'Hybrid', drive: '4WD', seats: 5, segment: 'SUV off-road', pmin: 1190, pmax: 1490, warranty: '5 năm / 150.000 km', econ: '~8,5 L/100km', dims: [4760, 1930, 1903, 2750], cargo: 400, hp: 342, torque: 648, rel: 3, r: { performance: 4, tech: 4, brandRep: 3, fuelEcon: 3, resale: 2 } }),
+  mk({ id: 'tank-500', brandSlug: 'tank', model: 'Tank 500', gen: '(2024)', trim: '2.0T HEV', engine: '2.0L turbo Hybrid', trans: 'AT 9 cấp', fuel: 'Hybrid', drive: '4WD', seats: 7, segment: 'SUV off-road cỡ lớn', pmin: 1690, pmax: 1990, warranty: '5 năm / 150.000 km', econ: '~9,5 L/100km', dims: [5078, 1934, 1905, 2850], cargo: 795, hp: 342, torque: 648, rel: 3, r: { comfort: 4, cargo: 5, family: 4, performance: 4, fuelEcon: 3, resale: 2 } }),
+
+  // ===== Ora (Trung Quốc – điện) =====
+  mk({ id: 'ora-good-cat', brandSlug: 'ora', model: 'Good Cat', gen: '(2023)', trim: '400 Ultra', engine: 'Mô-tơ điện (trước)', trans: '1 cấp', fuel: 'Điện', drive: 'FWD', seats: 5, segment: 'Hatchback điện hạng B', pmin: 669, pmax: 799, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~14 kWh/100km', dims: [4235, 1825, 1596, 2650], cargo: 228, hp: 143, torque: 210, rel: 3, r: { fuelEcon: 5, tech: 4, comfort: 4, resale: 2 } }),
+  mk({ id: 'ora-07', brandSlug: 'ora', model: 'Ora 07', gen: '(2024)', trim: 'Performance AWD', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'Sedan điện hạng D', pmin: 1090, pmax: 1290, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~16 kWh/100km', dims: [4871, 1862, 1500, 2870], cargo: 470, hp: 408, torque: 680, rel: 3, r: { performance: 5, tech: 4, fuelEcon: 5, resale: 2 } }),
+
+  // ===== NIO (Trung Quốc – điện) =====
+  mk({ id: 'nio-et5', brandSlug: 'nio', model: 'ET5', gen: '(2023)', trim: '75kWh', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'Sedan điện hạng D', pmin: 1290, pmax: 1590, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~16 kWh/100km', dims: [4790, 1960, 1499, 2888], cargo: 386, hp: 489, torque: 700, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, comfort: 4, resale: 2 } }),
+  mk({ id: 'nio-es6', brandSlug: 'nio', model: 'ES6', gen: '(2024)', trim: '100kWh', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'SUV điện hạng D', pmin: 1690, pmax: 2090, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~19 kWh/100km', dims: [4854, 1995, 1703, 2915], cargo: 579, hp: 490, torque: 700, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, cargo: 4, comfort: 4, resale: 2 } }),
+
+  // ===== XPeng (Trung Quốc – điện) =====
+  mk({ id: 'xpeng-g6', brandSlug: 'xpeng', model: 'G6', gen: '(2024)', trim: 'Performance AWD', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'SUV điện hạng C', pmin: 1090, pmax: 1390, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~17 kWh/100km', dims: [4753, 1920, 1650, 2890], cargo: 571, hp: 487, torque: 660, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, resale: 2 } }),
+  mk({ id: 'xpeng-p7', brandSlug: 'xpeng', model: 'P7', gen: '(2024 FL)', trim: 'Performance AWD', engine: 'Mô-tơ điện kép', trans: '1 cấp', fuel: 'Điện', drive: 'AWD', seats: 5, segment: 'Sedan điện hạng D', pmin: 1290, pmax: 1590, warranty: '5 năm / 150.000 km (pin 8 năm)', econ: '~16 kWh/100km', dims: [4880, 1896, 1450, 2998], cargo: 440, hp: 473, torque: 655, rel: 3, r: { performance: 5, tech: 5, fuelEcon: 5, comfort: 4, resale: 2 } }),
+
+  // ===== Li Auto (Trung Quốc – EREV) =====
+  mk({ id: 'li-auto-l9', brandSlug: 'li-auto', model: 'L9', gen: '(2024)', trim: 'Max EREV', engine: '1.5T tăng phạm vi + điện kép', trans: '1 cấp', fuel: 'Hybrid', drive: 'AWD', seats: 6, segment: 'SUV hạng E 6 chỗ', pmin: 1690, pmax: 2090, warranty: '5 năm / 150.000 km', econ: '~7,0 L/100km', dims: [5218, 1998, 1800, 3105], cargo: 686, hp: 449, torque: 620, rel: 3, r: { comfort: 5, tech: 5, family: 5, cargo: 5, fuelEcon: 4, resale: 2 } }),
+  mk({ id: 'li-auto-l7', brandSlug: 'li-auto', model: 'L7', gen: '(2024)', trim: 'Max EREV', engine: '1.5T tăng phạm vi + điện kép', trans: '1 cấp', fuel: 'Hybrid', drive: 'AWD', seats: 5, segment: 'SUV hạng D', pmin: 1390, pmax: 1790, warranty: '5 năm / 150.000 km', econ: '~6,8 L/100km', dims: [5050, 1995, 1750, 3005], cargo: 525, hp: 449, torque: 620, rel: 3, r: { comfort: 5, tech: 5, family: 4, cargo: 4, fuelEcon: 4, resale: 2 } }),
+
+  // ===== Hongqi (Trung Quốc – hạng sang) =====
+  mk({ id: 'hongqi-hs5', brandSlug: 'hongqi', model: 'HS5', gen: '(2023)', trim: '2.0T Flagship', engine: '2.0L turbo', trans: 'AT 7 cấp', fuel: 'Xăng', drive: 'AWD', seats: 5, segment: 'SUV hạng C', pmin: 1090, pmax: 1390, warranty: '5 năm / 150.000 km', econ: '~8,5 L/100km', dims: [4760, 1907, 1700, 2870], cargo: 442, hp: 252, torque: 380, rel: 3, r: { comfort: 4, tech: 4, brandRep: 3, resale: 2 } }),
+  mk({ id: 'hongqi-h9', brandSlug: 'hongqi', model: 'H9', gen: '(2024)', trim: '3.0 V6 Flagship', engine: '3.0L V6 supercharged', trans: 'AT 7 cấp', fuel: 'Xăng', drive: 'RWD', seats: 5, segment: 'Sedan hạng sang E', pmin: 2090, pmax: 2690, warranty: '5 năm / 150.000 km', econ: '~10 L/100km', dims: [5137, 1904, 1493, 3060], cargo: 510, hp: 280, torque: 400, rel: 3, r: { comfort: 5, tech: 4, brandRep: 3, resale: 2 } }),
 ];
 
 const vehicleById = new Map(vehicles.map((v) => [v.id, v]));
