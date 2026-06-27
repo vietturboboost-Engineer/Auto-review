@@ -7,33 +7,83 @@ interface Car {
   type: string;
   price: string;
   color: string;
+  image: string;
 }
 
+// Ảnh thật lấy từ Wikimedia Commons (URL CDN ổn định). Nếu ảnh lỗi sẽ tự rơi về SVG minh hoạ.
 // Giá tham khảo thị trường Việt Nam (có thể thay đổi theo thời điểm & đại lý).
 const toyotaCars: Car[] = [
-  { name: 'Toyota Wigo', type: 'Hatchback đô thị', price: '360 – 405 triệu', color: '#ef476f' },
-  { name: 'Toyota Vios', type: 'Sedan hạng B', price: '458 – 545 triệu', color: '#118ab2' },
-  { name: 'Toyota Veloz Cross', type: 'MPV 7 chỗ', price: '658 – 698 triệu', color: '#06d6a0' },
-  { name: 'Toyota Yaris Cross', type: 'SUV đô thị', price: '730 – 838 triệu', color: '#ffd166' },
+  {
+    name: 'Toyota Wigo',
+    type: 'Hatchback đô thị',
+    price: '360 – 405 triệu',
+    color: '#ef476f',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/2014_Daihatsu_Ayla_1.0_X_B100RS_%2820190615%29.jpg/320px-2014_Daihatsu_Ayla_1.0_X_B100RS_%2820190615%29.jpg',
+  },
+  {
+    name: 'Toyota Vios',
+    type: 'Sedan hạng B',
+    price: '458 – 545 triệu',
+    color: '#118ab2',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Toyota_Vios_1.5_VVT-i_G_%28IV%29_%E2%80%93_f_13032025.jpg/320px-Toyota_Vios_1.5_VVT-i_G_%28IV%29_%E2%80%93_f_13032025.jpg',
+  },
+  {
+    name: 'Toyota Veloz Cross',
+    type: 'MPV 7 chỗ',
+    price: '658 – 698 triệu',
+    color: '#06d6a0',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/2022_Toyota_Avanza_1.5_G_Toyota_Safety_Sense_W101RE_%2820220403%29.jpg/320px-2022_Toyota_Avanza_1.5_G_Toyota_Safety_Sense_W101RE_%2820220403%29.jpg',
+  },
+  {
+    name: 'Toyota Yaris Cross',
+    type: 'SUV đô thị',
+    price: '730 – 838 triệu',
+    color: '#ffd166',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Toyota_Yaris_Cross_Hybrid_%28XP210%29_1X7A1846.jpg/320px-Toyota_Yaris_Cross_Hybrid_%28XP210%29_1X7A1846.jpg',
+  },
   {
     name: 'Toyota Corolla Cross',
     type: 'SUV hạng C',
     price: '820 – 935 triệu',
     color: '#8338ec',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg/320px-2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg',
   },
   {
     name: 'Toyota Innova Cross',
     type: 'MPV cao cấp',
     price: '810 triệu – 1,0 tỷ',
     color: '#fb5607',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Toyota_Innova_Zenix_2.0_V_%28III%29_%E2%80%93_f_22032025.jpg/320px-Toyota_Innova_Zenix_2.0_V_%28III%29_%E2%80%93_f_22032025.jpg',
   },
-  { name: 'Toyota Camry', type: 'Sedan hạng D', price: '1,105 – 1,495 tỷ', color: '#3a86ff' },
-  { name: 'Toyota Fortuner', type: 'SUV 7 chỗ', price: '1,055 – 1,470 tỷ', color: '#2a9d8f' },
+  {
+    name: 'Toyota Camry',
+    type: 'Sedan hạng D',
+    price: '1,105 – 1,495 tỷ',
+    color: '#3a86ff',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/2018_Toyota_Camry_%28ASV70R%29_Ascent_sedan_%282018-08-27%29_01.jpg/320px-2018_Toyota_Camry_%28ASV70R%29_Ascent_sedan_%282018-08-27%29_01.jpg',
+  },
+  {
+    name: 'Toyota Fortuner',
+    type: 'SUV 7 chỗ',
+    price: '1,055 – 1,470 tỷ',
+    color: '#2a9d8f',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/2015_Toyota_Fortuner_%28New_Zealand%29.jpg/320px-2015_Toyota_Fortuner_%28New_Zealand%29.jpg',
+  },
   {
     name: 'Toyota Land Cruiser',
     type: 'SUV hạng sang',
     price: '4,030 – 4,600 tỷ',
     color: '#e09f3e',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/2021_Toyota_Land_Cruiser_300_3.4_ZX_%28Colombia%29_front_view_04.png/320px-2021_Toyota_Land_Cruiser_300_3.4_ZX_%28Colombia%29_front_view_04.png',
   },
 ];
 
@@ -49,10 +99,18 @@ function carThumb(color: string): string {
   </svg>`;
 }
 
+// Ảnh thật + fallback SVG: nếu <img> lỗi mạng, ẩn ảnh và hiện SVG minh hoạ kế bên.
+function carPhoto(c: Car): string {
+  return `<img class="photo" src="${c.image}" alt="${c.name}" width="120" height="68"
+      loading="lazy" referrerpolicy="no-referrer"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+    <span class="fallback" style="display:none">${carThumb(c.color)}</span>`;
+}
+
 const rows = toyotaCars
   .map(
     (c) => `<tr>
-      <td class="thumb">${carThumb(c.color)}</td>
+      <td class="thumb">${carPhoto(c)}</td>
       <td class="name">${c.name}</td>
       <td class="type">${c.type}</td>
       <td class="price">${c.price}</td>
@@ -173,8 +231,16 @@ const page = /* html */ `<!doctype html>
       tbody tr { transition: background 0.15s ease; }
       tbody tr:hover { background: rgba(255, 255, 255, 0.08); }
       tbody tr:last-child td { border-bottom: none; }
-      td.thumb { width: 110px; }
+      td.thumb { width: 132px; }
       td.thumb svg { display: block; }
+      td.thumb img.photo {
+        display: block;
+        width: 120px;
+        height: 68px;
+        object-fit: cover;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+      }
       td.name { font-weight: 600; white-space: nowrap; }
       td.type { opacity: 0.85; font-size: 0.92rem; }
       td.price { font-weight: 700; color: var(--accent); white-space: nowrap; }
