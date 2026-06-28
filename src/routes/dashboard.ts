@@ -133,6 +133,13 @@ body{
     linear-gradient(160deg,var(--bg1),var(--bg2));
   background-attachment:fixed;
 }
+
+/* Scrollbar mảnh, gọn */
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 a{color:inherit}
 .wrap{max-width:1180px;margin:0 auto;padding:0 18px}
 
