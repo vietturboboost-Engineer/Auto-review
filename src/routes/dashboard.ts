@@ -668,6 +668,8 @@ html[data-skin="handdrawn"] .slot,
 html[data-skin="handdrawn"] .opt,
 html[data-skin="handdrawn"] .rvhelp,
 html[data-skin="handdrawn"] .vurate{border:1.5px solid var(--hd-stroke);border-radius:var(--hd-pill);background:var(--surface)}
+/* Trạng thái đã chọn của .opt phải thắng nền .surface ở trên (cùng/độ ưu tiên cao hơn) */
+html[data-skin="handdrawn"] .opt.on{background:var(--accent);color:var(--ink);border-color:var(--hd-stroke)}
 /* .vnbadge giữ nền màu trạng thái (xanh/đỏ...) để chữ trắng luôn đọc được ở cả light/dark */
 html[data-skin="handdrawn"] .vnbadge{border:1.5px solid var(--hd-stroke);border-radius:var(--hd-pill)}
 /* Tabs */
