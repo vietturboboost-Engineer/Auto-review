@@ -21,6 +21,7 @@ import {
   type MarketDataSource,
   type VerifiedMarketFile,
 } from '../data/marketCollector.js';
+import { createRssNewsSource } from '../data/sources/rssNews.js';
 
 const DATA_DIR = join(process.cwd(), 'src', 'data', 'market-data');
 const GENERATED_FILE = join(process.cwd(), 'src', 'data', 'marketTrends.generated.ts');
@@ -59,14 +60,33 @@ function loadVerifiedSources(v: CollectorVehicle): MarketDataSource[] {
   }
 }
 
+/**
+ * Các feed RSS tin xe (NGUỒN THẬT, opt-in qua biến môi trường).
+ *   MARKET_RSS_FEEDS="VnExpress|https://vnexpress.net/rss/oto-xe-may.rss,Báo X|https://.../rss"
+ * Mặc định rỗng -> chỉ chạy offline với dữ liệu đã kiểm chứng.
+ */
+function loadRssSources(): MarketDataSource[] {
+  const raw = (process.env.MARKET_RSS_FEEDS ?? '').trim();
+  if (!raw) return [];
+  const feeds: MarketDataSource[] = [];
+  for (const part of raw.split(',')) {
+    const [publisher, url] = part.split('|').map((s) => s.trim());
+    if (publisher && url) feeds.push(createRssNewsSource({ publisher, url }));
+  }
+  return feeds;
+}
+
+const rssSources = loadRssSources();
+
 const curatedFiles = existsSync(DATA_DIR)
   ? readdirSync(DATA_DIR).filter((f) => f.endsWith('.json') && !f.startsWith('_'))
   : [];
 
 console.log('Thư mục dữ liệu:', DATA_DIR);
 console.log('Số file đã kiểm chứng:', curatedFiles.length);
+console.log('Số feed RSS bật:', rssSources.length);
 
-const result = await collectAll(vehicles, loadVerifiedSources);
+const result = await collectAll(vehicles, (v) => [...loadVerifiedSources(v), ...rssSources]);
 const ids = Object.keys(result);
 console.log('Số xe có dữ liệu thị trường xác minh được:', ids.length);
 
