@@ -240,6 +240,18 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .cmpbar .slot{font-size:12px;padding:6px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);white-space:nowrap}
 .cmpbar .slot b{cursor:pointer;color:var(--bad);margin-left:6px}
 
+/* Back to top */
+.totop{position:fixed;right:24px;bottom:24px;z-index:55;width:60px;height:60px;border-radius:50%;
+  border:none;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#1a1300;
+  box-shadow:0 10px 26px rgba(0,0,0,.45),0 0 0 6px rgba(255,209,102,.16);
+  cursor:pointer;font-size:34px;font-weight:900;line-height:1;display:none;align-items:center;justify-content:center;
+  transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
+.totop:hover{transform:translateY(-4px) scale(1.06);filter:brightness(1.07);
+  box-shadow:0 16px 34px rgba(0,0,0,.5),0 0 0 8px rgba(255,209,102,.22)}
+.totop:active{transform:translateY(-1px) scale(1)}
+.totop.show{display:flex;animation:totop-in .25s ease}
+@keyframes totop-in{from{opacity:0;transform:translateY(12px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
+
 /* Modal */
 .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
   background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);overflow-y:auto;padding:16px 12px}
@@ -372,6 +384,8 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   <button class="clearbtn" id="cmp-clear">Xoá</button>
 </div>
 
+<button class="totop" id="totop" title="Về đầu trang" aria-label="Về đầu trang">↑</button>
+
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 
 <script>
@@ -386,6 +400,14 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function $(id){ return document.getElementById(id); }
   function stars(n){ var f=Math.max(0,Math.min(5,Math.round(n))); return '★★★★★'.slice(0,f)+'☆☆☆☆☆'.slice(0,5-f); }
+  /* Yêu cầu Wikimedia trả ảnh phân giải cao hơn khi xem chi tiết (cards vẫn dùng bản nhẹ). */
+  function hiRes(u){
+    if(typeof u!=='string' || u.indexOf('upload.wikimedia.org')<0) return u;
+    var p=u.lastIndexOf('/'); if(p<0) return u;
+    var seg=u.slice(p+1), m=seg.indexOf('px-'); if(m<1) return u;
+    for(var i=0;i<m;i++){ var c=seg.charCodeAt(i); if(c<48||c>57) return u; }
+    return u.slice(0,p+1)+'1280px-'+seg.slice(m+3);
+  }
 
   /* Ảnh dự phòng nếu URL gốc lỗi (hiếm) -> không bao giờ hiện icon ảnh vỡ. */
   var FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#26262e"/><path d="M40 120 q10 -40 55 -44 l70 -2 q34 0 52 30 l24 4 q14 2 14 16 q0 9 -11 9 l-200 0 q-11 0 -11 -9 z" fill="#3a3a44"/><circle cx="95" cy="118" r="16" fill="#15151a"/><circle cx="210" cy="118" r="16" fill="#15151a"/><text x="160" y="158" font-family="Arial" font-size="13" fill="#9a9aa6" text-anchor="middle">Ảnh đang cập nhật</text></svg>');
@@ -467,6 +489,15 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   function closeModal(){ modal.classList.remove('show'); document.body.style.overflow=''; }
   modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+  /* ---------- Back to top ---------- */
+  var totop=$('totop');
+  if(totop){
+    window.addEventListener('scroll', function(){
+      if(window.pageYOffset>400) totop.classList.add('show'); else totop.classList.remove('show');
+    }, { passive:true });
+    totop.onclick=function(){ window.scrollTo({ top:0, behavior:'smooth' }); };
+  }
   function bindTabs(){
     var tabs=sheet.querySelectorAll('.tab'); if(!tabs.length) return;
     Array.prototype.forEach.call(tabs, function(t){
@@ -525,7 +556,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       + '<div class="sheet-body">'
       +   '<div class="tabpane active" data-pane="ov">'
       +     '<div class="ovgrid">'
-      +       '<img class="ovimg" src="'+esc(v.image)+'" alt="">'
+      +       '<img class="ovimg" src="'+esc(hiRes(v.image))+'" data-orig="'+esc(v.image)+'" alt="">'
       +       '<div class="ovinfo">'
       +         '<div class="vprice" style="font-size:20px">'+esc(v.price.label)+'</div>'
       +         '<div class="vmeta" style="margin:8px 0">'+stars(v.reliability)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+' · '+v.seats+' chỗ</div>'
@@ -568,7 +599,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
-  function openDetail(id){ var v=byId[id]; if(v){ openModal(detailHtml(v)); } }
+  function openDetail(id){ var v=byId[id]; if(v){ openModal(detailHtml(v)); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
 
   /* ---------- Compare ---------- */
   var picked=[];
