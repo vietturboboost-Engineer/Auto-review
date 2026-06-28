@@ -1927,6 +1927,8 @@ export const vehicles: Vehicle[] = [
     torque: 240,
     curbWeight: 1330,
     rel: 3,
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/2017_Ford_Focus_Zetec_Edition_1.0_Front.jpg/330px-2017_Ford_Focus_Zetec_Edition_1.0_Front.jpg',
     pros: [
       'Động cơ 1.5 EcoBoost tăng áp bốc, vận hành thể thao.',
       'Khung gầm chắc, cầm lái và vào cua tốt bậc nhất phân khúc.',
