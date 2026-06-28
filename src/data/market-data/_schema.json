@@ -1,0 +1,25 @@
+{
+  "_note": "Đặt các file dữ liệu thị trường ĐÃ KIỂM CHỨNG tại đây, mỗi xe một file: <vehicleId>.json",
+  "_schema": {
+    "vehicleId": "string (vd toyota-corolla-cross)",
+    "reports": [
+      {
+        "publisher": "Tên nguồn (vd VnExpress, Chợ Tốt, Toyota VN)",
+        "kind": "manufacturer | news | government | marketplace",
+        "url": "https://...",
+        "date": "YYYY-MM-DD",
+        "trusted": true,
+        "fields": {
+          "averageMarketPrice": "số (triệu VND)",
+          "priceChange30d": "số (%)",
+          "supplyLevel": "Thấp | Trung bình | Cao",
+          "demandLevel": "Thấp | Trung bình | Cao | Rất cao",
+          "estimatedDaysToSell": "số (ngày)"
+        },
+        "events": [{ "date": "2026-05", "title": "..." }],
+        "alerts": ["..."]
+      }
+    ]
+  },
+  "_rule": "Mỗi giá trị chỉ được giữ khi >=2 nguồn tin cậy xác nhận (sự kiện chính thức từ hãng/cơ quan nhà nước thì 1 nguồn là đủ). Thiếu dữ liệu thì để trống — KHÔNG bịa."
+}
