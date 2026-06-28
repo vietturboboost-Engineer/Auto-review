@@ -1410,15 +1410,28 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
   function trendPaneHtml(v){
     var m=v.market; if(!m) return noData();
     // Giá thị trường
-    var priceBody;
+    var priceBody; var priceNd;
     if(m.priceTrend){
       var pt=m.priceTrend;
       priceBody='<div class="mkt-big">'+pt.avgPrice+' triệu</div>'
         +'<div class="mkt-chgs"><span>30 ngày '+trendChange(pt.change30d)+'</span>'
         +'<span>90 ngày '+trendChange(pt.change90d)+'</span>'
         +'<span>1 năm '+trendChange(pt.change1y)+'</span></div>';
+      priceNd=false;
+    } else if(v.depreciation){
+      var d=v.depreciation;
+      var e3=depFind(d.points,3), e5=depFind(d.points,5);
+      priceBody='<div class="mkt-big">'+fmtVnd(d.newPrice)+'</div>'
+        +'<div class="mkt-sub">Giá niêm yết tham khảo (xe mới)</div>'
+        +'<div class="mkt-pairs" style="margin-top:8px">'
+        +'<div><span class="mkt-k">Ước tính sau 3 năm</span><span class="mkt-v">'+fmtVnd(e3.value)+'</span></div>'
+        +'<div><span class="mkt-k">Ước tính sau 5 năm</span><span class="mkt-v">'+fmtVnd(e5.value)+'</span></div>'
+        +'</div>'
+        +'<div class="mkt-sub" style="margin-top:6px">Ước tính từ khấu hao — chưa có giá giao dịch xe cũ thực tế.</div>';
+      priceNd=false;
     } else {
       priceBody=noData('Cần dữ liệu giá xe cũ thực tế');
+      priceNd=true;
     }
     // Cung & cầu
     var sdBody;
@@ -1451,7 +1464,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       popBody=noData('Cần thống kê người dùng');
     }
     var grid='<div class="mkt-grid">'
-      + mktCard('📈 Giá thị trường', priceBody, !m.priceTrend)
+      + mktCard('📈 Giá thị trường', priceBody, priceNd)
       + mktCard('📊 Cung & cầu', sdBody, !m.supplyDemand)
       + mktCard('💰 Giữ giá', retBody, false)
       + mktCard('🔥 Độ phổ biến', popBody, !m.popularity)
