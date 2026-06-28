@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#ffd166"/>
+  <g transform="translate(256 268) scale(0.6) translate(-256 -268)" fill="#0f0f14">
+    <!-- cabin -->
+    <path d="M176 252 l34-58 q10-16 30-16 h84 q20 0 30 16 l34 58 z"/>
+    <!-- body -->
+    <rect x="108" y="248" width="296" height="80" rx="30"/>
+    <!-- wheels -->
+    <circle cx="178" cy="332" r="40"/>
+    <circle cx="334" cy="332" r="40"/>
+  </g>
+  <g transform="translate(256 268) scale(0.6) translate(-256 -268)" fill="#ffd166">
+    <!-- windows -->
+    <path d="M206 246 l22-40 q5-9 18-9 h22 v49 z"/>
+    <path d="M284 246 v-49 h22 q13 0 18 9 l22 40 z"/>
+    <!-- wheel hubs -->
+    <circle cx="178" cy="332" r="18"/>
+    <circle cx="334" cy="332" r="18"/>
+  </g>
+</svg>

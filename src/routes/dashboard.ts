@@ -121,6 +121,14 @@ const page = `<!doctype html>
 <title>AutoReview — Cẩm nang chọn xe đa hãng</title>
 <meta name="description" content="Cẩm nang ${vehicles.length}+ mẫu xe từ ${brands.length} hãng tại Việt Nam: thông số, giá lăn bánh, chi phí sở hữu, bảo dưỡng, đánh giá người dùng và gợi ý xe bằng AI.">
 <meta name="theme-color" content="#ffd166">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AutoReview">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="AutoReview">
 <meta property="og:title" content="AutoReview — Cẩm nang chọn xe đa hãng">

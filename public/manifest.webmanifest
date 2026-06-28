@@ -1,0 +1,28 @@
+{
+  "name": "AutoReview — Cẩm nang chọn xe đa hãng",
+  "short_name": "AutoReview",
+  "description": "So sánh xe tại Việt Nam: thông số, giá lăn bánh, chi phí sở hữu, đánh giá người dùng và gợi ý xe bằng AI.",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#060608",
+  "theme_color": "#ffd166",
+  "categories": ["lifestyle", "shopping", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
