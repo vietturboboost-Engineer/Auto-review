@@ -858,6 +858,10 @@ function mk(o: Mk): Vehicle {
 
 export const vehicles: Vehicle[] = [
   // ===== Toyota =====
+  // Nguồn (Toyota Vios VN, thế hệ XP150 facelift 2023):
+  //  - Wikipedia "Toyota Vios" (mục Third generation XP150), dẫn lại sgCarMart: dài 4.410–4.425, rộng 1.730, cao 1.475, trục cơ sở 2.550 mm; máy 1.5L 2NR-FE 107 hp/140 Nm. (truy cập 2026-06)
+  //  - ASEAN NCAP result #10473 (2023): 5 sao; có AEB, cảnh báo chệch làn (bản G).
+  // Đã sửa: trục cơ sở 2620 -> 2550 (2620 là đời AC100 thứ 4, KHÔNG bán tại VN).
   mk({
     id: 'toyota-vios',
     brandSlug: 'toyota',
@@ -873,7 +877,7 @@ export const vehicles: Vehicle[] = [
     pmin: 458,
     pmax: 545,
     econ: '~5,5 L/100km',
-    dims: [4425, 1730, 1475, 2620],
+    dims: [4425, 1730, 1475, 2550],
     cargo: 506,
     hp: 107,
     torque: 140,
