@@ -663,12 +663,13 @@ html[data-skin="handdrawn"] .clearbtn{border:2px solid var(--hd-stroke);border-r
 /* Badge / tag / chip / slot */
 html[data-skin="handdrawn"] .chip,
 html[data-skin="handdrawn"] .tag,
-html[data-skin="handdrawn"] .vnbadge,
 html[data-skin="handdrawn"] .ai-badge,
 html[data-skin="handdrawn"] .slot,
 html[data-skin="handdrawn"] .opt,
 html[data-skin="handdrawn"] .rvhelp,
 html[data-skin="handdrawn"] .vurate{border:1.5px solid var(--hd-stroke);border-radius:var(--hd-pill);background:var(--surface)}
+/* .vnbadge giữ nền màu trạng thái (xanh/đỏ...) để chữ trắng luôn đọc được ở cả light/dark */
+html[data-skin="handdrawn"] .vnbadge{border:1.5px solid var(--hd-stroke);border-radius:var(--hd-pill)}
 /* Tabs */
 html[data-skin="handdrawn"] .tab{border:2px solid transparent;border-radius:var(--hd-sm)}
 html[data-skin="handdrawn"] .tab.active{border-color:var(--hd-stroke);background:var(--surface)}
