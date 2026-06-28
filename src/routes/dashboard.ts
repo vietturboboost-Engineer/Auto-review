@@ -162,7 +162,7 @@ body{
 ::-webkit-scrollbar-thumb{background:var(--muted);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent2);background-clip:padding-box}
 a{color:inherit}
-.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+.wrap{max-width:1480px;margin:0 auto;padding:0 18px}
 
 /* Nav */
 .nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(12px);
