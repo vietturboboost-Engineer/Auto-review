@@ -345,7 +345,7 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .cc-big{font-size:26px;font-weight:900;color:var(--accent)}
 .cc-big span{font-size:14px;font-weight:600;color:var(--muted)}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
-.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px;box-shadow:0 10px 28px rgba(247,183,51,.40), 0 3px 8px rgba(247,183,51,.28)}
+.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
 .ovh{margin:14px 0 7px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
 .ovh b{color:var(--accent2)}
