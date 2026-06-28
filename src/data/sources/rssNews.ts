@@ -59,7 +59,7 @@ const SIGNAL_RULES: SignalRule[] = [
   { test: /ra mắt|trình làng|mở bán|chính thức bán/, alert: '🆕 Ra mắt / mở bán' },
   { test: /khan hàng|thiếu xe|cháy hàng|khan hiếm/, alert: '⏳ Khan hàng' },
   { test: /ế ẩm|tồn kho|xả hàng|dư thừa/, alert: '📦 Tồn kho / dư cung' },
-  { test: /cập nhật phần mềm|ota/, alert: '🔄 Cập nhật phần mềm (OTA)' },
+  { test: /cập nhật phần mềm|\bota\b/, alert: '🔄 Cập nhật phần mềm (OTA)' },
 ];
 
 function decode(s: string): string {

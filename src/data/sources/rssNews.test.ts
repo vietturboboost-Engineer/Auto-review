@@ -58,6 +58,15 @@ describe('extractMarketSignals', () => {
     expect(sigs[0].alert).toBe('🔻 Giảm giá / ưu đãi');
     expect(sigs[1].alert).toBe('🔧 Nâng cấp / facelift');
   });
+
+  it('does not flag a false OTA alert from the word "Toyota"', () => {
+    const items: { title: string; link: string; date: string }[] = [
+      { title: 'Toyota Corolla Cross bản mới ra mắt', link: 'https://x/1', date: '2026-06-01' },
+    ];
+    const sigs = extractMarketSignals(items, VH);
+    expect(sigs).toHaveLength(1);
+    expect(sigs[0].alert).toBe('🆕 Ra mắt / mở bán');
+  });
 });
 
 describe('createRssNewsSource', () => {

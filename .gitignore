@@ -11,3 +11,4 @@ coverage/
 .idea/
 *.tsbuildinfo
 /data/
+src/data/market-data/_collected.json

@@ -28,13 +28,13 @@ const GENERATED_FILE = join(process.cwd(), 'src', 'data', 'marketTrends.generate
 
 const GENERATED_HEADER =
   '/**\n' +
-  ' * DỮ LIỆU XU HƯỚNG THỊ TRƯỜNG ĐÃ XÁC MINH (tự sinh).\n' +
+  ' * DỮ LIỆU XU HƯỚNG THỊ TRƯỜNG (tự sinh — KHÔNG sửa tay).\n' +
   ' *\n' +
-  ' * KHÔNG sửa tay. File này do CLI sinh ra:\n' +
-  ' *   npm run build && npm run collect:market\n' +
+  ' * Sinh bởi:  npm run build && npm run collect:market\n' +
   ' *\n' +
-  ' * Nguồn: src/data/market-data/<vehicleId>.json (dữ liệu đã kiểm chứng >=2 nguồn).\n' +
-  ' * Mặc định rỗng — đúng nguyên tắc: chưa có dữ liệu thật thì KHÔNG bịa.\n' +
+  ' * Nguồn: feed RSS tin xe + file đã kiểm chứng trong src/data/market-data/.\n' +
+  ' * Mỗi giá trị đều kèm nguồn (publisher). Chỉ lấy thông tin nguồn công bố rõ ràng,\n' +
+  ' * KHÔNG bịa số liệu. Ngưỡng nguồn tối thiểu cấu hình qua MARKET_MIN_SOURCES (mặc định 1).\n' +
   ' */\n' +
   "import type { MarketTrendsData } from './vehicles.js';\n\n";
 
@@ -61,22 +61,36 @@ function loadVerifiedSources(v: CollectorVehicle): MarketDataSource[] {
 }
 
 /**
- * Các feed RSS tin xe (NGUỒN THẬT, opt-in qua biến môi trường).
+ * Các feed RSS tin xe (NGUỒN THẬT).
+ * Mặc định dùng danh sách dưới đây; có thể ghi đè qua biến môi trường:
  *   MARKET_RSS_FEEDS="VnExpress|https://vnexpress.net/rss/oto-xe-may.rss,Báo X|https://.../rss"
- * Mặc định rỗng -> chỉ chạy offline với dữ liệu đã kiểm chứng.
+ * Đặt MARKET_RSS_FEEDS="off" để tắt hoàn toàn (chỉ chạy offline).
  */
+const DEFAULT_FEEDS: { publisher: string; url: string }[] = [
+  { publisher: 'VnExpress', url: 'https://vnexpress.net/rss/oto-xe-may.rss' },
+  { publisher: 'Tuổi Trẻ', url: 'https://tuoitre.vn/rss/xe.rss' },
+  { publisher: 'Dân Trí', url: 'https://dantri.com.vn/o-to-xe-may.rss' },
+];
+
 function loadRssSources(): MarketDataSource[] {
   const raw = (process.env.MARKET_RSS_FEEDS ?? '').trim();
-  if (!raw) return [];
-  const feeds: MarketDataSource[] = [];
-  for (const part of raw.split(',')) {
-    const [publisher, url] = part.split('|').map((s) => s.trim());
-    if (publisher && url) feeds.push(createRssNewsSource({ publisher, url }));
+  if (raw.toLowerCase() === 'off') return [];
+  const feeds: { publisher: string; url: string }[] = [];
+  if (raw) {
+    for (const part of raw.split(',')) {
+      const [publisher, url] = part.split('|').map((s) => s.trim());
+      if (publisher && url) feeds.push({ publisher, url });
+    }
+  } else {
+    feeds.push(...DEFAULT_FEEDS);
   }
-  return feeds;
+  return feeds.map((f) => createRssNewsSource({ publisher: f.publisher, url: f.url }));
 }
 
 const rssSources = loadRssSources();
+
+// Ngưỡng số nguồn tối thiểu. Theo yêu cầu: 1 nguồn tin cậy là đủ (vẫn gắn nguồn).
+const minSources = Number(process.env.MARKET_MIN_SOURCES ?? '1') || 1;
 
 const curatedFiles = existsSync(DATA_DIR)
   ? readdirSync(DATA_DIR).filter((f) => f.endsWith('.json') && !f.startsWith('_'))
@@ -85,8 +99,9 @@ const curatedFiles = existsSync(DATA_DIR)
 console.log('Thư mục dữ liệu:', DATA_DIR);
 console.log('Số file đã kiểm chứng:', curatedFiles.length);
 console.log('Số feed RSS bật:', rssSources.length);
+console.log('Ngưỡng nguồn tối thiểu:', minSources);
 
-const result = await collectAll(vehicles, (v) => [...loadVerifiedSources(v), ...rssSources]);
+const result = await collectAll(vehicles, (v) => [...loadVerifiedSources(v), ...rssSources], { minSources });
 const ids = Object.keys(result);
 console.log('Số xe có dữ liệu thị trường xác minh được:', ids.length);
 
