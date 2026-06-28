@@ -676,7 +676,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
   function $(id){ return document.getElementById(id); }
   function stars(n){ var f=Math.max(0,Math.min(5,Math.round(n))); return '★★★★★'.slice(0,f)+'☆☆☆☆☆'.slice(0,5-f); }
   /* Tô sao đã chọn (★) màu vàng, sao rỗng (☆) mờ — dùng cho phần chi tiết. An toàn vì chỉ chứa ký tự sao. */
-  function starsHtml(str){ var out=''; for(var i=0;i<str.length;i++){ var ch=str.charAt(i); out += (ch==='★') ? '<span class="stf">★</span>' : '<span class="ste">☆</span>'; } return out; }
+  function starsHtml(str){ var out=''; for(var i=0;i<str.length;i++){ var ch=str.charAt(i); out += (ch==='★') ? '<span class="stf">★</span>' : '<span class="ste">☆</span>'; } return '<span class="stwrap">'+out+'</span>'; }
   /* Yêu cầu Wikimedia trả ảnh phân giải cao hơn khi xem chi tiết (cards vẫn dùng bản nhẹ). */
   function hiRes(u){
     if(typeof u!=='string' || u.indexOf('upload.wikimedia.org')<0) return u;
