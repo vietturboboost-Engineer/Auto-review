@@ -232,7 +232,7 @@ section{padding:26px 0}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.28)}
 .vbody{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .vbrand{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
-.blogo{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:8px;flex:0 0 auto;background:#fff;border-radius:5px;padding:2px;box-sizing:border-box;box-shadow:0 3px 8px rgba(247,183,51,.40), 0 0 0 1px rgba(247,183,51,.40)}
+.blogo{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:8px;flex:0 0 auto;background:#fff;border-radius:5px;padding:2px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
 .vcountry{font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0}
 /* Màu thương hiệu: kẹp độ sáng theo theme để chữ luôn đọc được, vẫn giữ nhận diện hãng */
 .brandmark,.vbrand,.bct{color:var(--bc,currentColor)}
@@ -294,7 +294,7 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
   border-radius:22px;width:100%;max-width:1240px;box-shadow:var(--shadow);overflow:hidden;margin:auto;
   display:flex;flex-direction:column;height:min(94vh,960px)}
 .sheet-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
-.sheet-head h3{margin:0;font-size:18px;flex:1;text-shadow:0 1px 3px rgba(247,183,51,.50)}
+.sheet-head h3{margin:0;font-size:18px;flex:1}
 .closebtn{border:1px solid var(--line);background:var(--card);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px}
 .sheet-body{padding:18px;flex:1 1 auto;overflow-y:auto}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
@@ -358,8 +358,8 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .pc-good h4{color:var(--good)}
 .pc-bad h4{color:var(--bad)}
 .brandbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
-.blogo-lg{width:104px;height:104px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;box-shadow:0 8px 22px rgba(247,183,51,.42), 0 2px 6px rgba(247,183,51,.30), 0 0 0 1px rgba(247,183,51,.45)}
-.brandbox .bb-name{font-weight:800;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--bc, var(--text));text-shadow:0 1px 4px rgba(247,183,51,.55)}
+.blogo-lg{width:104px;height:104px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.brandbox .bb-name{font-weight:800;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--bc, var(--text))}
 .brandbox .bb-sub{font-size:12px;color:var(--muted);margin-top:-4px}
 @media(max-width:760px){.proscons{grid-template-columns:1fr}}
 @media(max-width:760px){.ovgrid{grid-template-columns:1fr}.ovimg{max-height:260px}}
