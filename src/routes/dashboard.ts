@@ -238,10 +238,14 @@ section{padding:26px 0}
 .brandmark,.vbrand,.bct{color:var(--bc,currentColor)}
 html:not([data-theme="light"]) .brandmark,
 html:not([data-theme="light"]) .vbrand,
-html:not([data-theme="light"]) .bct{color:oklch(from var(--bc,#8a8a8a) max(l,0.74) c h)}
+html:not([data-theme="light"]) .bct,
+html:not([data-theme="light"]) .brandbox .bb-name,
+html:not([data-theme="light"]) .simcard .sim-b{color:oklch(from var(--bc,#8a8a8a) max(l,0.74) c h)}
 html[data-theme="light"] .brandmark,
 html[data-theme="light"] .vbrand,
-html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h)}
+html[data-theme="light"] .bct,
+html[data-theme="light"] .brandbox .bb-name,
+html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(l,0.46) c h)}
 .vname{margin:0;font-size:17px;font-weight:800}
 .vname span{font-weight:500;color:var(--muted);font-size:13px}
 .vchips{display:flex;gap:6px;flex-wrap:wrap}
@@ -354,8 +358,8 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .pc-good h4{color:var(--good)}
 .pc-bad h4{color:var(--bad)}
 .brandbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
-.blogo-lg{width:104px;height:104px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
-.brandbox .bb-name{font-weight:800;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--bc, var(--text))}
+.blogo-lg{width:104px;height:104px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;box-shadow:0 8px 22px rgba(0,0,0,.30), 0 2px 6px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06)}
+.brandbox .bb-name{font-weight:800;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--bc, var(--text));text-shadow:0 1px 3px rgba(0,0,0,.28)}
 .brandbox .bb-sub{font-size:12px;color:var(--muted);margin-top:-4px}
 @media(max-width:760px){.proscons{grid-template-columns:1fr}}
 @media(max-width:760px){.ovgrid{grid-template-columns:1fr}.ovimg{max-height:260px}}
