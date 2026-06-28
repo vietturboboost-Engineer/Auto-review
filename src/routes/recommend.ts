@@ -19,6 +19,31 @@ function asText(v: unknown): string {
   return typeof v === 'string' ? v : '';
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type FetchResponse = Awaited<ReturnType<typeof fetch>>;
+
+// Gọi Gemini có retry khi gặp 429 (quá tải/rate limit) hoặc 503, tôn trọng Retry-After (giới hạn 8s).
+async function callGeminiWithRetry(url: string, payload: string, retries = 2): Promise<FetchResponse> {
+  let attempt = 0;
+  for (;;) {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    });
+    if (r.ok || (r.status !== 429 && r.status !== 503) || attempt >= retries) {
+      return r;
+    }
+    const retryAfter = Number(r.headers.get('retry-after'));
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 800 * 2 ** attempt;
+    await sleep(Math.min(wait, 8000));
+    attempt += 1;
+  }
+}
+
 function buildPrompt(profile: string, cars: unknown[]): string {
   const carLines = cars
     .map((c, i) => {
@@ -86,17 +111,20 @@ recommendRouter.post('/', async (req: Request, res: Response): Promise<void> => 
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=` +
       encodeURIComponent(apiKey);
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const r = await callGeminiWithRetry(
+      url,
+      JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
       }),
-    });
+    );
 
     if (!r.ok) {
-      res.status(502).json({ ok: false, error: `Dịch vụ AI trả lỗi (${r.status}).` });
+      const msg =
+        r.status === 429
+          ? 'Dịch vụ AI đang quá tải hoặc hết lượt miễn phí (429). Vui lòng thử lại sau giây lát.'
+          : `Dịch vụ AI trả lỗi (${r.status}).`;
+      res.status(r.status === 429 ? 429 : 502).json({ ok: false, error: msg });
       return;
     }
 
