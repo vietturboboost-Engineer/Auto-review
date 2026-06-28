@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout (needed for fly.toml)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Resolve image ref (GHCR requires lowercase)
         env:
