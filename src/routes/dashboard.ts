@@ -296,6 +296,17 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .dtbl{width:100%;border-collapse:collapse;font-size:14px}
 .dtbl td,.dtbl th{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .dtbl th{color:var(--muted);font-weight:600;width:40%}
+/* spec panel */
+.specwrap{display:flex;flex-direction:column;gap:20px}
+.specsec{border-top:1px solid var(--line);padding-top:16px}
+.specsec:first-child{border-top:none;padding-top:0}
+.specsec h4{margin:0 0 10px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.specgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+.specrow{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.specrow .sl{color:var(--muted);font-size:13px}
+.specrow .sv{font-weight:600;font-size:13px;text-align:right;white-space:nowrap}
+.specrow.hl .sv{color:var(--accent);font-weight:800}
+@media(max-width:760px){.specgrid{grid-template-columns:1fr;gap:0}}
 .taglist{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
 .tag{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
 .vn-status{font-size:15px;font-weight:800;padding:10px 14px;border-radius:12px;margin-bottom:12px;
@@ -352,8 +363,9 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .picker-foot{padding:14px 18px;border-top:1px solid var(--line);background:var(--surface);text-align:right;flex:0 0 auto}
 .btn-ai-on{background:var(--good);color:#06281a}
 .muted{color:var(--muted)}
-footer{padding:46px 0 60px;color:var(--muted);font-size:14px;text-align:center;border-top:1px solid var(--line);margin-top:40px;line-height:1.9}
-.credit{display:inline-block;margin:22px auto 0;padding:14px 22px;font-size:14px;
+footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--muted);font-size:14px;text-align:center;border-top:1px solid var(--line);margin-top:40px;margin-bottom:calc(40px + env(safe-area-inset-bottom,0px));line-height:1.9}
+@media(max-width:760px){footer{padding:38px 0 calc(56px + env(safe-area-inset-bottom,0px));margin-bottom:calc(28px + env(safe-area-inset-bottom,0px))}}
+.credit{display:inline-block;margin:22px auto 28px;padding:14px 22px;font-size:14px;
   border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
 .credit b{color:var(--accent)}
 .credit a{color:var(--accent2);font-weight:600}
@@ -567,6 +579,93 @@ footer{padding:46px 0 60px;color:var(--muted);font-size:14px;text-align:center;b
 
   /* ---------- Vehicle detail ---------- */
   function row(k,v){ return '<tr><th>'+esc(k)+'</th><td>'+esc(v)+'</td></tr>'; }
+  function srow(label,val,hl){ return '<div class="specrow'+(hl?' hl':'')+'"><span class="sl">'+esc(label)+'</span><span class="sv">'+esc(val)+'</span></div>'; }
+  function specSec(title,rows){ return rows ? '<div class="specsec"><h4>'+title+'</h4><div class="specgrid">'+rows+'</div></div>' : ''; }
+  /* Lớp render chỉ ĐỊNH DẠNG giá trị; trả null nếu dữ liệu không tồn tại -> bỏ qua dòng (không bịa số liệu). */
+  function uval(val,unit){ return (val===0||val)?(val+(unit||'')):null; }
+  function bval(val){ return val===true?'Có':(val===false?'Không':null); }
+  function rval(n){ return n?stars(n):null; }
+  /* Sổ đăng ký field: mỗi field tự lấy dữ liệu từ dataset (cấu hình thay vì hard-code). */
+  var SPEC_FIELDS={
+    brand:{l:'Hãng',g:function(v){return v.brand||null;}},
+    model:{l:'Mẫu',g:function(v){return v.model?(v.model+(v.trim?' '+v.trim:'')):null;}},
+    genYear:{l:'Thế hệ / Năm',g:function(v){var s=((v.generation||'')+' '+(v.year||'')).trim();return s||null;}},
+    segment:{l:'Phân khúc',g:function(v){return v.segment||null;}},
+    bodyType:{l:'Kiểu thân',g:function(v){return v.bodyType||null;}},
+    seats:{l:'Số chỗ',g:function(v){return v.seats!=null?(v.seats+' chỗ'):null;}},
+    fuelType:{l:'Nhiên liệu',g:function(v){return v.fuelType||null;}},
+    driveType:{l:'Dẫn động',g:function(v){return v.driveType||null;}},
+    transmission:{l:'Hộp số',g:function(v){return v.transmission||null;}},
+    engine:{l:'Động cơ',g:function(v){return v.engine||null;}},
+    engineDisplacement:{l:'Dung tích xy-lanh',g:function(v){return uval(v.engineDisplacement,'L');}},
+    electricMotor:{l:'Mô-tơ điện',g:function(v){return v.electricMotor||null;}},
+    combinedPower:{l:'Công suất tổng',hl:true,g:function(v){return uval(v.combinedPower,' hp');}},
+    horsepower:{l:'Công suất',hl:true,g:function(v){return uval(v.horsepower,' hp');}},
+    torque:{l:'Mô-men xoắn',g:function(v){return uval(v.torque,' Nm');}},
+    fuelEconomy:{l:'Tiêu hao',hl:true,g:function(v){return v.fuelEconomy||null;}},
+    fuelTank:{l:'Dung tích bình',g:function(v){return uval(v.fuelTank,' L');}},
+    batteryCapacity:{l:'Dung lượng pin',g:function(v){return uval(v.batteryCapacity,' kWh');}},
+    range:{l:'Quãng đường/lần sạc',hl:true,g:function(v){return uval(v.range,' km');}},
+    acCharging:{l:'Sạc AC',g:function(v){return uval(v.acCharging,' kW');}},
+    dcCharging:{l:'Sạc nhanh DC',g:function(v){return uval(v.dcCharging,' kW');}},
+    chargingTime:{l:'Thời gian sạc',g:function(v){return v.chargingTime||null;}},
+    driveModes:{l:'Chế độ lái',g:function(v){return (v.driveModes&&v.driveModes.length)?v.driveModes.join(', '):null;}},
+    zeroTo100:{l:'Tăng tốc 0–100 km/h',g:function(v){return uval(v.zeroTo100,' s');}},
+    topSpeed:{l:'Tốc độ tối đa',g:function(v){return uval(v.topSpeed,' km/h');}},
+    payload:{l:'Tải trọng',g:function(v){return uval(v.payload,' kg');}},
+    towing:{l:'Khả năng kéo',g:function(v){return uval(v.towing,' kg');}},
+    differentialLock:{l:'Khóa vi sai',g:function(v){return bval(v.differentialLock);}},
+    waterWading:{l:'Khả năng lội nước',g:function(v){return uval(v.waterWading,' mm');}},
+    slidingDoors:{l:'Cửa trượt',g:function(v){return bval(v.slidingDoors);}},
+    thirdRow:{l:'Hàng ghế thứ 3',g:function(v){return bval(v.thirdRow);}},
+    weightDistribution:{l:'Phân bổ trọng lượng',g:function(v){return v.weightDistribution||null;}},
+    length:{l:'Dài',g:function(v){return v.dimensions&&uval(v.dimensions.length,' mm');}},
+    width:{l:'Rộng',g:function(v){return v.dimensions&&uval(v.dimensions.width,' mm');}},
+    height:{l:'Cao',g:function(v){return v.dimensions&&uval(v.dimensions.height,' mm');}},
+    wheelbase:{l:'Trục cơ sở',g:function(v){return v.dimensions&&uval(v.dimensions.wheelbase,' mm');}},
+    groundClearance:{l:'Khoảng sáng gầm',g:function(v){return uval(v.groundClearance,' mm');}},
+    turningRadius:{l:'Bán kính quay đầu',g:function(v){return uval(v.turningRadius,' m');}},
+    curbWeight:{l:'Trọng lượng',g:function(v){return uval(v.curbWeight,' kg');}},
+    cargo:{l:'Khoang hành lý',g:function(v){return uval(v.cargo,' L');}},
+    ratingSafety:{l:'Xếp hạng an toàn',hl:true,g:function(v){return rval(v.ratings&&v.ratings.safety);}},
+    reliability:{l:'Độ tin cậy',hl:true,g:function(v){return rval(v.reliability);}},
+    ratingResale:{l:'Giá trị bán lại',g:function(v){return rval(v.ratings&&v.ratings.resale);}},
+    warranty:{l:'Bảo hành',hl:true,g:function(v){return v.warranty||null;}},
+    maintenanceCostPerYear:{l:'Chi phí bảo dưỡng/năm',g:function(v){return v.maintenanceCostPerYear||null;}},
+    ownershipCost:{l:'Tổng chi phí sở hữu/năm',g:function(v){return v.ownershipCost||null;}}
+  };
+  /* Mục "Vận hành" thích ứng theo loại xe; chỉ field có dữ liệu mới hiển thị. */
+  var PERF_BY_TYPE={
+    ev:['batteryCapacity','horsepower','torque','range','acCharging','dcCharging','chargingTime','driveModes'],
+    hybrid:['engine','electricMotor','combinedPower','horsepower','torque','batteryCapacity','transmission','driveType','fuelEconomy'],
+    pickup:['engine','engineDisplacement','horsepower','torque','transmission','driveType','fuelEconomy','fuelTank','payload','towing','differentialLock','driveModes','waterWading'],
+    mpv:['engine','engineDisplacement','horsepower','torque','transmission','driveType','fuelEconomy','fuelTank','slidingDoors','thirdRow','zeroTo100'],
+    sports:['engine','engineDisplacement','horsepower','torque','transmission','driveType','zeroTo100','topSpeed','weightDistribution'],
+    ice:['engine','engineDisplacement','horsepower','torque','transmission','driveType','fuelEconomy','fuelTank','zeroTo100','topSpeed']
+  };
+  function vehicleType(v){
+    if(v.fuelType==='Điện') return 'ev';
+    if(v.fuelType==='Hybrid') return 'hybrid';
+    var b=(v.bodyType||'').toLowerCase(), s=(v.segment||'').toLowerCase();
+    if(b.indexOf('pickup')>=0||b.indexOf('bán tải')>=0||s.indexOf('bán tải')>=0) return 'pickup';
+    if(b.indexOf('mpv')>=0||s.indexOf('mpv')>=0) return 'mpv';
+    if(b.indexOf('coupe')>=0||s.indexOf('thể thao')>=0||s.indexOf('sport')>=0) return 'sports';
+    return 'ice';
+  }
+  function srows(v,keys){ var out=''; for(var i=0;i<keys.length;i++){ var f=SPEC_FIELDS[keys[i]]; if(!f) continue; var val=f.g(v); if(val==null||val==='') continue; out+=srow(f.l,val,f.hl); } return out; }
+  function chipsBlock(arr){ return (arr&&arr.length)? '<div class="taglist" style="margin:8px 0 0">'+arr.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>' : ''; }
+  function specPaneHtml(v){
+    var t=vehicleType(v), html='';
+    html+=specSec('🚗 Tổng quan', srows(v,['brand','model','genYear','segment','bodyType','seats','fuelType','driveType','transmission']));
+    html+=specSec('📐 Kích thước', srows(v,['length','width','height','wheelbase','groundClearance','turningRadius','curbWeight','cargo']));
+    html+=specSec('⚙️ Vận hành', srows(v, PERF_BY_TYPE[t]||PERF_BY_TYPE.ice));
+    var safRows=srows(v,['ratingSafety']), safChips=chipsBlock(v.safetyFeatures);
+    if(safRows||safChips){ html+='<div class="specsec"><h4>🛡 An toàn</h4>'+(safRows?'<div class="specgrid">'+safRows+'</div>':'')+safChips+'</div>'; }
+    var comChips=chipsBlock(v.techFeatures);
+    if(comChips){ html+='<div class="specsec"><h4>💺 Tiện nghi & Công nghệ</h4>'+comChips+'</div>'; }
+    html+=specSec('🔧 Sở hữu', srows(v,['reliability','warranty','maintenanceCostPerYear','ownershipCost','ratingResale']));
+    return html ? '<div class="specwrap">'+html+'</div>' : '<p class="muted">Chưa có thông số cho mẫu xe này.</p>';
+  }
   function tags(arr){ return '<div class="taglist">'+(arr||[]).map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>'; }
   function vnPane(m){
     m = m || {};
@@ -637,13 +736,7 @@ footer{padding:46px 0 60px;color:var(--muted);font-size:14px;text-align:center;b
       +       '<button class="btn '+(aiHas(v.id)?'btn-ai-on':'btn-primary')+'" data-aiadd="'+esc(v.id)+'">'+(aiHas(v.id)?'✓ Đã thêm vào AI':'+ Thêm vào so sánh AI')+'</button>'
       +     '</div>'
       +   '</div>'
-      +   '<div class="tabpane" data-pane="spec"><table class="dtbl">'
-      +     row('Phân khúc', v.segment) + row('Số chỗ', v.seats) + row('Nhiên liệu', v.fuelType)
-      +     row('Dài × Rộng × Cao', v.dimensions.length+' × '+v.dimensions.width+' × '+v.dimensions.height+' mm')
-      +     row('Trục cơ sở', v.dimensions.wheelbase+' mm') + row('Khoang hành lý', v.cargo+' L')
-      +     row('Công suất', v.horsepower+' hp') + row('Mô-men xoắn', v.torque+' Nm')
-      +     row('Độ tin cậy', stars(v.reliability))
-      +   '</table></div>'
+      +   '<div class="tabpane" data-pane="spec">'+specPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="maint"><p class="muted">Lịch bảo dưỡng định kỳ tham khảo:</p><table class="dtbl">'+ms+'</table></div>'
       +   '<div class="tabpane" data-pane="parts"><p class="muted">Giá phụ tùng tham khảo:</p><table class="dtbl">'+pc+'</table></div>'
       +   '<div class="tabpane" data-pane="cost"><p class="muted">Ước tính chi phí nuôi xe mỗi năm:</p><table class="dtbl">'
