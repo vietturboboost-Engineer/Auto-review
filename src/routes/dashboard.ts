@@ -4,6 +4,8 @@ import {
   vehicles,
   getMaintenanceSchedule,
   getPartsCatalog,
+  getMaintTaskTemplates,
+  getOwnershipTimeline,
   getSegments,
   type Vehicle,
 } from '../data/vehicles.js';
@@ -15,6 +17,8 @@ const clientVehicles = vehicles.map((v) => ({
   ...v,
   maintenanceSchedule: getMaintenanceSchedule(v),
   partsCatalog: getPartsCatalog(v),
+  maintTasks: getMaintTaskTemplates(v),
+  ownershipTimeline: getOwnershipTimeline(v),
 }));
 
 const clientBrands = brands.map((b) => ({
@@ -344,6 +348,65 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .cc-out{margin-top:6px;padding-top:12px;border-top:1px dashed var(--line)}
 .cc-big{font-size:26px;font-weight:900;color:var(--accent)}
 .cc-big span{font-size:14px;font-weight:600;color:var(--muted)}
+
+/* lịch bảo dưỡng chi tiết */
+.maint-note{font-size:12px;color:var(--muted);margin:0 0 12px}
+.mstop{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:12px;overflow:hidden}
+.mstop-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.mstop-km{font-weight:800;font-size:15px}
+.mstop-km b{color:var(--accent)}
+.mstop-total{font-size:13px;font-weight:700;color:var(--accent)}
+.mtask{display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px dashed var(--line)}
+.mtask:last-child{border-bottom:0}
+.mtask-main{flex:1;min-width:0}
+.mtask-name{font-size:13.5px;font-weight:600}
+.mtask-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.prio{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:999px;white-space:nowrap;flex:0 0 auto}
+.prio-req{background:rgba(239,68,68,.16);color:#f87171}
+.prio-rec{background:rgba(247,183,51,.16);color:var(--accent)}
+.prio-opt{background:rgba(148,163,184,.16);color:var(--muted)}
+.mtask-cost{font-size:12.5px;font-weight:700;white-space:nowrap;flex:0 0 auto}
+/* công cụ AI nhập số km */
+.aibox{border:1px solid var(--accent);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(247,183,51,.08),transparent);margin:6px 0 16px}
+.aibox h4{margin:0 0 4px;font-size:15px}
+.aibox-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.aibox-row input{padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:14px;max-width:160px}
+.aibtn{padding:9px 16px;border-radius:10px;border:0;background:var(--accent);color:#1a1300;font-weight:800;cursor:pointer;font-size:14px}
+.airec{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.airec-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card)}
+.airec-card h5{margin:0 0 8px;font-size:13px}
+.airec-card.next{border-color:var(--accent)}
+.airec-card.over{border-color:#f87171}
+.airec-card ul{margin:6px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.airec-card li{font-size:13px;display:flex;gap:7px;align-items:flex-start}
+.airec-big{font-size:22px;font-weight:900;color:var(--accent);margin-top:8px}
+.airec-empty{font-size:13px;color:var(--muted)}
+@media(max-width:680px){.airec{grid-template-columns:1fr}}
+
+/* dòng thời gian chi phí sở hữu */
+.tl-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 16px}
+.tl-kpi{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
+.tl-kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.tl-kpi .v{font-size:17px;font-weight:900;margin-top:4px}
+.tl-kpi .v.acc{color:var(--accent)}
+.chart{margin:6px 0 18px}
+.chart h5{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-lab{font-size:12px;width:58px;flex:0 0 auto;color:var(--muted)}
+.bar-track{flex:1;height:18px;background:var(--card);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.bar-fill.dep{background:linear-gradient(90deg,#64748b,#94a3b8)}
+.bar-val{font-size:12px;font-weight:700;width:96px;flex:0 0 auto;text-align:right}
+.tlcard{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:12px;overflow:hidden}
+.tlcard-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.tlcard-y{font-weight:800;font-size:15px}
+.tlcard-y b{color:var(--accent)}
+.tlcard-cum{font-size:12px;color:var(--muted)}
+.tlcard-cum b{color:var(--text)}
+.tlrow{display:flex;justify-content:space-between;gap:10px;padding:7px 14px;font-size:13px;border-bottom:1px dashed var(--line)}
+.tlrow:last-child{border-bottom:0}
+.tlrow .amt{font-weight:700;white-space:nowrap}
+.tl-note{font-size:12px;color:var(--accent);padding:8px 14px;background:rgba(247,183,51,.07)}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
 .ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
@@ -1053,11 +1116,107 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
     }
     km.addEventListener('input', calc); price.addEventListener('input', calc); calc();
   }
+  // ----- Lịch bảo dưỡng chi tiết + trợ lý AI theo số km -----
+  function prioCls(p){ return p==='Bắt buộc'?'prio-req':(p==='Tùy chọn'?'prio-opt':'prio-rec'); }
+  function kmLabel(n){ return (n/1000)+'.000 km'; }
+  function taskCost(t){ return (t.estimatedCost||0)+(t.laborCost||0); }
+  function sumCost(items){ var s=0; for(var i=0;i<items.length;i++) s+=taskCost(items[i]); return s; }
+  function maintScheduleHtml(v){
+    var tasks=v.maintTasks||[];
+    if(!tasks.length) return '<p class="muted">Chưa có dữ liệu lịch bảo dưỡng cho xe này.</p>';
+    var ms=[5000,10000,20000,30000,40000,60000,80000,100000]; var html='';
+    for(var i=0;i<ms.length;i++){
+      var m=ms[i]; var items=[]; var total=0;
+      for(var j=0;j<tasks.length;j++){ if(m % tasks[j].everyKm===0){ items.push(tasks[j]); total+=taskCost(tasks[j]); } }
+      if(!items.length) continue;
+      var rows='';
+      for(var k=0;k<items.length;k++){ var t=items[k];
+        rows += '<div class="mtask"><span class="prio '+prioCls(t.priority)+'">'+esc(t.priority)+'</span>'
+          + '<div class="mtask-main"><div class="mtask-name">'+esc(t.name)+'</div>'
+          + '<div class="mtask-sub">Phụ tùng '+fmtVnd(t.estimatedCost)+' · Nhân công '+fmtVnd(t.laborCost)+' · chu kỳ '+esc(kmLabel(t.everyKm))+'</div></div>'
+          + '<div class="mtask-cost">'+fmtVnd(taskCost(t))+'</div></div>';
+      }
+      html += '<div class="mstop"><div class="mstop-h"><span class="mstop-km"><b>'+esc(kmLabel(m))+'</b></span><span class="mstop-total">≈ '+fmtVnd(total)+'</span></div>'+rows+'</div>';
+    }
+    return html;
+  }
+  function nextServiceFor(tasks, km){
+    var step=5000;
+    var nextKm=Math.ceil((km+1)/step)*step;
+    var prevKm=Math.floor(km/step)*step;
+    function dueAt(x){ var o=[]; for(var i=0;i<tasks.length;i++){ if(x>0 && x % tasks[i].everyKm===0) o.push(tasks[i]); } return o; }
+    return { nextKm:nextKm, next:dueAt(nextKm), prevKm:prevKm, prev:(prevKm>=5000 && prevKm!==km)?dueAt(prevKm):[] };
+  }
+  function recListHtml(items){ if(!items.length) return '<li class="airec-empty">Không có hạng mục.</li>'; var h=''; for(var i=0;i<items.length;i++){ h+='<li>✓ <span>'+esc(items[i].name)+'</span></li>'; } return h; }
+  function renderMaintAi(v, km){
+    var box=document.getElementById('ai-rec'); if(!box) return;
+    if(!(km>0)){ box.innerHTML='<p class="airec-empty">Nhập số km để xem khuyến nghị.</p>'; return; }
+    var rec=nextServiceFor(v.maintTasks||[], km);
+    var h='<div class="airec">';
+    h+='<div class="airec-card next"><h5>➡️ Bảo dưỡng kế tiếp · <b>'+esc(kmLabel(rec.nextKm))+'</b></h5><ul>'+recListHtml(rec.next)+'</ul><div class="airec-big">≈ '+fmtVnd(sumCost(rec.next))+'</div></div>';
+    if(rec.prev.length){
+      h+='<div class="airec-card over"><h5>⚠️ Mốc '+esc(kmLabel(rec.prevKm))+' — kiểm tra đã làm chưa?</h5><ul>'+recListHtml(rec.prev)+'</ul><div class="airec-big">≈ '+fmtVnd(sumCost(rec.prev))+'</div></div>';
+    } else {
+      h+='<div class="airec-card"><h5>✅ Tình trạng</h5><p class="airec-empty">Bạn đang ở gần mốc bảo dưỡng, không có hạng mục quá hạn rõ ràng.</p></div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+  function bindMaintAi(v){
+    var inp=document.getElementById('ai-km'); var btn=document.getElementById('ai-go'); if(!inp||!btn) return;
+    function go(){ renderMaintAi(v, +inp.value||0); }
+    btn.addEventListener('click', go);
+    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); go(); } });
+  }
+  function maintPaneHtml(v){
+    return ''
+     + '<div class="aibox"><h4>🤖 Trợ lý bảo dưỡng theo số km</h4>'
+     + '<p class="maint-note" style="margin:2px 0 0">Nhập số km xe đã đi — hệ thống tính mốc bảo dưỡng kế tiếp, hạng mục có thể quá hạn và chi phí ước tính.</p>'
+     + '<div class="aibox-row"><input type="number" id="ai-km" min="0" step="1000" placeholder="VD: 42000"><button class="aibtn" id="ai-go">Tính toán</button></div>'
+     + '<div id="ai-rec"><p class="airec-empty">Nhập số km để xem khuyến nghị.</p></div></div>'
+     + '<p class="maint-note">Lịch bảo dưỡng định kỳ (ước tính theo chuẩn ngành — số liệu tham khảo):</p>'
+     + maintScheduleHtml(v);
+  }
+  // ----- Dòng thời gian chi phí sở hữu -----
+  function costTimelineHtml(v){
+    var tl=v.ownershipTimeline||[];
+    if(!tl.length) return '';
+    var y5=tl[tl.length-1];
+    var price=(tl[0].lines[0]?tl[0].lines[0].amount:0);
+    var resale=y5.resaleValue||y5.carValue||0;
+    var totalDep=price-resale;
+    var oper=0; for(var a=0;a<tl.length;a++){ oper+=tl[a].annualTotal; } oper-=price;
+    var kpi='<div class="tl-sum">'
+     + '<div class="tl-kpi"><div class="k">Tổng chi 5 năm</div><div class="v acc">'+fmtVnd(y5.cumulative)+'</div></div>'
+     + '<div class="tl-kpi"><div class="k">Chi phí vận hành</div><div class="v">'+fmtVnd(oper)+'</div></div>'
+     + '<div class="tl-kpi"><div class="k">Khấu hao 5 năm</div><div class="v">'+fmtVnd(totalDep)+'</div></div>'
+     + '<div class="tl-kpi"><div class="k">Bán lại ước tính</div><div class="v acc">'+fmtVnd(resale)+'</div></div>'
+     + '</div>';
+    var opByYear=[]; var maxOp=1;
+    for(var b=0;b<tl.length;b++){ var val=(b===0)?(tl[b].annualTotal-price):tl[b].annualTotal; opByYear.push(val); if(val>maxOp) maxOp=val; }
+    var c1='<div class="chart"><h5>Chi phí ra túi theo năm (Năm 0 = phí lăn bánh, chưa gồm giá xe)</h5>';
+    for(var d=0;d<tl.length;d++){ var w=Math.round(opByYear[d]/maxOp*100);
+      c1+='<div class="bar-row"><span class="bar-lab">Năm '+d+'</span><span class="bar-track"><span class="bar-fill" style="width:'+w+'%"></span></span><span class="bar-val">'+fmtVnd(opByYear[d])+'</span></div>';
+    }
+    c1+='</div>';
+    var c2='<div class="chart"><h5>Giá trị xe còn lại (khấu hao)</h5>';
+    for(var e=0;e<tl.length;e++){ var w2=price>0?Math.round(tl[e].carValue/price*100):0;
+      c2+='<div class="bar-row"><span class="bar-lab">Năm '+e+'</span><span class="bar-track"><span class="bar-fill dep" style="width:'+w2+'%"></span></span><span class="bar-val">'+fmtVnd(tl[e].carValue)+'</span></div>';
+    }
+    c2+='</div>';
+    var cards='';
+    for(var f=0;f<tl.length;f++){ var yr=tl[f]; var rows='';
+      for(var g=0;g<yr.lines.length;g++){ rows+='<div class="tlrow"><span>'+esc(yr.lines[g].label)+'</span><span class="amt">'+fmtVnd(yr.lines[g].amount)+'</span></div>'; }
+      var note=yr.note?'<div class="tl-note">'+esc(yr.note)+'</div>':'';
+      cards+='<div class="tlcard"><div class="tlcard-h"><span class="tlcard-y">Năm <b>'+yr.year+'</b></span>'
+        + '<span class="tlcard-cum">Chi trong năm: <b>'+fmtVnd(yr.annualTotal)+'</b> · Luỹ kế: <b>'+fmtVnd(yr.cumulative)+'</b></span></div>'
+        + rows + note + '</div>';
+    }
+    return kpi + c1 + c2 + '<p class="maint-note">Chi tiết từng năm:</p>' + cards
+      + '<p class="maint-note" style="margin-top:10px">* Ước tính theo chuẩn thị trường VN (phí lăn bánh, bảo hiểm, nhiên liệu ~15.000 km/năm). Khấu hao suy ra từ điểm giữ giá của xe.</p>';
+  }
   function detailHtml(v){
     var c = brandColor[v.brandSlug] || 'var(--accent)';
-    var ms = (v.maintenanceSchedule||[]).map(function(m){
-      return '<tr><th>'+esc((m.km/1000)+'.000 km')+'</th><td>'+esc(m.items)+'<div class="muted">'+esc(m.cost)+'</div></td></tr>';
-    }).join('');
     var pc = (v.partsCatalog||[]).map(function(p){
       return '<tr><th>'+esc(p.name)+'</th><td>'+esc(p.price)+'<div class="muted">OEM: '+esc(p.oem)+'</div></td></tr>';
     }).join('');
@@ -1109,9 +1268,10 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +     '</div>'
       +   '</div>'
       +   '<div class="tabpane" data-pane="spec">'+specPaneHtml(v)+'</div>'
-      +   '<div class="tabpane" data-pane="maint"><p class="muted">Lịch bảo dưỡng định kỳ tham khảo:</p><table class="dtbl">'+ms+'</table></div>'
+      +   '<div class="tabpane" data-pane="maint">'+maintPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="parts"><p class="muted">Giá phụ tùng tham khảo:</p><table class="dtbl">'+pc+'</table></div>'
       +   '<div class="tabpane" data-pane="cost">'
+      +     costTimelineHtml(v)
       +     '<div class="costcalc" id="costcalc">'
       +       '<h4 style="margin:0 0 10px">🧮 Máy tính chi phí nhiên liệu/năm</h4>'
       +       '<div class="cc-row"><label>Quãng đường mỗi năm: <b id="cc-kmval">15.000 km</b></label>'
@@ -1120,16 +1280,11 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +         '<input type="number" id="cc-price" min="0" step="500" value="'+(v.fuelType==='Điện'?'3000':'24000')+'"></div>'
       +       '<div class="cc-out" id="cc-out"></div>'
       +     '</div>'
-      +     '<p class="muted" style="margin:14px 0 6px">Ước tính chi phí nuôi xe mỗi năm:</p><table class="dtbl">'
-      +     row('Bảo dưỡng định kỳ', v.maintenanceCostPerYear)
-      +     row('Nhiên liệu/năng lượng', v.fuelType==='Điện' ? 'Thấp (sạc điện)' : 'Theo mức tiêu hao '+v.fuelEconomy)
-      +     row('Tổng chi phí sở hữu/năm', v.ownershipCost||'—')
-      +     row('Khuyến nghị', v.reliability>=4 ? 'Chi phí vận hành ổn định, dễ bán lại.' : 'Cân nhắc chi phí phụ tùng/dịch vụ.')
-      +   '</table></div>'
+      +   '</div>'
       +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
-  function openDetail(id){ var v=byId[id]; if(v){ pushRecent(id); openModal(detailHtml(v)); refreshReviewBtn(id); bindCostCalc(v); updateShareUrl(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
+  function openDetail(id){ var v=byId[id]; if(v){ pushRecent(id); openModal(detailHtml(v)); refreshReviewBtn(id); bindCostCalc(v); bindMaintAi(v); updateShareUrl(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
   function shareUrl(id){ return location.origin + location.pathname + '?v=' + encodeURIComponent(id); }
   function updateShareUrl(id){ try{ history.replaceState(null, '', shareUrl(id)); }catch(e){} }
   function clearShareUrl(){ try{ history.replaceState(null, '', location.pathname); }catch(e){} }

@@ -6977,3 +6977,298 @@ export function getPartsCatalog(v: Vehicle): PartItem[] {
   if (v.partsCatalog) return v.partsCatalog;
   return v.fuelType === 'Điện' ? defaultEvPartsCatalog : defaultPartsCatalog;
 }
+
+// =====================================================================================
+// Lịch bảo dưỡng CHI TIẾT & dòng thời gian CHI PHÍ SỞ HỮU — suy ra theo TỪNG XE.
+// Tất cả số liệu là ƯỚC TÍNH theo chuẩn ngành (estimated=true) khi không có dữ liệu
+// chính hãng. Dữ liệu được sinh tự động từ thuộc tính thực của xe (loại nhiên liệu,
+// kiểu thân xe, phân khúc giá, điểm giữ giá) nên KHÔNG trùng nhau giữa các xe cùng
+// hãng, và dùng lại được cho >1000 mẫu xe mà không cần khai báo tay.
+// =====================================================================================
+
+export type MaintPriority = 'Bắt buộc' | 'Khuyến nghị' | 'Tùy chọn';
+
+export interface MaintTask {
+  /** Hạng mục bảo dưỡng. */
+  name: string;
+  /** Chu kỳ thực hiện (km). */
+  everyKm: number;
+  /** Chi phí phụ tùng/vật tư ước tính (VND). */
+  estimatedCost: number;
+  /** Chi phí nhân công ước tính (VND). */
+  laborCost: number;
+  priority: MaintPriority;
+  /** true = số liệu ước tính theo chuẩn ngành (không phải hãng công bố). */
+  estimated: boolean;
+}
+
+export interface MaintStop {
+  /** Mốc số km. */
+  mileage: number;
+  items: MaintTask[];
+  /** Tổng chi phí ước tính cho mốc này (phụ tùng + nhân công, VND). */
+  totalCost: number;
+}
+
+export interface OwnershipCostLine {
+  label: string;
+  amount: number;
+}
+
+export interface OwnershipYear {
+  year: number;
+  lines: OwnershipCostLine[];
+  /** Nhiên liệu / điện trong năm (VND). */
+  energy: number;
+  /** Bảo dưỡng trong năm (VND). */
+  maintenance: number;
+  /** Bảo hiểm trong năm (VND). */
+  insurance: number;
+  /** Khấu hao trong năm (VND). */
+  depreciation: number;
+  /** Tổng tiền chi ra trong năm (VND). */
+  annualTotal: number;
+  /** Luỹ kế từ đầu (gồm giá mua + phí + chi phí vận hành) (VND). */
+  cumulative: number;
+  /** Giá trị xe ước tính cuối năm (VND). */
+  carValue: number;
+  /** Giá trị bán lại (chỉ năm cuối) (VND). */
+  resaleValue?: number;
+  note?: string;
+}
+
+interface RawMaintTask {
+  name: string;
+  everyKm: number;
+  parts: number;
+  labor: number;
+  priority: MaintPriority;
+}
+
+/** Hệ số chi phí phụ tùng/nhân công theo phân khúc giá (xe sang đắt hơn). */
+function maintCostFactor(pmin: number): number {
+  if (pmin < 500) return 0.9;
+  if (pmin < 900) return 1.0;
+  if (pmin < 1800) return 1.35;
+  if (pmin < 4000) return 1.9;
+  return 2.8;
+}
+
+function roundVnd(n: number): number {
+  return Math.round(n / 1000) * 1000;
+}
+
+/** Lấy số đầu/khoảng giá trị trong chuỗi (vd "4 – 6 triệu" -> 5 triệu). */
+function firstNumTs(s: string): number {
+  const m = String(s).replace(',', '.').match(/[0-9]+(\.[0-9]+)?/);
+  return m ? parseFloat(m[0]) : 0;
+}
+
+/** Trung bình của khoảng "x – y triệu" -> VND. */
+function midMillion(range: string): number {
+  const nums = (range.match(/[0-9]+([.,][0-9]+)?/g) ?? []).map((s) =>
+    parseFloat(s.replace(',', '.')),
+  );
+  if (nums.length === 0) return 0;
+  const avg = nums.length >= 2 ? (nums[0] + nums[1]) / 2 : nums[0];
+  return avg * 1_000_000;
+}
+
+/** Chi phí năng lượng mỗi năm (VND) theo mức tiêu hao thực của xe. */
+function energyPerYear(v: Vehicle, kmPerYear = 15000): number {
+  const econ = firstNumTs(v.fuelEconomy);
+  if (!econ) return 0;
+  const unitPrice = v.fuelType === 'Điện' ? 3000 : v.fuelType === 'Dầu' ? 22000 : 24000;
+  return roundVnd((econ * kmPerYear) / 100 * unitPrice);
+}
+
+/** Chi phí 1 bộ lốp (4 chiếc) theo phân khúc (VND). */
+function tireSetCost(pmin: number): number {
+  if (pmin < 500) return 4_000_000;
+  if (pmin < 900) return 6_000_000;
+  if (pmin < 1800) return 10_000_000;
+  if (pmin < 4000) return 18_000_000;
+  return 28_000_000;
+}
+
+/** Bộ hạng mục bảo dưỡng gốc theo loại nhiên liệu & kiểu thân xe. */
+function rawMaintTasks(fuel: FuelType, body: string): RawMaintTask[] {
+  const out: RawMaintTask[] = [];
+  const isEv = fuel === 'Điện';
+
+  if (!isEv) {
+    // Động cơ đốt trong (Xăng / Dầu / Hybrid)
+    out.push(
+      { name: 'Thay dầu động cơ', everyKm: 5000, parts: 380000, labor: 150000, priority: 'Bắt buộc' },
+      { name: 'Kiểm tra lốp', everyKm: 5000, parts: 0, labor: 80000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra hệ thống phanh', everyKm: 5000, parts: 0, labor: 100000, priority: 'Khuyến nghị' },
+      { name: 'Thay lọc dầu', everyKm: 10000, parts: 180000, labor: 80000, priority: 'Bắt buộc' },
+      { name: 'Đảo lốp', everyKm: 10000, parts: 0, labor: 150000, priority: 'Khuyến nghị' },
+      { name: 'Thay lọc gió động cơ', everyKm: 20000, parts: 280000, labor: 80000, priority: 'Khuyến nghị' },
+      { name: 'Thay lọc gió điều hòa', everyKm: 20000, parts: 300000, labor: 80000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra & bổ sung nước làm mát', everyKm: 20000, parts: 150000, labor: 100000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra ắc quy', everyKm: 20000, parts: 0, labor: 80000, priority: 'Khuyến nghị' },
+      { name: 'Thay dầu phanh', everyKm: 40000, parts: 220000, labor: 180000, priority: 'Bắt buộc' },
+      { name: 'Thay dầu hộp số', everyKm: 40000, parts: 750000, labor: 350000, priority: 'Khuyến nghị' },
+      { name: 'Thay má phanh trước (ước tính)', everyKm: 40000, parts: 950000, labor: 250000, priority: 'Khuyến nghị' },
+    );
+  }
+
+  if (fuel === 'Xăng') {
+    out.push(
+      { name: 'Thay bugi', everyKm: 40000, parts: 700000, labor: 200000, priority: 'Bắt buộc' },
+      { name: 'Thay lọc nhiên liệu', everyKm: 40000, parts: 400000, labor: 180000, priority: 'Bắt buộc' },
+    );
+  } else if (fuel === 'Dầu') {
+    out.push(
+      { name: 'Thay lọc nhiên liệu (diesel)', everyKm: 20000, parts: 650000, labor: 200000, priority: 'Bắt buộc' },
+      { name: 'Kiểm tra bộ lọc khí thải (DPF)', everyKm: 40000, parts: 0, labor: 250000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra turbo tăng áp', everyKm: 40000, parts: 0, labor: 250000, priority: 'Khuyến nghị' },
+    );
+  } else if (fuel === 'Hybrid') {
+    out.push(
+      { name: 'Kiểm tra pin hybrid', everyKm: 20000, parts: 0, labor: 280000, priority: 'Bắt buộc' },
+      { name: 'Kiểm tra phanh tái tạo năng lượng', everyKm: 20000, parts: 0, labor: 180000, priority: 'Khuyến nghị' },
+      { name: 'Thay nước làm mát bộ biến tần (inverter)', everyKm: 40000, parts: 350000, labor: 220000, priority: 'Khuyến nghị' },
+    );
+  } else if (isEv) {
+    // Xe điện: KHÔNG thay dầu động cơ
+    out.push(
+      { name: 'Đảo lốp', everyKm: 10000, parts: 0, labor: 180000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra sức khỏe pin (SoH)', everyKm: 20000, parts: 0, labor: 300000, priority: 'Bắt buộc' },
+      { name: 'Thay lọc gió điều hòa (cabin)', everyKm: 20000, parts: 300000, labor: 80000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra hệ thống phanh', everyKm: 20000, parts: 0, labor: 120000, priority: 'Khuyến nghị' },
+      { name: 'Thay dầu phanh', everyKm: 40000, parts: 220000, labor: 180000, priority: 'Bắt buộc' },
+      { name: 'Kiểm tra hệ thống treo', everyKm: 40000, parts: 0, labor: 180000, priority: 'Khuyến nghị' },
+      { name: 'Kiểm tra & bổ sung nước làm mát pin (nếu có)', everyKm: 40000, parts: 180000, labor: 150000, priority: 'Khuyến nghị' },
+    );
+  }
+
+  if (body === 'Pickup' || body === 'SUV') {
+    out.push({
+      name: 'Kiểm tra gầm, hệ thống treo & lái',
+      everyKm: 20000,
+      parts: 0,
+      labor: 150000,
+      priority: 'Khuyến nghị',
+    });
+  }
+
+  return out;
+}
+
+/** Bộ hạng mục bảo dưỡng của xe (đã quy đổi chi phí theo phân khúc). */
+export function getMaintTaskTemplates(v: Vehicle): MaintTask[] {
+  const f = maintCostFactor(v.price.min);
+  return rawMaintTasks(v.fuelType, v.bodyType).map((t) => ({
+    name: t.name,
+    everyKm: t.everyKm,
+    estimatedCost: roundVnd(t.parts * f),
+    laborCost: roundVnd(t.labor * f),
+    priority: t.priority,
+    estimated: true,
+  }));
+}
+
+/** Các mốc số km dùng để dựng lịch bảo dưỡng (chuẩn ngành). */
+export const MAINT_MILESTONES = [5000, 10000, 20000, 30000, 40000, 60000, 80000, 100000];
+
+/** Lịch bảo dưỡng chi tiết theo mốc km (sinh tự động từ bộ hạng mục của xe). */
+export function getMaintenancePlan(v: Vehicle): MaintStop[] {
+  const tpls = getMaintTaskTemplates(v);
+  const stops: MaintStop[] = [];
+  for (const m of MAINT_MILESTONES) {
+    const items = tpls.filter((t) => m % t.everyKm === 0);
+    if (items.length === 0) continue;
+    const totalCost = items.reduce((s, t) => s + t.estimatedCost + t.laborCost, 0);
+    stops.push({ mileage: m, items, totalCost });
+  }
+  return stops;
+}
+
+/** Dòng thời gian chi phí sở hữu Năm 0 → Năm 5 (suy ra theo từng xe). */
+export function getOwnershipTimeline(v: Vehicle): OwnershipYear[] {
+  const price = v.price.min * 1_000_000;
+  const isEv = v.fuelType === 'Điện';
+  const isHybridOrEv = isEv || v.fuelType === 'Hybrid';
+  const reg = isEv ? 0 : roundVnd(price * 0.1);
+  const plate = 20_000_000;
+  const physIns = (val: number): number => roundVnd(val * 0.015) + 480700;
+  const accessories = roundVnd(Math.max(8_000_000, price * 0.02));
+  const energy = energyPerYear(v);
+  const maintBase = midMillion(v.maintenanceCostPerYear) || roundVnd(price * 0.012);
+
+  const resaleR = v.ratings.resale;
+  const firstRetain = 0.8 + (resaleR - 3) * 0.02;
+  const laterRetain = 0.9 + (resaleR - 3) * 0.01;
+
+  const years: OwnershipYear[] = [];
+  let cumulative = 0;
+  let carValue = price;
+
+  for (let y = 0; y <= 5; y++) {
+    const lines: OwnershipCostLine[] = [];
+    let energyY = 0;
+    let maintY = 0;
+    let insY = 0;
+    let depY = 0;
+    let annual = 0;
+
+    if (y === 0) {
+      const ins0 = physIns(price);
+      lines.push(
+        { label: 'Giá xe niêm yết', amount: price },
+        { label: isEv ? 'Lệ phí trước bạ (EV 0%)' : 'Lệ phí trước bạ (~10%)', amount: reg },
+        { label: 'Phí biển số (khu vực I)', amount: plate },
+        { label: 'Bảo hiểm (TNDS + vật chất)', amount: ins0 },
+        { label: 'Phụ kiện (tùy chọn)', amount: accessories },
+      );
+      insY = ins0;
+      annual = price + reg + plate + ins0 + accessories;
+    } else {
+      const prevValue = carValue;
+      const retain = y === 1 ? firstRetain : laterRetain;
+      carValue = roundVnd(prevValue * retain);
+      depY = prevValue - carValue;
+      energyY = energy;
+      maintY = y === 3 ? roundVnd(maintBase * 1.8) : maintBase;
+      insY = physIns(carValue);
+      lines.push(
+        { label: isEv ? 'Tiền điện' : 'Nhiên liệu', amount: energyY },
+        { label: y === 3 ? 'Bảo dưỡng lớn (đại tu)' : 'Bảo dưỡng định kỳ', amount: maintY },
+        { label: 'Bảo hiểm vật chất (gia hạn)', amount: insY },
+      );
+      if (y === 3) {
+        const tires = tireSetCost(v.price.min);
+        lines.push({ label: 'Thay lốp (ước tính)', amount: tires });
+        annual = energyY + maintY + insY + tires;
+      } else {
+        annual = energyY + maintY + insY;
+      }
+    }
+
+    cumulative += annual;
+    const yr: OwnershipYear = {
+      year: y,
+      lines,
+      energy: energyY,
+      maintenance: maintY,
+      insurance: insY,
+      depreciation: depY,
+      annualTotal: annual,
+      cumulative,
+      carValue,
+    };
+    if (y === 2 && isHybridOrEv) yr.note = 'Kiểm tra sức khỏe pin định kỳ';
+    if (y === 5) {
+      yr.resaleValue = carValue;
+      yr.note =
+        'Giá trị bán lại ước tính · Tổng khấu hao ~' +
+        Math.round((price - carValue) / 1_000_000) +
+        ' triệu';
+    }
+    years.push(yr);
+  }
+
+  return years;
+}
