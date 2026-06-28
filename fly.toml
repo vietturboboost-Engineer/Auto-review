@@ -20,6 +20,14 @@ primary_region = "sin"  # sin=Singapore, nrt=Tokyo, sjc=San Jose, fra=Frankfurt,
 [env]
   NODE_ENV = "production"
   PORT = "3000"
+  # Thư mục dữ liệu bền vững (đánh giá người dùng) — trỏ vào volume bên dưới.
+  DATA_DIR = "/data"
+
+# Volume lưu đánh giá/bình luận để không mất khi redeploy.
+# Tạo 1 lần: flyctl volumes create data --region sin --size 1
+[mounts]
+  source = "data"
+  destination = "/data"
 
 [http_service]
   internal_port = 3000

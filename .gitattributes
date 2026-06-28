@@ -1,0 +1,3 @@
+# Giữ script shell luôn dùng LF (tránh lỗi khi build Docker trên alpine).
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf

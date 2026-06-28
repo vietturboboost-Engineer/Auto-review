@@ -278,6 +278,26 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .tab.active{color:var(--ink);background:var(--accent)}
 .tabpane{display:none}
 .tabpane.active{display:block}
+.modal2{z-index:80;background:rgba(0,0,0,0.78)}
+.sheet-sm{max-width:680px;height:min(88vh,760px)}
+.rvsum{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.rvsum .rvavg{font-size:30px;font-weight:800;color:var(--accent)}
+.rvstars{color:var(--accent);letter-spacing:1px}
+.rvform{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--card);margin-bottom:18px}
+.rvinput{width:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px 12px;font:inherit;font-size:14px}
+.rvinput:focus{outline:none;border-color:var(--accent)}
+.rvstarpick{display:flex;align-items:center;gap:6px}
+.rvstar{font-size:26px;cursor:pointer;color:var(--muted);line-height:1;user-select:none}
+.rvstar.on{color:var(--accent)}
+.rvhint{font-size:12px;margin-left:6px}
+.rverr{color:var(--bad);font-size:13px;min-height:0}
+.rverr:empty{display:none}
+.rvlist{display:flex;flex-direction:column;gap:12px}
+.rvitem{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.rvtop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.rvname{font-weight:700;font-size:14px}
+.rvcomment{font-size:14px;line-height:1.55}
+.rvdate{font-size:12px;color:var(--muted);margin-top:6px}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
 .ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
@@ -447,6 +467,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
 <button class="fab" id="tobottom" title="Xuống cuối trang" aria-label="Xuống cuối trang">↓</button>
 
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="modal modal2" id="rvmodal"><div class="sheet sheet-sm" id="rvsheet"></div></div>
 
 <script>
 (function(){
@@ -551,10 +572,12 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
 
   /* ---------- Modal helpers ---------- */
   var modal=$('modal'), sheet=$('sheet');
+  var rvmodal=$('rvmodal'), rvsheet=$('rvsheet');
   function openModal(html){ sheet.innerHTML=html; modal.classList.add('show'); document.body.style.overflow='hidden'; bindTabs(); }
   function closeModal(){ modal.classList.remove('show'); document.body.style.overflow=''; }
   modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+  rvmodal.addEventListener('click', function(e){ if(e.target===rvmodal) closeRvModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(rvmodal.classList.contains('show')) closeRvModal(); else closeModal(); } });
 
   /* ---------- Floating scroll buttons ---------- */
   var totop=$('totop'), tobottom=$('tobottom');
@@ -745,6 +768,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       +       '</div>'
       +     '</div>'
       +     '<div class="vactions">'
+      +       '<button class="btn btn-ghost" data-reviews="'+esc(v.id)+'">💬 Đánh giá người dùng</button>'
       +       '<button class="btn btn-ghost" data-act="compare" data-id="'+esc(v.id)+'">⚖️ Thêm vào so sánh</button>'
       +       '<button class="btn '+(aiHas(v.id)?'btn-ai-on':'btn-primary')+'" data-aiadd="'+esc(v.id)+'">'+(aiHas(v.id)?'✓ Đã thêm vào AI':'+ Thêm vào so sánh AI')+'</button>'
       +     '</div>'
@@ -760,7 +784,51 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
-  function openDetail(id){ var v=byId[id]; if(v){ openModal(detailHtml(v)); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
+  function openDetail(id){ var v=byId[id]; if(v){ openModal(detailHtml(v)); refreshReviewBtn(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
+
+  /* ---------- Reviews (đánh giá người dùng) ---------- */
+  function closeRvModal(){ rvmodal.classList.remove('show'); }
+  function rvDate(iso){ try{ return new Date(iso).toLocaleDateString('vi-VN'); }catch(e){ return ''; } }
+  function updateReviewBtn(id, summary){ var b=document.querySelector('#sheet [data-reviews="'+id+'"]'); if(b&&summary){ b.innerHTML = summary.count>0 ? ('💬 Đánh giá ('+summary.count+')') : '💬 Đánh giá người dùng'; } }
+  function refreshReviewBtn(id){ fetch('/api/reviews/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){ if(d&&d.ok) updateReviewBtn(id, d.summary); }).catch(function(){}); }
+  function reviewItemHtml(r){ return '<div class="rvitem"><div class="rvtop"><span class="rvname">'+esc(r.name)+'</span><span class="rvstars">'+stars(r.rating)+'</span></div><div class="rvcomment">'+esc(r.comment)+'</div><div class="rvdate">'+esc(rvDate(r.createdAt))+'</div></div>'; }
+  function reviewsShellHtml(v){ return '<div class="sheet-head"><h3>💬 Đánh giá · '+esc(v.brand+' '+v.model)+'</h3><button class="closebtn" data-rvclose>✕</button></div><div class="sheet-body" id="rvbody"><p class="muted">Đang tải…</p></div>'; }
+  function reviewsBodyHtml(id, d){
+    var s=d.summary||{count:0,avg:0};
+    var head = s.count>0 ? ('<div class="rvsum"><span class="rvavg">'+s.avg.toFixed(1)+'</span><span class="rvstars">'+stars(Math.round(s.avg))+'</span><span class="muted">'+s.count+' đánh giá</span></div>') : '<p class="muted">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>';
+    var form = '<form class="rvform" data-rvform="'+esc(id)+'">'
+      + '<input class="rvinput" name="name" maxlength="40" placeholder="Tên của bạn (tuỳ chọn)">'
+      + '<div class="rvstarpick" data-rvstarpick>'+[1,2,3,4,5].map(function(n){return '<span class="rvstar" data-star="'+n+'">☆</span>';}).join('')+'<span class="rvhint muted">Chọn số sao</span></div>'
+      + '<textarea class="rvinput" name="comment" maxlength="600" rows="3" placeholder="Chia sẻ cảm nhận của bạn…"></textarea>'
+      + '<div class="rverr" data-rverr></div>'
+      + '<button type="submit" class="btn btn-primary">Gửi đánh giá</button>'
+      + '</form>';
+    var list = (d.reviews||[]).map(reviewItemHtml).join('');
+    return head + form + '<div class="rvlist">'+list+'</div>';
+  }
+  function bindReviewForm(id){
+    var form=rvsheet.querySelector('[data-rvform]'); if(!form) return;
+    var rating=0;
+    var pick=form.querySelector('[data-rvstarpick]');
+    pick.addEventListener('click', function(e){ var sEl=e.target.closest('[data-star]'); if(!sEl) return; rating=Number(sEl.getAttribute('data-star'));
+      var els=pick.querySelectorAll('[data-star]'); for(var i=0;i<els.length;i++){ var on=i<rating; els[i].textContent=on?'★':'☆'; els[i].classList.toggle('on', on); } });
+    form.addEventListener('submit', function(e){ e.preventDefault();
+      var err=form.querySelector('[data-rverr]'); err.textContent='';
+      var comment=form.querySelector('[name=comment]').value;
+      if(rating<1){ err.textContent='Vui lòng chọn số sao.'; return; }
+      if(!comment.trim()){ err.textContent='Vui lòng nhập nội dung đánh giá.'; return; }
+      var btn=form.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Đang gửi…';
+      fetch('/api/reviews/'+encodeURIComponent(id), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: form.querySelector('[name=name]').value, rating: rating, comment: comment }) })
+        .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+        .then(function(res){ if(!res.ok || !res.d.ok){ err.textContent=(res.d&&res.d.error)||'Không gửi được.'; btn.disabled=false; btn.textContent='Gửi đánh giá'; return; }
+          var body=document.getElementById('rvbody'); body.innerHTML=reviewsBodyHtml(id, res.d); bindReviewForm(id); updateReviewBtn(id, res.d.summary); })
+        .catch(function(){ err.textContent='Lỗi mạng, vui lòng thử lại.'; btn.disabled=false; btn.textContent='Gửi đánh giá'; });
+    });
+  }
+  function openReviews(id){ var v=byId[id]; if(!v) return; rvsheet.innerHTML=reviewsShellHtml(v); rvmodal.classList.add('show'); document.body.style.overflow='hidden';
+    var body=document.getElementById('rvbody');
+    fetch('/api/reviews/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok){ body.innerHTML='<p class="muted">Không tải được đánh giá.</p>'; return; } body.innerHTML=reviewsBodyHtml(id, d); bindReviewForm(id); updateReviewBtn(id, d.summary); }).catch(function(){ body.innerHTML='<p class="muted">Không tải được đánh giá.</p>'; });
+  }
 
   /* ---------- Compare ---------- */
   var picked=[];
@@ -1079,6 +1147,9 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       var ck=pk.querySelector('.pi-check'); if(ck) ck.textContent=pon?'✓':'+'; updPickerN(); return; }
     var aa=e.target.closest('[data-aiadd]');
     if(aa){ var aid=aa.getAttribute('data-aiadd'); aiToggle(aid); setAiBtn(aa, aiHas(aid)); return; }
+    var rvb=e.target.closest('[data-reviews]');
+    if(rvb){ openReviews(rvb.getAttribute('data-reviews')); return; }
+    if(e.target.closest('[data-rvclose]')){ closeRvModal(); return; }
     if(e.target.closest('[data-close]')) closeModal();
   });
   $('cta-reco').onclick=openReco;

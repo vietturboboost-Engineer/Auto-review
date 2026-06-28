@@ -34,20 +34,24 @@ WORKDIR /app
 
 ENV NODE_ENV=production \
     PORT=3000 \
-    HOST=0.0.0.0
+    HOST=0.0.0.0 \
+    DATA_DIR=/data
 
 # wget is used by HEALTHCHECK; alpine has it built-in via busybox.
-RUN addgroup -S app && adduser -S app -G app
+# su-exec lets the entrypoint fix volume permissions as root then drop to 'app'.
+RUN apk add --no-cache su-exec && addgroup -S app && adduser -S app -G app
 
 COPY --from=prod-deps --chown=app:app /app/node_modules ./node_modules
 COPY --from=build     --chown=app:app /app/dist          ./dist
 COPY --chown=app:app  public                             ./public
 COPY --chown=app:app  package.json                       ./
+COPY                  docker-entrypoint.sh               /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER app
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null || exit 1
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/index.js"]

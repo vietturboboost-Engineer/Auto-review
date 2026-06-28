@@ -5,6 +5,7 @@ import { healthRouter } from './routes/health.js';
 import { homeRouter } from './routes/home.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { recommendRouter } from './routes/recommend.js';
+import { reviewsRouter } from './routes/reviews.js';
 import { apiRouter } from './routes/api.js';
 
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
@@ -20,6 +21,7 @@ export function createApp(): Express {
   app.use('/toyota', homeRouter);
   app.use('/health', healthRouter);
   app.use('/api/recommend', recommendRouter);
+  app.use('/api/reviews', reviewsRouter);
   app.use('/api', apiRouter);
 
   return app;
