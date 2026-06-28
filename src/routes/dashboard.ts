@@ -215,7 +215,7 @@ section{padding:26px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .vcard{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
   display:flex;flex-direction:column;transition:transform .14s ease,box-shadow .14s ease}
-.vcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.vcard:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(247,183,51,.34), 0 4px 10px rgba(247,183,51,.22);border-color:rgba(247,183,51,.45)}
 .vthumb{position:relative;aspect-ratio:16/9;background:#0c0c10;overflow:hidden;cursor:pointer}
 .vthumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
 .vthumb:hover img{transform:scale(1.05)}
