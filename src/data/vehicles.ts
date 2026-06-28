@@ -1154,13 +1154,19 @@ export const vehicles: Vehicle[] = [
   }),
 
   // ===== Mitsubishi =====
+  // Nguồn (Xpander facelift 2022, bản VN giữ AT 4 cấp):
+  //  - Wikipedia "Mitsubishi Xpander" (infobox + bảng Powertrain, dẫn lại Mitsubishi Motors & paultan):
+  //    máy 1.5L 4A91 MIVEC 77 kW (105 PS) / 141 Nm @4000; dài 4.595, rộng 1.750, cao 1.750 (bản facelift),
+  //    trục cơ sở 2.775 mm; khối lượng 1.220–1.275 kg; thị trường VN/Philippines/Malaysia giữ hộp số tự động 4 cấp. (truy cập 2026-06)
+  //  - ASEAN NCAP result #4019 (2018): 4 sao, chỉ 2 túi khí trên bản tiền facelift.
+  // Đối chiếu: số liệu hiện có (105 hp, 141 Nm, 4595/1750/1750/2775) khớp -> giữ nguyên; bổ sung khối lượng.
   mk({
     id: 'mitsubishi-xpander',
     brandSlug: 'mitsubishi',
     model: 'Xpander',
     gen: '(2022 FL)',
     trim: '1.5 AT Premium',
-    engine: '1.5L xăng',
+    engine: '1.5L xăng 4A91 MIVEC',
     trans: 'AT 4 cấp',
     fuel: 'Xăng',
     drive: 'FWD',
@@ -1173,6 +1179,7 @@ export const vehicles: Vehicle[] = [
     cargo: 322,
     hp: 105,
     torque: 141,
+    curbWeight: 1245,
     rel: 4,
     image:
       'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Mitsubishi_Xpander_NC1W_FL2_1.5_GLS_Quartz_White_Pearl_01.jpg/330px-Mitsubishi_Xpander_NC1W_FL2_1.5_GLS_Quartz_White_Pearl_01.jpg',
