@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { brands, countryFlag } from '../data/brands.js';
+import { brands, countryFlag, brandLogo } from '../data/brands.js';
 import {
   vehicles,
   getMaintenanceSchedule,
@@ -20,6 +20,7 @@ const clientVehicles = vehicles.map((v) => ({
 const clientBrands = brands.map((b) => ({
   ...b,
   flag: countryFlag(b.country),
+  logo: brandLogo(b.slug),
   count: vehicles.filter((v) => v.brandSlug === b.slug).length,
 }));
 
@@ -79,7 +80,7 @@ function vehicleCard(v: Vehicle): string {
     `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment + ' ' + v.tags.join(' ')).toLowerCase())}">` +
     `<div class="vthumb" data-act="detail" data-id="${v.id}" title="Xem chi tiết"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span><span class="vlogo" style="color:${color}">${escapeHtml(brand?.wordmark ?? v.brand)}</span></div>` +
     `<div class="vbody">` +
-    `<div class="vbrand" style="--bc:${color}">${countryFlag(brand?.country ?? '')} ${escapeHtml(v.brand)} <span class="vcountry">· ${escapeHtml(brand?.country ?? '')}</span></div>` +
+    `<div class="vbrand" style="--bc:${color}"><img class="blogo" src="${escapeHtml(brandLogo(v.brandSlug))}" alt="" loading="lazy">${countryFlag(brand?.country ?? '')} ${escapeHtml(v.brand)} <span class="vcountry">· ${escapeHtml(brand?.country ?? '')}</span></div>` +
     `<h3 class="vname">${escapeHtml(v.model)} <span>${escapeHtml(v.trim)}</span></h3>` +
     `<div class="vchips"><span class="chip">${escapeHtml(v.segment)}</span><span class="chip">${escapeHtml(v.fuelType)}</span><span class="chip">${v.seats} chỗ</span></div>` +
     `<div class="vprice">${escapeHtml(v.price.label)}</div>` +
@@ -218,6 +219,7 @@ section{padding:26px 0}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.28)}
 .vbody{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .vbrand{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.blogo{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:8px;flex:0 0 auto;background:#fff;border-radius:5px;padding:2px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
 .vcountry{font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0}
 /* Màu thương hiệu: kẹp độ sáng theo theme để chữ luôn đọc được, vẫn giữ nhận diện hãng */
 .brandmark,.vbrand,.bct{color:var(--bc,currentColor)}
@@ -450,6 +452,8 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
   var byId = {}; V.forEach(function(v){ byId[v.id] = v; });
   var brandColor = {}; B.forEach(function(b){ brandColor[b.slug] = b.color; });
   var brandFlag = {}; B.forEach(function(b){ brandFlag[b.slug] = b.flag || ''; });
+  var brandLogoMap = {}; B.forEach(function(b){ brandLogoMap[b.slug] = b.logo || ''; });
+  function blogo(slug){ var u=brandLogoMap[slug]; return u ? '<img class="blogo" src="'+esc(u)+'" alt="" loading="lazy">' : ''; }
 
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function $(id){ return document.getElementById(id); }
@@ -467,6 +471,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
   var FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#26262e"/><path d="M40 120 q10 -40 55 -44 l70 -2 q34 0 52 30 l24 4 q14 2 14 16 q0 9 -11 9 l-200 0 q-11 0 -11 -9 z" fill="#3a3a44"/><circle cx="95" cy="118" r="16" fill="#15151a"/><circle cx="210" cy="118" r="16" fill="#15151a"/><text x="160" y="158" font-family="Arial" font-size="13" fill="#9a9aa6" text-anchor="middle">Ảnh đang cập nhật</text></svg>');
   document.addEventListener('error', function(e){
     var t = e.target;
+    if(t && t.tagName === 'IMG' && t.classList.contains('blogo')){ t.style.display='none'; return; }
     if(t && t.tagName === 'IMG' && !t.classList.contains('flagicon') && !t.getAttribute('data-fb')){ t.setAttribute('data-fb','1'); t.src = FALLBACK; }
   }, true);
 
@@ -694,7 +699,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       return '<tr><th>'+esc(p.name)+'</th><td>'+esc(p.price)+'<div class="muted">OEM: '+esc(p.oem)+'</div></td></tr>';
     }).join('');
     return ''
-      + '<div class="sheet-head"><h3>'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+'<span class="bct" style="--bc:'+c+'">'+esc(v.brand)+'</span> '+esc(v.model)+' · '+esc(v.trim)+'</h3>'
+      + '<div class="sheet-head"><h3>'+blogo(v.brandSlug)+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+'<span class="bct" style="--bc:'+c+'">'+esc(v.brand)+'</span> '+esc(v.model)+' · '+esc(v.trim)+'</h3>'
       + '<button class="closebtn" data-close>✕</button></div>'
       + '<div class="tabs">'
       +   '<button class="tab active" data-tab="ov">Tổng quan</button>'
@@ -784,7 +789,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
     var html=''
       + '<div class="sheet-head"><h3>So sánh '+vs.length+' xe</h3><button class="closebtn" data-close>✕</button></div>'
       + '<div class="sheet-body" style="overflow-x:auto"><table class="cmp-tbl"><tr><th>Tiêu chí</th>'
-      + vs.map(function(v){return '<th>'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand+' '+v.model)+'<div class="muted" style="font-weight:400">'+esc(v.trim)+'</div></th>';}).join('') + '</tr>'
+      + vs.map(function(v){return '<th>'+blogo(v.brandSlug)+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand+' '+v.model)+'<div class="muted" style="font-weight:400">'+esc(v.trim)+'</div></th>';}).join('') + '</tr>'
       + '<tr><td class="label">Ảnh</td>'+ vs.map(function(v){return '<td class="cmpimg-cell"><img class="cmpimg" src="'+esc(hiRes(v.image))+'" data-orig="'+esc(v.image)+'" alt="'+esc(v.brand+' '+v.model)+'"></td>';}).join('') +'</tr>'
       + rowCmp('Giá từ (triệu)', function(v){return v.price.min;}, false)
       + rowCmp('Phân khúc', function(v){return v.segment;})
@@ -1001,7 +1006,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
     var html=lastTop.map(function(it){
       var v=it.v, c=brandColor[v.brandSlug]||'var(--accent)';
       return '<div class="reco-card"><img src="'+esc(v.image)+'" alt="">'
-        + '<div style="flex:1"><div class="vbrand" style="--bc:'+c+'">'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand)+'</div>'
+        + '<div style="flex:1"><div class="vbrand" style="--bc:'+c+'">'+blogo(v.brandSlug)+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand)+'</div>'
         + '<h3 class="vname" style="margin:2px 0">'+esc(v.model)+' <span>'+esc(v.trim)+'</span></h3>'
         + '<div class="muted" style="font-size:13px">'+esc(v.price.label)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+'</div>'
         + '<div class="muted" style="font-size:12px;margin-top:3px">'+esc(it.vnStatus)+'</div>'

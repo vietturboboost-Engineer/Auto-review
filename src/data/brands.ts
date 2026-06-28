@@ -2,6 +2,8 @@
 // Logo hiển thị dạng wordmark có màu thương hiệu (không phụ thuộc ảnh ngoài,
 // tránh lỗi tải & vấn đề bản quyền logo). Có thể thay bằng URL ảnh sau này.
 
+import { BRAND_LOGOS } from './brand-logos.generated.js';
+
 export interface Brand {
   /** Slug duy nhất, dùng trong URL/api: 'toyota', 'mercedes-benz'... */
   slug: string;
@@ -11,6 +13,8 @@ export interface Brand {
   color: string;
   /** Logo chữ rút gọn hiển thị trong ô (vd: 'TOYOTA', 'BMW'). */
   wordmark: string;
+  /** Đường dẫn logo SVG (tùy chọn). Mặc định suy ra '/assets/brands/<slug>.svg'. */
+  logo?: string;
 }
 
 export const brands: Brand[] = [
@@ -213,6 +217,15 @@ const brandBySlug = new Map(brands.map((b) => [b.slug, b]));
 
 export function getBrand(slug: string): Brand | undefined {
   return brandBySlug.get(slug);
+}
+
+/**
+ * Đường dẫn logo SVG của hãng (cấu hình tập trung, tái dùng cho list/detail/compare/AI).
+ * Ưu tiên `brand.logo` nếu khai báo, nếu không suy ra theo slug. File đặt tại `public/assets/brands/<slug>.svg`.
+ * Nếu file chưa tồn tại, UI sẽ tự ẩn logo và chỉ hiển thị tên hãng (fallback nhẹ nhàng).
+ */
+export function brandLogo(slug: string): string {
+  return brandBySlug.get(slug)?.logo ?? BRAND_LOGOS[slug] ?? `/assets/brands/${slug}.svg`;
 }
 
 /** Mã ISO 3166-1 alpha-2 theo tên nước (dùng để lấy icon cờ). */
