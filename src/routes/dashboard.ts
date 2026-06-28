@@ -135,11 +135,11 @@ body{
 }
 
 /* Scrollbar mảnh, gọn */
-*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
-::-webkit-scrollbar{width:8px;height:8px}
+*{scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+::-webkit-scrollbar-thumb{background:var(--muted);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--accent2);background-clip:padding-box}
 a{color:inherit}
 .wrap{max-width:1180px;margin:0 auto;padding:0 18px}
 
@@ -193,6 +193,7 @@ section{padding:26px 0}
 /* Filters */
 .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .filters select{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:14px}
+.filters select option{background:var(--surface);color:var(--text)}
 .filters .count{margin-left:auto;color:var(--muted);font-size:13px}
 .clearbtn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
 
@@ -247,16 +248,16 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .cmpbar .slot{font-size:12px;padding:6px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);white-space:nowrap}
 .cmpbar .slot b{cursor:pointer;color:var(--bad);margin-left:6px}
 
-/* Back to top */
-.totop{position:fixed;right:24px;bottom:24px;z-index:55;width:60px;height:60px;border-radius:50%;
+/* Floating scroll buttons */
+.fab{position:fixed;right:24px;bottom:24px;z-index:55;width:60px;height:60px;border-radius:50%;
   border:none;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#1a1300;
   box-shadow:0 10px 26px rgba(0,0,0,.45),0 0 0 6px rgba(255,209,102,.16);
   cursor:pointer;font-size:34px;font-weight:900;line-height:1;display:none;align-items:center;justify-content:center;
   transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
-.totop:hover{transform:translateY(-4px) scale(1.06);filter:brightness(1.07);
+.fab:hover{transform:translateY(-4px) scale(1.06);filter:brightness(1.07);
   box-shadow:0 16px 34px rgba(0,0,0,.5),0 0 0 8px rgba(255,209,102,.22)}
-.totop:active{transform:translateY(-1px) scale(1)}
-.totop.show{display:flex;animation:totop-in .25s ease}
+.fab:active{transform:translateY(-1px) scale(1)}
+.fab.show{display:flex;animation:totop-in .25s ease}
 @keyframes totop-in{from{opacity:0;transform:translateY(12px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 /* Modal */
@@ -304,13 +305,15 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .cmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .cmp-tbl th,.cmp-tbl td{border:1px solid var(--line);padding:9px;text-align:center}
 .cmp-tbl th{background:var(--card)}
+.cmp-tbl td.cmpimg-cell{padding:6px}
+.cmpimg{width:100%;max-width:220px;height:124px;object-fit:cover;border-radius:10px;display:block;margin:0 auto;background:var(--card)}
 .cmp-tbl td.label{text-align:left;color:var(--muted);font-weight:600;background:var(--card)}
 
 /* reco */
 .reco-form{display:grid;gap:16px}
 .fld label{display:block;font-weight:700;margin-bottom:6px;font-size:14px}
 .fld .opts{display:flex;gap:8px;flex-wrap:wrap}
-.opt{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:13px}
+.opt{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);cursor:pointer;font-size:13px}
 .opt.on{background:var(--accent);color:var(--ink);border-color:var(--accent)}
 .fld input[type=range]{width:100%}
 .budgetval{font-weight:800;color:var(--accent)}
@@ -322,8 +325,38 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .ai-box{border:1px solid var(--accent);border-radius:14px;padding:14px;margin-top:12px;background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .ai-badge{font-size:11px;font-weight:800;color:var(--ink);background:var(--accent);padding:3px 8px;border-radius:999px}
 .ai-warn{color:var(--bad);font-size:13px}
+
+/* AI shortlist + vehicle picker */
+.aishort{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:18px;background:var(--card)}
+.aishort-h{font-weight:800;font-size:15px}
+.aishort-chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.aichip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:600;cursor:grab;user-select:none}
+.aichip b{cursor:pointer;color:var(--bad)}
+.aichip.dragging{opacity:.5}
+.aichip.dragover{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.picker-search{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--text);font-size:14px;outline:none}
+.picker-search:focus{border-color:var(--accent)}
+.picker-list{display:flex;flex-direction:column;gap:8px}
+.picker-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+  padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.picker-item:hover{border-color:var(--accent)}
+.picker-item.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.picker-item img{width:74px;height:46px;object-fit:cover;border-radius:8px;background:#0c0c10;flex:0 0 auto}
+.pi-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.pi-brand{font-size:12px;color:var(--muted);font-weight:700}
+.pi-model{font-size:14px;font-weight:700}
+.pi-price{font-size:12px}
+.pi-check{margin-left:auto;font-size:18px;font-weight:900;color:var(--accent);width:26px;text-align:center;flex:0 0 auto}
+.picker-foot{padding:14px 18px;border-top:1px solid var(--line);background:var(--surface);text-align:right;flex:0 0 auto}
+.btn-ai-on{background:var(--good);color:#06281a}
 .muted{color:var(--muted)}
-footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border-top:1px solid var(--line);margin-top:30px}
+footer{padding:46px 0 60px;color:var(--muted);font-size:14px;text-align:center;border-top:1px solid var(--line);margin-top:40px;line-height:1.9}
+.credit{display:inline-block;margin:22px auto 0;padding:14px 22px;font-size:14px;
+  border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+.credit b{color:var(--accent)}
+.credit a{color:var(--accent2);font-weight:600}
 @media(max-width:560px){.searchbar{flex-direction:column}.nav nav a{padding:7px 9px}}
 </style>
 </head>
@@ -383,6 +416,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
 <footer class="wrap">
   Số liệu mang tính tham khảo cho thị trường Việt Nam (giá/thông số thay đổi theo phiên bản & thời điểm).
   Ảnh một số xe là ảnh minh hoạ. • <a href="/health">/health</a>
+  <div class="credit">Phát triển bởi <b>Viet Turbo Boost</b> • Liên hệ: <a href="mailto:viet.turbo.boost@gmail.com">viet.turbo.boost@gmail.com</a></div>
 </footer>
 
 <div class="cmpbar" id="cmpbar">
@@ -391,7 +425,8 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   <button class="clearbtn" id="cmp-clear">Xoá</button>
 </div>
 
-<button class="totop" id="totop" title="Về đầu trang" aria-label="Về đầu trang">↑</button>
+<button class="fab" id="totop" title="Về đầu trang" aria-label="Về đầu trang">↑</button>
+<button class="fab" id="tobottom" title="Xuống cuối trang" aria-label="Xuống cuối trang">↓</button>
 
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 
@@ -497,14 +532,24 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
 
-  /* ---------- Back to top ---------- */
-  var totop=$('totop');
-  if(totop){
-    window.addEventListener('scroll', function(){
-      if(window.pageYOffset>400) totop.classList.add('show'); else totop.classList.remove('show');
-    }, { passive:true });
-    totop.onclick=function(){ window.scrollTo({ top:0, behavior:'smooth' }); };
+  /* ---------- Floating scroll buttons ---------- */
+  var totop=$('totop'), tobottom=$('tobottom');
+  function updFabs(){
+    var y=window.pageYOffset;
+    var scrollable=(document.documentElement.scrollHeight-window.innerHeight)>200;
+    if(y>400){
+      if(totop) totop.classList.add('show');
+      if(tobottom) tobottom.classList.remove('show');
+    } else {
+      if(totop) totop.classList.remove('show');
+      if(tobottom){ if(scrollable) tobottom.classList.add('show'); else tobottom.classList.remove('show'); }
+    }
   }
+  window.addEventListener('scroll', updFabs, { passive:true });
+  window.addEventListener('resize', updFabs, { passive:true });
+  updFabs();
+  if(totop) totop.onclick=function(){ window.scrollTo({ top:0, behavior:'smooth' }); };
+  if(tobottom) tobottom.onclick=function(){ window.scrollTo({ top:document.documentElement.scrollHeight, behavior:'smooth' }); };
   function bindTabs(){
     var tabs=sheet.querySelectorAll('.tab'); if(!tabs.length) return;
     Array.prototype.forEach.call(tabs, function(t){
@@ -587,7 +632,10 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       +         '<p class="ovh"><b>Từ khóa</b></p>'+tags(v.tags||[])
       +       '</div>'
       +     '</div>'
-      +     '<div class="vactions"><button class="btn btn-ghost" data-act="compare" data-id="'+esc(v.id)+'">⚖️ Thêm vào so sánh</button></div>'
+      +     '<div class="vactions">'
+      +       '<button class="btn btn-ghost" data-act="compare" data-id="'+esc(v.id)+'">⚖️ Thêm vào so sánh</button>'
+      +       '<button class="btn '+(aiHas(v.id)?'btn-ai-on':'btn-primary')+'" data-aiadd="'+esc(v.id)+'">'+(aiHas(v.id)?'✓ Đã thêm vào AI':'+ Thêm vào so sánh AI')+'</button>'
+      +     '</div>'
       +   '</div>'
       +   '<div class="tabpane" data-pane="spec"><table class="dtbl">'
       +     row('Phân khúc', v.segment) + row('Số chỗ', v.seats) + row('Nhiên liệu', v.fuelType)
@@ -644,6 +692,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       + '<div class="sheet-head"><h3>So sánh '+vs.length+' xe</h3><button class="closebtn" data-close>✕</button></div>'
       + '<div class="sheet-body" style="overflow-x:auto"><table class="cmp-tbl"><tr><th>Tiêu chí</th>'
       + vs.map(function(v){return '<th>'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand+' '+v.model)+'<div class="muted" style="font-weight:400">'+esc(v.trim)+'</div></th>';}).join('') + '</tr>'
+      + '<tr><td class="label">Ảnh</td>'+ vs.map(function(v){return '<td class="cmpimg-cell"><img class="cmpimg" src="'+esc(hiRes(v.image))+'" data-orig="'+esc(v.image)+'" alt="'+esc(v.brand+' '+v.model)+'"></td>';}).join('') +'</tr>'
       + rowCmp('Giá từ (triệu)', function(v){return v.price.min;}, false)
       + rowCmp('Phân khúc', function(v){return v.segment;})
       + rowCmp('Nhiên liệu', function(v){return v.fuelType;})
@@ -656,6 +705,105 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       + rowCmp('Bảo hành', function(v){return v.warranty;})
       + '</table><p class="muted" style="margin-top:10px">Ô <span class="best">xanh</span> là tốt nhất ở tiêu chí định lượng.</p></div>';
     openModal(html);
+    Array.prototype.forEach.call(document.querySelectorAll('#sheet .cmpimg'), function(im){
+      im.setAttribute('data-fb','1');
+      im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } };
+    });
+  }
+
+  /* ---------- AI shortlist (chọn xe để AI so sánh) ---------- */
+  var aiSel=[];
+  try{ var _s=localStorage.getItem('ar-ai-sel'); if(_s){ aiSel=JSON.parse(_s).filter(function(id){return byId[id];}).slice(0,5); } }catch(e){}
+  function saveAiSel(){ try{ localStorage.setItem('ar-ai-sel', JSON.stringify(aiSel)); }catch(e){} }
+  function aiHas(id){ return aiSel.indexOf(id)>=0; }
+  function aiToggle(id){
+    var i=aiSel.indexOf(id);
+    if(i>=0){ aiSel.splice(i,1); }
+    else { if(aiSel.length>=5){ alert('Chỉ chọn tối đa 5 xe cho AI so sánh.'); return false; } aiSel.push(id); }
+    saveAiSel(); refreshAiUI(); return true;
+  }
+  function aiRemove(id){ var i=aiSel.indexOf(id); if(i>=0){ aiSel.splice(i,1); saveAiSel(); refreshAiUI(); } }
+  function aiMove(from,to){ if(from<0||to<0||to>=aiSel.length||from===to) return; var x=aiSel.splice(from,1)[0]; aiSel.splice(to,0,x); saveAiSel(); refreshAiUI(); }
+  function aiShortHtml(){
+    if(!aiSel.length){
+      return '<div class="aishort" id="aishort">'
+        + '<div class="aishort-h">Bạn đang phân vân xe nào?</div>'
+        + '<p class="muted" style="margin:6px 0 12px">Chọn trước các mẫu xe sẽ giúp AI tư vấn chính xác hơn.</p>'
+        + '<button type="button" class="btn btn-primary" data-aipickopen>+ Chọn xe</button>'
+        + '</div>';
+    }
+    var chips=aiSel.map(function(id){ var v=byId[id]; if(!v) return '';
+      return '<span class="aichip" draggable="true" data-id="'+esc(id)+'" title="Kéo để đổi thứ tự">'
+        + (brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'') + esc(v.brand+' '+v.model)
+        + '<b data-airm="'+esc(id)+'" title="Xoá">✕</b></span>';
+    }).join('');
+    return '<div class="aishort" id="aishort">'
+      + '<div class="aishort-h">Bạn đang phân vân: <span class="muted" style="font-weight:400">('+aiSel.length+'/5)</span></div>'
+      + '<div class="aishort-chips" id="aichips">'+chips+'</div>'
+      + '<button type="button" class="btn btn-ghost" data-aipickopen>+ Thêm xe</button>'
+      + '<button type="button" class="btn btn-primary" id="ai-ask" style="margin-left:8px">🧠 Hỏi AI so sánh</button>'
+      + '<div id="ai-deep-sel" style="margin-top:12px"></div>'
+      + '</div>';
+  }
+  function bindAiShort(){
+    var box=sheet.querySelector('#aishort'); if(!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('[data-airm]'), function(b){
+      b.onclick=function(ev){ ev.stopPropagation(); aiRemove(b.getAttribute('data-airm')); };
+    });
+    var ask=box.querySelector('#ai-ask'); if(ask) ask.onclick=function(){ runDeepAI('ai-deep-sel'); };
+    var dragId=null;
+    Array.prototype.forEach.call(box.querySelectorAll('.aichip'), function(ch){
+      ch.addEventListener('dragstart', function(){ dragId=ch.getAttribute('data-id'); ch.classList.add('dragging'); });
+      ch.addEventListener('dragend', function(){ ch.classList.remove('dragging'); });
+      ch.addEventListener('dragover', function(e){ e.preventDefault(); ch.classList.add('dragover'); });
+      ch.addEventListener('dragleave', function(){ ch.classList.remove('dragover'); });
+      ch.addEventListener('drop', function(e){ e.preventDefault(); ch.classList.remove('dragover');
+        aiMove(aiSel.indexOf(dragId), aiSel.indexOf(ch.getAttribute('data-id')));
+      });
+    });
+  }
+  function refreshAiUI(){
+    var box=sheet.querySelector('#aishort');
+    if(box){ box.outerHTML=aiShortHtml(); bindAiShort(); }
+  }
+  function setAiBtn(btn,on){
+    btn.textContent = on ? '✓ Đã thêm vào AI' : '+ Thêm vào so sánh AI';
+    btn.classList.toggle('btn-primary', !on);
+    btn.classList.toggle('btn-ai-on', on);
+  }
+
+  /* ---------- Vehicle picker for AI ---------- */
+  function pickerItemHtml(v){
+    var on=aiHas(v.id);
+    return '<button type="button" class="picker-item'+(on?' on':'')+'" data-aipick="'+esc(v.id)+'">'
+      + '<img src="'+esc(v.image)+'" alt="" loading="lazy">'
+      + '<span class="pi-main"><span class="pi-brand">'+(brandFlag[v.brandSlug]?brandFlag[v.brandSlug]+' ':'')+esc(v.brand)+'</span>'
+      + '<span class="pi-model">'+esc(v.model)+' <span class="muted">'+esc(v.trim)+'</span></span>'
+      + '<span class="muted pi-price">'+esc(v.price.label)+' · '+esc(v.segment)+'</span></span>'
+      + '<span class="pi-check">'+(on?'✓':'+')+'</span>'
+      + '</button>';
+  }
+  function renderPickerList(q){
+    q=(q||'').trim().toLowerCase();
+    var list=V.filter(function(v){
+      if(!q) return true;
+      return (v.brand+' '+v.model+' '+v.trim+' '+v.segment).toLowerCase().indexOf(q)>=0;
+    }).slice(0,80);
+    var el=sheet.querySelector('#picker-list'); if(!el) return;
+    el.innerHTML = list.length ? list.map(pickerItemHtml).join('') : '<p class="muted" style="padding:14px">Không tìm thấy xe phù hợp.</p>';
+  }
+  function updPickerN(){ var n=sheet.querySelector('#picker-n'); if(n) n.textContent='('+aiSel.length+'/5)'; }
+  function openPicker(){
+    var html=''
+      + '<div class="sheet-head"><h3>Chọn xe để AI so sánh <span class="muted" id="picker-n" style="font-weight:400;font-size:14px"></span></h3>'
+      +   '<button class="closebtn" data-aidone title="Xong">✕</button></div>'
+      + '<div style="padding:12px 18px;border-bottom:1px solid var(--line)"><input class="picker-search" id="picker-q" type="search" autocomplete="off" placeholder="Tìm theo hãng, model, phân khúc… (Corolla, CX-5, VF…)"></div>'
+      + '<div class="sheet-body"><div class="picker-list" id="picker-list"></div></div>'
+      + '<div class="picker-foot"><button type="button" class="btn btn-primary btn-lg" data-aidone>Xong</button></div>';
+    openModal(html);
+    var q=sheet.querySelector('#picker-q');
+    if(q){ q.oninput=function(){ renderPickerList(q.value); }; setTimeout(function(){ try{ q.focus(); }catch(e){} },40); }
+    renderPickerList(''); updPickerN();
   }
 
   /* ---------- AI Recommendation (brand-agnostic) ---------- */
@@ -680,7 +828,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   function recoFormHtml(){
     return ''
       + '<div class="sheet-head"><h3>🤖 Gợi ý xe bằng AI</h3><button class="closebtn" data-close>✕</button></div>'
-      + '<div class="sheet-body"><form class="reco-form" id="recoform">'
+      + '<div class="sheet-body">' + aiShortHtml() + '<form class="reco-form" id="recoform">'
       + '<div class="fld"><label>Ngân sách tối đa: <span class="budgetval" id="bval">'+reco.budget+' triệu</span></label>'
       +   '<input type="range" id="r-budget" min="240" max="4000" step="10" value="'+reco.budget+'"></div>'
       + '<div class="fld"><label>Nhu cầu chính</label><div class="opts" id="r-need">'+NEEDS.map(function(n){return chip(reco.need===n.k,n.t,n.k,'need');}).join('')+'</div></div>'
@@ -698,6 +846,7 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
     sheet.querySelector('#r-fuel').onclick=pick('fuel','fuel',false);
     sheet.querySelector('#r-prio').onclick=pick('prio','prios',true);
     $('r-go').onclick=runReco;
+    bindAiShort();
   }
   function pick(attr,field,multi,num){
     return function(e){
@@ -750,9 +899,12 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
   }
   var lastTop=[];
   function runReco(){
-    var scored=V.map(function(v){ var r=scoreVehicle(v); return {v:v, pct:r.pct, why:r.why, vnStatus:r.vnStatus, vnAvail:r.vnAvail}; });
+    var useSel = aiSel.length>0;
+    var pool = useSel ? aiSel.map(function(id){ return byId[id]; }).filter(Boolean) : V;
+    var scored=pool.map(function(v){ var r=scoreVehicle(v); return {v:v, pct:r.pct, why:r.why, vnStatus:r.vnStatus, vnAvail:r.vnAvail}; });
     scored.sort(function(a,b){ return b.pct-a.pct; });
-    lastTop=scored.slice(0,3);
+    lastTop = useSel ? scored : scored.slice(0,3);
+    var heading = useSel ? ('So sánh '+lastTop.length+' xe bạn đang phân vân') : ('Top '+lastTop.length+' gợi ý');
     var html=lastTop.map(function(it){
       var v=it.v, c=brandColor[v.brandSlug]||'var(--accent)';
       return '<div class="reco-card"><img src="'+esc(v.image)+'" alt="">'
@@ -767,8 +919,8 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
         + '</div><div class="pct">'+it.pct+'%</div></div>';
     }).join('');
     html += '<button type="button" class="btn btn-primary btn-lg" id="r-ai">🧠 Phân tích chuyên sâu bằng AI</button><div id="ai-deep"></div>';
-    $('recoresult').innerHTML='<h3 style="margin:18px 0 10px">Top '+lastTop.length+' gợi ý</h3>'+html;
-    $('r-ai').onclick=runDeepAI;
+    $('recoresult').innerHTML='<h3 style="margin:18px 0 10px">'+esc(heading)+'</h3>'+html;
+    $('r-ai').onclick=function(){ runDeepAI('ai-deep'); };
   }
   function mdLite(t){
     return esc(t)
@@ -776,16 +928,22 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       .replace(/^[-•]\\s?(.*)$/gm,'• $1')
       .replace(/\\n/g,'<br>');
   }
-  function runDeepAI(){
-    var box=$('ai-deep');
+  function runDeepAI(boxId){
+    var box=$(boxId||'ai-deep'); if(!box) return;
     box.innerHTML='<div class="ai-box muted">Đang hỏi AI…</div>';
-    var profile='Ngân sách tối đa '+reco.budget+' triệu; nhu cầu '+reco.need+'; tối thiểu '+reco.seats+' chỗ; nhiên liệu '+(reco.fuel||'bất kỳ')+'; ưu tiên '+reco.prios.join(', ')+'. Người dùng mua xe tại Việt Nam: ưu tiên xe đang bán chính hãng, có bảo hành & phụ tùng chính hãng, chi phí bảo dưỡng hợp lý và giữ giá tốt.';
-    var cars=lastTop.map(function(it){ var v=it.v; return {
-      name:v.brand+' '+v.model+' '+v.trim, price:v.price.label, overall:it.pct, body:v.segment,
+    var useSel = aiSel.length>0;
+    var profile=(useSel?'Người dùng đang phân vân và muốn SO SÁNH đúng các xe trong danh sách đã chọn. ':'')
+      + 'Ngân sách tối đa '+reco.budget+' triệu; nhu cầu '+reco.need+'; tối thiểu '+reco.seats+' chỗ; nhiên liệu '+(reco.fuel||'bất kỳ')+'; ưu tiên '+reco.prios.join(', ')+'. Người dùng mua xe tại Việt Nam: ưu tiên xe đang bán chính hãng, có bảo hành & phụ tùng chính hãng, chi phí bảo dưỡng hợp lý và giữ giá tốt.';
+    var src = useSel ? aiSel.map(function(id){ return { v:byId[id], pct:0 }; }) : lastTop;
+    var cars=src.filter(function(it){ return it && it.v; }).map(function(it){ var v=it.v; return {
+      name:v.brand+' '+v.model+' '+v.trim, price:v.price.label, overall:it.pct||0, body:v.segment,
       seats:v.seats, engine:v.engine, gearbox:v.transmission, fuelStr:v.fuelType, monthly:0,
       vnStatus:(v.vietnam&&v.vietnam.statusLabel)||'', vnAvailable:!!(v.vietnam&&v.vietnam.available)
     };});
-    fetch('/api/recommend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:profile,cars:cars})})
+    if(!cars.length){ box.innerHTML='<div class="ai-box"><span class="ai-warn">⚠ Chưa có xe để phân tích. Hãy chọn xe hoặc bấm “Phân tích & gợi ý”.</span></div>'; return; }
+    var payload={ profile:profile, cars:cars };
+    if(useSel) payload.selectedVehicles=aiSel.slice();
+    fetch('/api/recommend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(res){
         if(!res.ok || !res.j.ok){
@@ -807,6 +965,14 @@ footer{padding:30px 0;color:var(--muted);font-size:13px;text-align:center;border
       else if(act==='compare') togglePick(id);
       return;
     }
+    if(e.target.closest('[data-aipickopen]')){ openPicker(); return; }
+    if(e.target.closest('[data-aidone]')){ openReco(); return; }
+    var pk=e.target.closest('[data-aipick]');
+    if(pk){ var pid=pk.getAttribute('data-aipick'); aiToggle(pid);
+      var pon=aiHas(pid); pk.classList.toggle('on', pon);
+      var ck=pk.querySelector('.pi-check'); if(ck) ck.textContent=pon?'✓':'+'; updPickerN(); return; }
+    var aa=e.target.closest('[data-aiadd]');
+    if(aa){ var aid=aa.getAttribute('data-aiadd'); aiToggle(aid); setAiBtn(aa, aiHas(aid)); return; }
     if(e.target.closest('[data-close]')) closeModal();
   });
   $('cta-reco').onclick=openReco;
