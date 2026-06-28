@@ -7432,3 +7432,146 @@ export function getOwnershipTimeline(v: Vehicle): OwnershipYear[] {
 
   return years;
 }
+
+// ===== Khấu hao theo thời gian (ước tính) =====
+
+export interface DepreciationPoint {
+  /** Năm sở hữu (1..5). */
+  year: number;
+  /** % giá trị giữ lại so với giá mua mới. */
+  resalePercent: number;
+  /** Giá trị xe còn lại (VND). */
+  value: number;
+  /** Số tiền đã mất so với giá mua mới (VND). */
+  dropFromNew: number;
+  /** % khấu hao riêng trong năm đó. */
+  annualPercent: number;
+}
+
+export interface DepreciationFactor {
+  label: string;
+  positive: boolean;
+}
+
+export interface DepreciationProfile {
+  /** Luôn true: số liệu suy ra theo thị trường VN, không phải hãng công bố. */
+  estimated: true;
+  /** Giá mua mới (VND). */
+  newPrice: number;
+  /** Điểm giữ giá của xe (1..5). */
+  resaleRating: number;
+  /** % giá trị giữ lại sau 5 năm của xe này. */
+  retain5y: number;
+  /** % giá trị giữ lại sau 5 năm trung bình của phân khúc. */
+  segmentRetain5y: number;
+  /** Chênh lệch điểm % giữ giá so với phân khúc (xe − phân khúc). */
+  vsSegment: number;
+  /** Tỉ lệ khấu hao mỗi năm (0..1), 5 phần tử cho năm 1..5. */
+  yearlyRate: number[];
+  /** Mốc giá trị theo từng năm (1..5). */
+  points: DepreciationPoint[];
+  /** Các yếu tố ảnh hưởng giữ giá. */
+  factors: DepreciationFactor[];
+  /** Các dòng nhận định ngắn. */
+  insight: string[];
+  /** Tóm tắt 1 câu. */
+  verdict: string;
+}
+
+/** Tỉ lệ khấu hao mỗi năm (năm 1, rồi các năm sau) suy ra từ điểm giữ giá. */
+function depYearlyRates(resale: number, isEv: boolean, massBrand: boolean): number[] {
+  let y1 = 0.18 - (resale - 3) * 0.025;
+  let yr = 0.1 - (resale - 3) * 0.012;
+  if (isEv) {
+    y1 += 0.03;
+    yr += 0.015;
+  }
+  if (massBrand) {
+    y1 -= 0.01;
+    yr -= 0.006;
+  }
+  y1 = Math.min(0.3, Math.max(0.08, y1));
+  yr = Math.min(0.16, Math.max(0.05, yr));
+  return [y1, yr, yr, yr, yr];
+}
+
+/** % giá trị giữ lại sau 5 năm (0..100) theo công thức khấu hao. */
+function depRetain5Pct(resale: number, isEv: boolean, massBrand: boolean): number {
+  let f = 1;
+  for (const rate of depYearlyRates(resale, isEv, massBrand)) f *= 1 - rate;
+  return Math.round(f * 1000) / 10;
+}
+
+/**
+ * Hồ sơ khấu hao ước tính của xe (Năm 1 → Năm 5).
+ * Suy ra từ điểm giữ giá, phân khúc, thương hiệu, độ bền & loại nhiên liệu —
+ * KHÔNG bịa số liệu, luôn gắn cờ estimated.
+ */
+export function getDepreciation(v: Vehicle): DepreciationProfile {
+  const newPrice = v.price.min * 1_000_000;
+  const resale = v.ratings.resale;
+  const isEv = v.fuelType === 'Điện';
+  const massBrand = VN_MASS_BRANDS.has(v.brandSlug);
+  const rates = depYearlyRates(resale, isEv, massBrand);
+
+  const points: DepreciationPoint[] = [];
+  let value = newPrice;
+  for (let y = 1; y <= 5; y++) {
+    const rate = rates[y - 1];
+    value = roundVnd(value * (1 - rate));
+    points.push({
+      year: y,
+      value,
+      resalePercent: Math.round((value / newPrice) * 1000) / 10,
+      dropFromNew: newPrice - value,
+      annualPercent: Math.round(rate * 1000) / 10,
+    });
+  }
+  const retain5y = points[points.length - 1].resalePercent;
+
+  const peers = vehicles.filter((x) => x.segment === v.segment);
+  let segSum = 0;
+  for (const p of peers) {
+    segSum += depRetain5Pct(p.ratings.resale, p.fuelType === 'Điện', VN_MASS_BRANDS.has(p.brandSlug));
+  }
+  const segmentRetain5y = peers.length ? Math.round((segSum / peers.length) * 10) / 10 : retain5y;
+  const vsSegment = Math.round((retain5y - segmentRetain5y) * 10) / 10;
+
+  const factors: DepreciationFactor[] = [];
+  if (massBrand) factors.push({ label: 'Thương hiệu phổ biến tại Việt Nam', positive: true });
+  if (v.reliability >= 4) factors.push({ label: 'Độ bền & độ tin cậy cao', positive: true });
+  if (resale >= 4) factors.push({ label: 'Nhu cầu xe cũ cao', positive: true });
+  if (massBrand) factors.push({ label: 'Phụ tùng phổ biến, dễ sửa chữa', positive: true });
+  if (isEv) factors.push({ label: 'Xe điện: giá trị pin ảnh hưởng giá bán lại', positive: false });
+  if (v.price.min >= 1800) factors.push({ label: 'Phân khúc cao: khấu hao tuyệt đối lớn', positive: false });
+  if (resale <= 2) factors.push({ label: 'Thanh khoản xe cũ thấp', positive: false });
+  if (factors.length === 0) factors.push({ label: 'Giữ giá ở mức trung bình phân khúc', positive: true });
+
+  let verdict: string;
+  if (vsSegment >= 3) verdict = 'Giữ giá tốt hơn trung bình phân khúc.';
+  else if (vsSegment <= -3) verdict = 'Khấu hao nhanh hơn trung bình phân khúc.';
+  else verdict = 'Mức giữ giá tương đương trung bình phân khúc.';
+
+  const insight: string[] = [
+    verdict,
+    'Sau 5 năm, giá trị còn khoảng ' +
+      retain5y +
+      '% (≈ ' +
+      Math.round(points[4].value / 1_000_000) +
+      ' triệu).',
+  ];
+
+  return {
+    estimated: true,
+    newPrice,
+    resaleRating: resale,
+    retain5y,
+    segmentRetain5y,
+    vsSegment,
+    yearlyRate: rates,
+    points,
+    factors,
+    insight,
+    verdict,
+  };
+}

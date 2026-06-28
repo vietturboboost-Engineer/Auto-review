@@ -6,6 +6,7 @@ import {
   getPartsCatalog,
   getMaintTaskTemplates,
   getOwnershipTimeline,
+  getDepreciation,
   getSegments,
   type Vehicle,
 } from '../data/vehicles.js';
@@ -19,6 +20,7 @@ const clientVehicles = vehicles.map((v) => ({
   partsCatalog: getPartsCatalog(v),
   maintTasks: getMaintTaskTemplates(v),
   ownershipTimeline: getOwnershipTimeline(v),
+  depreciation: getDepreciation(v),
 }));
 
 const clientBrands = brands.map((b) => ({
@@ -407,6 +409,35 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .tlrow:last-child{border-bottom:0}
 .tlrow .amt{font-weight:700;white-space:nowrap}
 .tl-note{font-size:12px;color:var(--accent);padding:8px 14px;background:rgba(247,183,51,.07)}
+/* khấu hao theo thời gian */
+.dep-timeline{display:flex;flex-direction:column;align-items:stretch;gap:2px;margin:6px 0 18px}
+.dep-step{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface);display:flex;flex-direction:column;gap:2px;transition:border-color .2s,transform .2s}
+.dep-step.new{border-color:var(--accent);background:linear-gradient(180deg,rgba(247,183,51,.1),transparent)}
+.dep-step-lab{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.dep-step-val{font-size:18px;font-weight:900}
+.dep-step.new .dep-step-val{font-size:22px;color:var(--accent)}
+.dep-step-drop{font-size:12.5px;font-weight:700;color:#f87171}
+.dep-arrow{text-align:center;color:var(--muted);font-size:14px;line-height:1.1}
+.dep-retain{border:1px solid var(--accent);border-radius:12px;padding:12px 14px;background:linear-gradient(180deg,rgba(247,183,51,.12),transparent);display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px}
+.dep-retain-lab{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.dep-retain-pct{font-size:26px;font-weight:900;color:var(--accent)}
+.dep-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
+.dep-ctrl-lab{font-size:12px;color:var(--muted)}
+.dep-mode,.dep-yr{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-weight:700;font-size:13px;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.dep-mode.active,.dep-yr.active{background:var(--accent);color:#1a1300;border-color:var(--accent)}
+.dep-svg{width:100%;height:150px;display:block}
+.dep-line{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:depdraw 1.1s ease forwards}
+@keyframes depdraw{to{stroke-dashoffset:0}}
+.dep-area{fill:rgba(247,183,51,.12);stroke:none;opacity:0;animation:depfade .9s ease .3s forwards}
+@keyframes depfade{to{opacity:1}}
+.dep-dot{fill:var(--accent);stroke:var(--surface);stroke-width:1.5}
+.dep-axt{fill:var(--muted);font-size:9px}
+.dep-verdict{font-weight:800;margin:4px 0 0;font-size:14px}
+.dep-factors{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.dep-factors li{font-size:13px;display:flex;gap:7px;align-items:flex-start}
+.dep-factors li.pos{color:var(--text)}
+.dep-factors li.neg{color:var(--muted)}
+.dep-sell-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
 .ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
@@ -1215,6 +1246,120 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
     return kpi + c1 + c2 + '<p class="maint-note">Chi tiết từng năm:</p>' + cards
       + '<p class="maint-note" style="margin-top:10px">* Ước tính theo chuẩn thị trường VN (phí lăn bánh, bảo hiểm, nhiên liệu ~15.000 km/năm). Khấu hao suy ra từ điểm giữ giá của xe.</p>';
   }
+  // ----- Khấu hao theo thời gian -----
+  function depFind(pts,y){ for(var i=0;i<pts.length;i++){ if(pts[i].year===y) return pts[i]; } return pts[pts.length-1]; }
+  function depPaneHtml(v){
+    var d=v.depreciation; if(!d) return '<p class="muted">Chưa có dữ liệu khấu hao.</p>';
+    var pts=d.points;
+    var p1=depFind(pts,1), p3=depFind(pts,3), p5=depFind(pts,5);
+    function step(label,val,drop,big){
+      var sub=drop>0?'<div class="dep-step-drop">-'+fmtVnd(drop)+'</div>':'';
+      return '<div class="dep-step'+(big?' new':'')+'"><div class="dep-step-lab">'+esc(label)+'</div>'
+        +'<div class="dep-step-val">'+fmtVnd(val)+'</div>'+sub+'</div>';
+    }
+    var arrow='<div class="dep-arrow">↓</div>';
+    var timeline='<div class="dep-timeline">'
+      + step('Giá mua mới', d.newPrice, 0, true) + arrow
+      + step('Sau 1 năm', p1.value, p1.dropFromNew) + arrow
+      + step('Sau 3 năm', p3.value, p3.dropFromNew) + arrow
+      + step('Sau 5 năm', p5.value, p5.dropFromNew) + arrow
+      + '<div class="dep-retain"><div class="dep-retain-lab">Giá trị giữ lại</div><div class="dep-retain-pct">'+d.retain5y+'%</div></div>'
+      + '</div>';
+    var kpi='<div class="tl-sum">'
+      +'<div class="tl-kpi"><div class="k">Giữ lại sau 5 năm</div><div class="v acc">'+d.retain5y+'%</div></div>'
+      +'<div class="tl-kpi"><div class="k">TB phân khúc</div><div class="v">'+d.segmentRetain5y+'%</div></div>'
+      +'<div class="tl-kpi"><div class="k">Khấu hao 5 năm</div><div class="v">'+fmtVnd(d.newPrice-p5.value)+'</div></div>'
+      +'<div class="tl-kpi"><div class="k">So với phân khúc</div><div class="v '+(d.vsSegment>=0?'acc':'')+'">'+(d.vsSegment>=0?'+':'')+d.vsSegment+'%</div></div>'
+      +'</div>';
+    var ctrl='<div class="dep-ctrl"><span class="dep-ctrl-lab">Hiển thị:</span>'
+      +'<button class="dep-mode active" data-mode="vnd">Giá trị (VND)</button>'
+      +'<button class="dep-mode" data-mode="pct">Phần trăm (%)</button></div>';
+    var charts='<div id="dep-charts"></div>';
+    var fl=''; for(var i=0;i<d.factors.length;i++){ fl+='<li class="'+(d.factors[i].positive?'pos':'neg')+'">'+(d.factors[i].positive?'✔':'•')+' '+esc(d.factors[i].label)+'</li>'; }
+    var ai='<div class="aibox"><h4>🤖 Nhận định khấu hao</h4>'
+      +'<p class="dep-verdict">'+esc(d.verdict)+'</p>'
+      +'<p class="maint-note" style="margin:4px 0 0">Sau 5 năm, giá trị còn khoảng <b>'+d.retain5y+'%</b>. Nguyên nhân:</p>'
+      +'<ul class="dep-factors">'+fl+'</ul></div>';
+    var sell='<div class="aibox"><h4>📅 Dự định bán sau bao lâu?</h4>'
+      +'<div class="dep-sell-btns">'
+      +'<button class="dep-yr" data-y="1">1 năm</button>'
+      +'<button class="dep-yr" data-y="2">2 năm</button>'
+      +'<button class="dep-yr active" data-y="3">3 năm</button>'
+      +'<button class="dep-yr" data-y="5">5 năm</button>'
+      +'</div><div id="dep-sell-out"></div></div>';
+    return '<p class="maint-note">📉 Khấu hao theo thời gian (ước tính — Estimated Depreciation):</p>'
+      + kpi + timeline + ctrl + charts + ai + sell
+      + '<p class="maint-note" style="margin-top:10px">* Số liệu khấu hao là ước tính theo điểm giữ giá, phân khúc, thương hiệu & độ bền — không phải số liệu hãng công bố.</p>';
+  }
+  function renderDepChart(v, mode){
+    var host=document.getElementById('dep-charts'); if(!host) return;
+    var d=v.depreciation; var pts=d.points;
+    var ys=[{y:0,value:d.newPrice,pct:100}];
+    for(var i=0;i<pts.length;i++){ ys.push({y:pts[i].year,value:pts[i].value,pct:pts[i].resalePercent}); }
+    var isPct=(mode==='pct');
+    var W=320,H=150,pl=10,pr=10,ptop=12,pbot=24;
+    var maxV=isPct?100:d.newPrice;
+    function X(yr){ return pl+(yr/5)*(W-pl-pr); }
+    function Y(val){ return ptop+(1-val/maxV)*(H-ptop-pbot); }
+    var poly=[]; var dots=''; var labs='';
+    for(var j=0;j<ys.length;j++){
+      var vv=isPct?ys[j].pct:ys[j].value;
+      var px=X(ys[j].y), py=Y(vv);
+      poly.push(px.toFixed(1)+','+py.toFixed(1));
+      dots+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="3.2" class="dep-dot"/>';
+      labs+='<text x="'+px.toFixed(1)+'" y="'+(H-7)+'" class="dep-axt" text-anchor="middle">N'+ys[j].y+'</text>';
+    }
+    var base=Y(0);
+    var areaD='M'+X(0).toFixed(1)+','+base.toFixed(1);
+    for(var k=0;k<poly.length;k++){ areaD+=' L'+poly[k]; }
+    areaD+=' L'+X(5).toFixed(1)+','+base.toFixed(1)+' Z';
+    var lineSvg='<div class="chart"><h5>Xu hướng giá trị ('+(isPct?'%':'VND')+')</h5>'
+      +'<svg class="dep-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img">'
+      +'<path class="dep-area" d="'+areaD+'"/>'
+      +'<polyline class="dep-line" points="'+poly.join(' ')+'"/>'
+      +dots+labs+'</svg></div>';
+    var c2='<div class="chart"><h5>Giá trị còn lại theo năm</h5>';
+    for(var a=0;a<ys.length;a++){ var wv=isPct?ys[a].pct:Math.round(ys[a].value/d.newPrice*100);
+      var lab=isPct?(ys[a].pct+'%'):fmtVnd(ys[a].value);
+      c2+='<div class="bar-row"><span class="bar-lab">Năm '+ys[a].y+'</span><span class="bar-track"><span class="bar-fill" style="width:'+wv+'%"></span></span><span class="bar-val">'+lab+'</span></div>';
+    }
+    c2+='</div>';
+    var maxDrop=1; var drops=[];
+    for(var b=0;b<pts.length;b++){ var prev=(b===0)?d.newPrice:pts[b-1].value; var dd=prev-pts[b].value; drops.push(dd); if(dd>maxDrop) maxDrop=dd; }
+    var c3='<div class="chart"><h5>Khấu hao theo năm</h5>';
+    for(var c=0;c<pts.length;c++){ var wd=Math.round(drops[c]/maxDrop*100);
+      var lab3=isPct?(pts[c].annualPercent+'%'):fmtVnd(drops[c]);
+      c3+='<div class="bar-row"><span class="bar-lab">Năm '+pts[c].year+'</span><span class="bar-track"><span class="bar-fill dep" style="width:'+wd+'%"></span></span><span class="bar-val">'+lab3+'</span></div>';
+    }
+    c3+='</div>';
+    host.innerHTML=lineSvg+c2+c3;
+  }
+  function renderDepSell(v, yN){
+    var out=document.getElementById('dep-sell-out'); if(!out) return;
+    var d=v.depreciation; var p=depFind(d.points, yN);
+    var diff5=Math.abs(Math.round(d.newPrice*d.vsSegment/100));
+    var segLine = d.vsSegment>=0
+      ? 'Giữ giá tốt hơn trung bình phân khúc ~<b>'+fmtVnd(diff5)+'</b> sau 5 năm.'
+      : 'Khấu hao nhiều hơn trung bình phân khúc ~<b>'+fmtVnd(diff5)+'</b> sau 5 năm.';
+    out.innerHTML='<div class="airec-card next"><div class="airec-big">'+fmtVnd(p.value)+'</div>'
+      +'<p style="margin:6px 0 0;font-size:13px">Nếu dự định bán sau <b>'+p.year+' năm</b>, xe còn khoảng <b>'+fmtVnd(p.value)+'</b> ('+p.resalePercent+'% giá mua mới), tức đã khấu hao ~<b>'+fmtVnd(p.dropFromNew)+'</b>.</p>'
+      +'<p class="maint-note" style="margin:6px 0 0">'+segLine+'</p></div>';
+  }
+  function bindDep(v){
+    if(!v||!v.depreciation) return;
+    renderDepChart(v,'vnd');
+    Array.prototype.forEach.call(sheet.querySelectorAll('.dep-mode'),function(m){ m.onclick=function(){
+      Array.prototype.forEach.call(sheet.querySelectorAll('.dep-mode'),function(x){x.classList.remove('active');});
+      m.classList.add('active');
+      renderDepChart(v, m.getAttribute('data-mode'));
+    };});
+    Array.prototype.forEach.call(sheet.querySelectorAll('.dep-yr'),function(b){ b.onclick=function(){
+      Array.prototype.forEach.call(sheet.querySelectorAll('.dep-yr'),function(x){x.classList.remove('active');});
+      b.classList.add('active');
+      renderDepSell(v, parseInt(b.getAttribute('data-y'),10));
+    };});
+    renderDepSell(v,3);
+  }
   function detailHtml(v){
     var c = brandColor[v.brandSlug] || 'var(--accent)';
     var pc = (v.partsCatalog||[]).map(function(p){
@@ -1229,6 +1374,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +   '<button class="tab" data-tab="maint">Bảo dưỡng</button>'
       +   '<button class="tab" data-tab="parts">Phụ tùng</button>'
       +   '<button class="tab" data-tab="cost">Chi phí sở hữu</button>'
+      +   '<button class="tab" data-tab="dep">📉 Khấu hao</button>'
       +   '<button class="tab" data-tab="vn">🇻🇳 Thị trường VN</button>'
       + '</div>'
       + '<div class="sheet-body">'
@@ -1281,10 +1427,11 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +       '<div class="cc-out" id="cc-out"></div>'
       +     '</div>'
       +   '</div>'
+      +   '<div class="tabpane" data-pane="dep">'+depPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
-  function openDetail(id){ var v=byId[id]; if(v){ pushRecent(id); openModal(detailHtml(v)); refreshReviewBtn(id); bindCostCalc(v); bindMaintAi(v); updateShareUrl(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
+  function openDetail(id){ var v=byId[id]; if(v){ pushRecent(id); openModal(detailHtml(v)); refreshReviewBtn(id); bindCostCalc(v); bindMaintAi(v); bindDep(v); updateShareUrl(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
   function shareUrl(id){ return location.origin + location.pathname + '?v=' + encodeURIComponent(id); }
   function updateShareUrl(id){ try{ history.replaceState(null, '', shareUrl(id)); }catch(e){} }
   function clearShareUrl(){ try{ history.replaceState(null, '', location.pathname); }catch(e){} }
