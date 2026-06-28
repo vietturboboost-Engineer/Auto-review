@@ -77,8 +77,8 @@ function vehicleCard(v: Vehicle): string {
             ? 'vn-up'
             : 'vn-no';
   return (
-    `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment + ' ' + v.tags.join(' ')).toLowerCase())}">` +
-    `<div class="vthumb" data-act="detail" data-id="${v.id}" title="Xem chi tiết"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span><span class="vlogo" style="color:${color}">${escapeHtml(brand?.wordmark ?? v.brand)}</span></div>` +
+    `<article class="vcard" data-id="${v.id}" data-brand="${v.brandSlug}" data-segment="${escapeHtml(v.segment)}" data-fuel="${escapeHtml(v.fuelType)}" data-price="${v.price.min}" data-vn-status="${vn.status}" data-vn-available="${vn.available ? '1' : '0'}" data-vn-assembly="${vn.assembly}" data-search="${escapeHtml((v.brand + ' ' + v.model + ' ' + v.trim + ' ' + v.segment + ' ' + v.tags.join(' ')).toLowerCase())}">` +
+    `<div class="vthumb" data-act="detail" data-id="${v.id}" title="Xem chi tiết"><img loading="lazy" src="${escapeHtml(v.image)}" alt="${escapeHtml(v.brand + ' ' + v.model)}"><span class="vnbadge ${vnClass}">${escapeHtml(vn.badge)}</span><span class="vlogo" style="color:${color}">${escapeHtml(brand?.wordmark ?? v.brand)}</span><button class="favbtn" data-fav="${v.id}" title="Lưu vào yêu thích" aria-label="Lưu vào yêu thích">♡</button></div>` +
     `<div class="vbody">` +
     `<div class="vbrand" style="--bc:${color}"><img class="blogo" src="${escapeHtml(brandLogo(v.brandSlug))}" alt="" loading="lazy">${countryFlag(brand?.country ?? '')} ${escapeHtml(v.brand)} <span class="vcountry">· ${escapeHtml(brand?.country ?? '')}</span></div>` +
     `<h3 class="vname">${escapeHtml(v.model)} <span>${escapeHtml(v.trim)}</span></h3>` +
@@ -86,6 +86,7 @@ function vehicleCard(v: Vehicle): string {
     `<div class="vprice">${escapeHtml(v.price.label)}</div>` +
     `<div class="vmeta"><span>⛽ ${escapeHtml(v.fuelEconomy)}</span><span>⚙️ ${v.horsepower} hp</span></div>` +
     `<div class="vrate" title="Độ tin cậy">${stars(v.reliability)}</div>` +
+    `<div class="vurate" data-vurate="${v.id}"></div>` +
     `<div class="vactions">` +
     `<button class="btn btn-primary" data-act="detail" data-id="${v.id}">Chi tiết</button>` +
     `<button class="btn btn-ghost" data-act="compare" data-id="${v.id}">⚖️ So sánh</button>` +
@@ -110,6 +111,16 @@ const page = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AutoReview — Cẩm nang chọn xe đa hãng</title>
+<meta name="description" content="Cẩm nang ${vehicles.length}+ mẫu xe từ ${brands.length} hãng tại Việt Nam: thông số, giá lăn bánh, chi phí sở hữu, bảo dưỡng, đánh giá người dùng và gợi ý xe bằng AI.">
+<meta name="theme-color" content="#ffd166">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AutoReview">
+<meta property="og:title" content="AutoReview — Cẩm nang chọn xe đa hãng">
+<meta property="og:description" content="So sánh minh bạch ${vehicles.length}+ mẫu xe từ ${brands.length} hãng tại Việt Nam — thông số, chi phí sở hữu, đánh giá người dùng & gợi ý AI.">
+<meta property="og:locale" content="vi_VN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AutoReview — Cẩm nang chọn xe đa hãng">
+<meta name="twitter:description" content="So sánh minh bạch xe tại Việt Nam — thông số, chi phí sở hữu, đánh giá người dùng & gợi ý AI.">
 <style>
 *{box-sizing:border-box}
 :root{
@@ -197,6 +208,7 @@ section{padding:26px 0}
 .filters select option{background:var(--surface);color:var(--text)}
 .filters .count{margin-left:auto;color:var(--muted);font-size:13px}
 .clearbtn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
+.fav-toggle.on{color:#ff5d8f;border-color:#ff5d8f;background:rgba(255,93,143,.12)}
 
 /* Vehicle cards */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
@@ -236,6 +248,13 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .vprice{font-weight:800;color:var(--accent);font-size:16px}
 .vmeta{display:flex;gap:12px;font-size:12px;color:var(--muted)}
 .vrate{color:var(--accent);font-size:14px;letter-spacing:1px}
+.vurate{font-size:12px;color:var(--muted);min-height:18px;display:flex;align-items:center;gap:6px}
+.vurate:empty{display:none}
+.vurate .ur-avg{color:var(--accent);font-weight:800}
+.vurate .ur-stars{color:var(--accent);letter-spacing:1px}
+.favbtn{position:absolute;bottom:8px;right:8px;width:34px;height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(10,10,14,.55);backdrop-filter:blur(4px);color:#fff;font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s ease,background .12s ease;z-index:2}
+.favbtn:hover{transform:scale(1.12)}
+.favbtn.on{color:#ff5d8f;background:rgba(255,93,143,.18);border-color:#ff5d8f}
 .vactions{display:flex;gap:8px;margin-top:auto}
 .vactions .btn{flex:1;font-size:13px;padding:9px 10px}
 .vcard.picked{box-shadow:0 0 0 2px var(--accent) inset}
@@ -298,6 +317,28 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .rvname{font-weight:700;font-size:14px}
 .rvcomment{font-size:14px;line-height:1.55}
 .rvdate{font-size:12px;color:var(--muted);margin-top:6px}
+.rvhp{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+.rvfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+.rvhelp{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.rvhelp:hover{color:var(--text);border-color:var(--muted)}
+.rvhelp.voted{color:var(--good);border-color:var(--good);cursor:default}
+.simsec{margin:6px 0 14px}
+.simsec h4{margin:0 0 10px;font-size:15px}
+.simgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.simcard{display:flex;flex-direction:column;gap:3px;text-align:left;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+.simcard:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.simcard img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:8px;background:#0c0c10}
+.simcard .sim-b{font-size:11px;font-weight:800;text-transform:uppercase;color:var(--bc,var(--muted))}
+.simcard .sim-m{font-size:13px;font-weight:700}
+.simcard .sim-p{font-size:12px;color:var(--accent);font-weight:700}
+.costcalc{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface);margin-bottom:8px}
+.cc-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.cc-row label{font-size:13px;color:var(--muted)}
+.cc-row input[type=number]{padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:14px;max-width:200px}
+.cc-row input[type=range]{width:100%}
+.cc-out{margin-top:6px;padding-top:12px;border-top:1px dashed var(--line)}
+.cc-big{font-size:26px;font-weight:900;color:var(--accent)}
+.cc-big span{font-size:14px;font-weight:600;color:var(--muted)}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
 .ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
@@ -443,6 +484,28 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
         <option value="cbu">🚢 Nhập khẩu (CBU)</option>
         <option value="none">🔴 Chưa bán tại VN</option>
       </select>
+      <select id="f-price">
+        <option value="">💰 Mọi mức giá</option>
+        <option value="0-600">Dưới 600 triệu</option>
+        <option value="600-1000">600 triệu – 1 tỷ</option>
+        <option value="1000-1500">1 – 1,5 tỷ</option>
+        <option value="1500-3000">1,5 – 3 tỷ</option>
+        <option value="3000-999999">Trên 3 tỷ</option>
+      </select>
+      <select id="f-rating">
+        <option value="">⭐ Mọi đánh giá</option>
+        <option value="4">Từ 4 sao trở lên</option>
+        <option value="3">Từ 3 sao trở lên</option>
+      </select>
+      <select id="f-sort">
+        <option value="">Sắp xếp: Mặc định</option>
+        <option value="price-asc">Giá: thấp → cao</option>
+        <option value="price-desc">Giá: cao → thấp</option>
+        <option value="rating-desc">Đánh giá người dùng cao nhất</option>
+        <option value="reliability-desc">Độ tin cậy cao nhất</option>
+        <option value="name-asc">Tên A → Z</option>
+      </select>
+      <button class="clearbtn fav-toggle" id="f-fav" title="Chỉ hiện xe đã lưu">♡ Yêu thích</button>
       <button class="clearbtn" id="f-clear">Xoá lọc</button>
       <span class="count" id="count"></span>
     </div>
@@ -521,8 +584,43 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
   });
 
   /* ---------- Filtering ---------- */
-  var state = { brand:'', segment:'', fuel:'', vn:'', q:'' };
+  var state = { brand:'', segment:'', fuel:'', vn:'', q:'', price:'', rating:'', fav:false, sort:'' };
   var cards = Array.prototype.slice.call(document.querySelectorAll('.vcard'));
+  var grid = $('grid');
+
+  /* Yêu thích (lưu localStorage) + xem gần đây */
+  var favSet = {};
+  try{ var _f=JSON.parse(localStorage.getItem('ar-fav')||'[]'); if(_f&&_f.length){ _f.forEach(function(id){ favSet[id]=1; }); } }catch(e){}
+  function saveFav(){ try{ localStorage.setItem('ar-fav', JSON.stringify(Object.keys(favSet))); }catch(e){} }
+  function isFav(id){ return !!favSet[id]; }
+  function toggleFav(id){ if(favSet[id]) delete favSet[id]; else favSet[id]=1; saveFav(); syncFavBtns(id); applyFilters(); }
+  function syncFavBtns(id){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-fav="'+id+'"]'), function(b){
+      var on=isFav(id); b.classList.toggle('on', on); b.textContent = on ? '♥' : '♡';
+    });
+  }
+  function syncAllFavBtns(){ Array.prototype.forEach.call(document.querySelectorAll('[data-fav]'), function(b){ var id=b.getAttribute('data-fav'); var on=isFav(id); b.classList.toggle('on', on); b.textContent=on?'♥':'♡'; }); }
+  syncAllFavBtns();
+
+  function pushRecent(id){
+    try{
+      var arr=JSON.parse(localStorage.getItem('ar-recent')||'[]'); arr=arr.filter(function(x){return x!==id;});
+      arr.unshift(id); arr=arr.slice(0,12); localStorage.setItem('ar-recent', JSON.stringify(arr));
+    }catch(e){}
+  }
+
+  /* Số liệu đánh giá người dùng theo xe (id -> {count,avg}) */
+  var userRatings = {};
+  function priceBucket(min){
+    if(state.price==='') return true;
+    var parts=state.price.split('-'); var lo=+parts[0], hi=+parts[1];
+    return min>=lo && min<hi;
+  }
+  function ratingMatch(id){
+    if(state.rating==='') return true;
+    var r=userRatings[id]; if(!r) return false;
+    return r.avg >= (+state.rating);
+  }
   function vnMatch(c){
     if(!state.vn) return true;
     if(state.vn==='available') return c.getAttribute('data-vn-available')==='1';
@@ -535,10 +633,14 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
   function applyFilters(){
     var n=0;
     cards.forEach(function(c){
+      var id=c.getAttribute('data-id');
       var ok = (!state.brand || c.getAttribute('data-brand')===state.brand)
         && (!state.segment || c.getAttribute('data-segment')===state.segment)
         && (!state.fuel || c.getAttribute('data-fuel')===state.fuel)
         && vnMatch(c)
+        && priceBucket(+c.getAttribute('data-price'))
+        && ratingMatch(id)
+        && (!state.fav || isFav(id))
         && (!state.q || c.getAttribute('data-search').indexOf(state.q)>=0);
       c.style.display = ok ? '' : 'none';
       if(ok) n++;
@@ -546,13 +648,37 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
     $('count').textContent = n + ' / ' + cards.length + ' xe';
     $('empty').style.display = n ? 'none' : 'block';
   }
+  function applySort(){
+    if(!state.sort){ return; }
+    var arr=cards.slice();
+    var byd=byId;
+    arr.sort(function(a,b){
+      var va=byd[a.getAttribute('data-id')], vb=byd[b.getAttribute('data-id')];
+      if(state.sort==='price-asc') return va.price.min-vb.price.min;
+      if(state.sort==='price-desc') return vb.price.min-va.price.min;
+      if(state.sort==='reliability-desc') return (vb.reliability||0)-(va.reliability||0);
+      if(state.sort==='name-asc') return (va.brand+' '+va.model).localeCompare(vb.brand+' '+vb.model, 'vi');
+      if(state.sort==='rating-desc'){
+        var ra=(userRatings[va.id]||{}).avg||0, rb=(userRatings[vb.id]||{}).avg||0;
+        if(rb!==ra) return rb-ra;
+        return (vb.reliability||0)-(va.reliability||0);
+      }
+      return 0;
+    });
+    arr.forEach(function(c){ grid.appendChild(c); });
+  }
   $('search').addEventListener('input', function(e){ state.q=e.target.value.trim().toLowerCase(); applyFilters(); });
   $('f-segment').addEventListener('change', function(e){ state.segment=e.target.value; applyFilters(); });
   $('f-fuel').addEventListener('change', function(e){ state.fuel=e.target.value; applyFilters(); });
   $('f-vn').addEventListener('change', function(e){ state.vn=e.target.value; applyFilters(); });
+  $('f-price').addEventListener('change', function(e){ state.price=e.target.value; applyFilters(); });
+  $('f-rating').addEventListener('change', function(e){ state.rating=e.target.value; applyFilters(); });
+  $('f-sort').addEventListener('change', function(e){ state.sort=e.target.value; applySort(); applyFilters(); });
+  $('f-fav').onclick = function(){ state.fav=!state.fav; $('f-fav').classList.toggle('on', state.fav); applyFilters(); };
   $('f-clear').onclick = function(){
-    state={brand:'',segment:'',fuel:'',vn:'',q:''};
+    state={brand:'',segment:'',fuel:'',vn:'',q:'',price:'',rating:'',fav:false,sort:''};
     $('search').value=''; $('f-segment').value=''; $('f-fuel').value=''; $('f-vn').value='';
+    $('f-price').value=''; $('f-rating').value=''; $('f-sort').value=''; $('f-fav').classList.remove('on');
     setBrandActive(''); applyFilters();
   };
   function setBrandActive(slug){
@@ -570,11 +696,25 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
   });
   applyFilters();
 
+  /* Tải số liệu đánh giá người dùng -> badge trên thẻ + phục vụ lọc/sắp xếp */
+  function renderUrate(id){
+    var el=document.querySelector('[data-vurate="'+id+'"]'); if(!el) return;
+    var r=userRatings[id];
+    if(r && r.count>0){ el.innerHTML='<span class="ur-stars">'+stars(Math.round(r.avg))+'</span><span class="ur-avg">'+r.avg.toFixed(1)+'</span><span>('+r.count+')</span>'; }
+    else { el.innerHTML=''; }
+  }
+  fetch('/api/reviews').then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok||!d.summaries) return;
+    userRatings=d.summaries;
+    cards.forEach(function(c){ renderUrate(c.getAttribute('data-id')); });
+    if(state.sort==='rating-desc') applySort();
+  }).catch(function(){});
+
   /* ---------- Modal helpers ---------- */
   var modal=$('modal'), sheet=$('sheet');
   var rvmodal=$('rvmodal'), rvsheet=$('rvsheet');
   function openModal(html){ sheet.innerHTML=html; modal.classList.add('show'); document.body.style.overflow='hidden'; bindTabs(); }
-  function closeModal(){ modal.classList.remove('show'); document.body.style.overflow=''; }
+  function closeModal(){ modal.classList.remove('show'); document.body.style.overflow=''; clearShareUrl(); }
   modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
   rvmodal.addEventListener('click', function(e){ if(e.target===rvmodal) closeRvModal(); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(rvmodal.classList.contains('show')) closeRvModal(); else closeModal(); } });
@@ -720,6 +860,54 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       + '<p style="margin-top:12px"><b>Ghi chú thị trường Việt Nam</b></p><ul class="vn-notes">'+notes+'</ul>'
       + '<p class="muted" style="margin-top:10px;font-size:12px">⚠ Thông tin thị trường VN mang tính tham khảo — giá, phiên bản và tình trạng phân phối thay đổi theo thời điểm và đại lý. Nên xác nhận lại với đại lý chính hãng.</p>';
   }
+  /* Xe tương tự: cùng phân khúc hoặc giá gần nhau (±35%), loại trừ chính nó. */
+  function findSimilar(v){
+    var pmin=v.price.min||0;
+    var scored=V.filter(function(x){ return x.id!==v.id; }).map(function(x){
+      var sc=0;
+      if(x.segment===v.segment) sc+=3;
+      if(x.bodyType && x.bodyType===v.bodyType) sc+=2;
+      if(x.fuelType===v.fuelType) sc+=1;
+      if(x.seats===v.seats) sc+=1;
+      var diff = pmin>0 ? Math.abs((x.price.min||0)-pmin)/pmin : 1;
+      if(diff<=0.35) sc+=2; else if(diff<=0.6) sc+=1;
+      return { v:x, sc:sc, diff:diff };
+    }).filter(function(o){ return o.sc>=3; });
+    scored.sort(function(a,b){ if(b.sc!==a.sc) return b.sc-a.sc; return a.diff-b.diff; });
+    return scored.slice(0,4).map(function(o){ return o.v; });
+  }
+  function similarHtml(v){
+    var list=findSimilar(v);
+    if(!list.length) return '';
+    var cards=list.map(function(s){ var sc=brandColor[s.brandSlug]||'var(--accent)';
+      return '<button type="button" class="simcard" data-act="detail" data-id="'+esc(s.id)+'">'
+        + '<img src="'+esc(s.image)+'" alt="" loading="lazy">'
+        + '<span class="sim-b" style="--bc:'+sc+'">'+(brandFlag[s.brandSlug]?brandFlag[s.brandSlug]+' ':'')+esc(s.brand)+'</span>'
+        + '<span class="sim-m">'+esc(s.model)+'</span>'
+        + '<span class="sim-p">'+esc(s.price.label)+'</span>'
+        + '</button>';
+    }).join('');
+    return '<div class="simsec"><h4>🔎 Xe tương tự</h4><div class="simgrid">'+cards+'</div></div>';
+  }
+  /* Lấy số đầu tiên trong chuỗi tiêu hao, vd "7,5 L/100km" -> 7.5 */
+  function firstNum(s){ var m=String(s||'').replace(',', '.').match(/[0-9]+(\\.[0-9]+)?/); return m?parseFloat(m[0]):0; }
+  function fmtVnd(n){ return Math.round(n).toLocaleString('vi-VN')+'đ'; }
+  function bindCostCalc(v){
+    var km=document.getElementById('cc-km'); if(!km) return;
+    var price=document.getElementById('cc-price'), out=document.getElementById('cc-out'), kmval=document.getElementById('cc-kmval');
+    var per100=firstNum(v.fuelEconomy);
+    var unit=v.fuelType==='Điện'?'kWh':'lít';
+    function calc(){
+      var kmY=+km.value, p=+price.value;
+      kmval.textContent=kmY.toLocaleString('vi-VN')+' km';
+      if(!per100){ out.innerHTML='<span class="muted">Chưa có dữ liệu mức tiêu hao để tính.</span>'; return; }
+      var used=per100*kmY/100;
+      var cost=used*p;
+      out.innerHTML='<div class="cc-big">'+fmtVnd(cost)+'<span> /năm</span></div>'
+        + '<div class="muted" style="font-size:13px;margin-top:4px">≈ '+fmtVnd(cost/12)+'/tháng · tiêu thụ ~'+Math.round(used).toLocaleString('vi-VN')+' '+unit+'/năm ('+per100+' '+unit+'/100km)</div>';
+    }
+    km.addEventListener('input', calc); price.addEventListener('input', calc); calc();
+  }
   function detailHtml(v){
     var c = brandColor[v.brandSlug] || 'var(--accent)';
     var ms = (v.maintenanceSchedule||[]).map(function(m){
@@ -767,8 +955,10 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       +         '<p class="ovh"><b>Từ khóa</b></p>'+tags(v.tags||[])
       +       '</div>'
       +     '</div>'
+      +     similarHtml(v)
       +     '<div class="vactions">'
       +       '<button class="btn btn-ghost" data-reviews="'+esc(v.id)+'">💬 Đánh giá người dùng</button>'
+      +       '<button class="btn btn-ghost" data-share="'+esc(v.id)+'">🔗 Chia sẻ</button>'
       +       '<button class="btn btn-ghost" data-act="compare" data-id="'+esc(v.id)+'">⚖️ Thêm vào so sánh</button>'
       +       '<button class="btn '+(aiHas(v.id)?'btn-ai-on':'btn-primary')+'" data-aiadd="'+esc(v.id)+'">'+(aiHas(v.id)?'✓ Đã thêm vào AI':'+ Thêm vào so sánh AI')+'</button>'
       +     '</div>'
@@ -776,28 +966,59 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       +   '<div class="tabpane" data-pane="spec">'+specPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="maint"><p class="muted">Lịch bảo dưỡng định kỳ tham khảo:</p><table class="dtbl">'+ms+'</table></div>'
       +   '<div class="tabpane" data-pane="parts"><p class="muted">Giá phụ tùng tham khảo:</p><table class="dtbl">'+pc+'</table></div>'
-      +   '<div class="tabpane" data-pane="cost"><p class="muted">Ước tính chi phí nuôi xe mỗi năm:</p><table class="dtbl">'
+      +   '<div class="tabpane" data-pane="cost">'
+      +     '<div class="costcalc" id="costcalc">'
+      +       '<h4 style="margin:0 0 10px">🧮 Máy tính chi phí nhiên liệu/năm</h4>'
+      +       '<div class="cc-row"><label>Quãng đường mỗi năm: <b id="cc-kmval">15.000 km</b></label>'
+      +         '<input type="range" id="cc-km" min="5000" max="50000" step="1000" value="15000"></div>'
+      +       '<div class="cc-row"><label>'+(v.fuelType==='Điện'?'Giá điện (đ/kWh)':'Giá nhiên liệu (đ/lít)')+'</label>'
+      +         '<input type="number" id="cc-price" min="0" step="500" value="'+(v.fuelType==='Điện'?'3000':'24000')+'"></div>'
+      +       '<div class="cc-out" id="cc-out"></div>'
+      +     '</div>'
+      +     '<p class="muted" style="margin:14px 0 6px">Ước tính chi phí nuôi xe mỗi năm:</p><table class="dtbl">'
       +     row('Bảo dưỡng định kỳ', v.maintenanceCostPerYear)
       +     row('Nhiên liệu/năng lượng', v.fuelType==='Điện' ? 'Thấp (sạc điện)' : 'Theo mức tiêu hao '+v.fuelEconomy)
+      +     row('Tổng chi phí sở hữu/năm', v.ownershipCost||'—')
       +     row('Khuyến nghị', v.reliability>=4 ? 'Chi phí vận hành ổn định, dễ bán lại.' : 'Cân nhắc chi phí phụ tùng/dịch vụ.')
       +   '</table></div>'
       +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
-  function openDetail(id){ var v=byId[id]; if(v){ openModal(detailHtml(v)); refreshReviewBtn(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
+  function openDetail(id){ var v=byId[id]; if(v){ pushRecent(id); openModal(detailHtml(v)); refreshReviewBtn(id); bindCostCalc(v); updateShareUrl(id); var im=document.querySelector('#sheet .ovimg'); if(im){ im.setAttribute('data-fb','1'); im.onerror=function(){ this.onerror=null; var o=this.getAttribute('data-orig'); if(o){ this.src=o; } }; } } }
+  function shareUrl(id){ return location.origin + location.pathname + '?v=' + encodeURIComponent(id); }
+  function updateShareUrl(id){ try{ history.replaceState(null, '', shareUrl(id)); }catch(e){} }
+  function clearShareUrl(){ try{ history.replaceState(null, '', location.pathname); }catch(e){} }
+  function doShare(id){
+    var v=byId[id]; if(!v) return;
+    var url=shareUrl(id), title=v.brand+' '+v.model+' '+v.trim;
+    if(navigator.share){ navigator.share({ title:title, url:url }).catch(function(){}); return; }
+    var done=function(){ var b=document.querySelector('[data-share="'+id+'"]'); if(b){ var old=b.innerHTML; b.innerHTML='✓ Đã copy link'; setTimeout(function(){ b.innerHTML=old; },1600); } };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(function(){ prompt('Sao chép link:', url); }); }
+    else { prompt('Sao chép link:', url); }
+  }
 
   /* ---------- Reviews (đánh giá người dùng) ---------- */
+  var rvCurrentId='';
+  var rvVoted={};
+  try{ var _hv=JSON.parse(localStorage.getItem('ar-helpful')||'[]'); if(_hv&&_hv.length){ _hv.forEach(function(x){ rvVoted[x]=1; }); } }catch(e){}
+  function saveVoted(){ try{ localStorage.setItem('ar-helpful', JSON.stringify(Object.keys(rvVoted))); }catch(e){} }
   function closeRvModal(){ rvmodal.classList.remove('show'); }
   function rvDate(iso){ try{ return new Date(iso).toLocaleDateString('vi-VN'); }catch(e){ return ''; } }
   function updateReviewBtn(id, summary){ var b=document.querySelector('#sheet [data-reviews="'+id+'"]'); if(b&&summary){ b.innerHTML = summary.count>0 ? ('💬 Đánh giá ('+summary.count+')') : '💬 Đánh giá người dùng'; } }
   function refreshReviewBtn(id){ fetch('/api/reviews/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){ if(d&&d.ok) updateReviewBtn(id, d.summary); }).catch(function(){}); }
-  function reviewItemHtml(r){ return '<div class="rvitem"><div class="rvtop"><span class="rvname">'+esc(r.name)+'</span><span class="rvstars">'+stars(r.rating)+'</span></div><div class="rvcomment">'+esc(r.comment)+'</div><div class="rvdate">'+esc(rvDate(r.createdAt))+'</div></div>'; }
+  function reviewItemHtml(r){
+    var voted=!!rvVoted[r.id];
+    var cnt=r.helpful||0;
+    var hbtn='<button class="rvhelp'+(voted?' voted':'')+'" data-rvhelpful="'+esc(r.id)+'"'+(voted?' disabled':'')+'>👍 Hữu ích'+(cnt>0?' ('+cnt+')':'')+'</button>';
+    return '<div class="rvitem"><div class="rvtop"><span class="rvname">'+esc(r.name)+'</span><span class="rvstars">'+stars(r.rating)+'</span></div><div class="rvcomment">'+esc(r.comment)+'</div><div class="rvfoot"><span class="rvdate">'+esc(rvDate(r.createdAt))+'</span>'+hbtn+'</div></div>';
+  }
   function reviewsShellHtml(v){ return '<div class="sheet-head"><h3>💬 Đánh giá · '+esc(v.brand+' '+v.model)+'</h3><button class="closebtn" data-rvclose>✕</button></div><div class="sheet-body" id="rvbody"><p class="muted">Đang tải…</p></div>'; }
   function reviewsBodyHtml(id, d){
     var s=d.summary||{count:0,avg:0};
     var head = s.count>0 ? ('<div class="rvsum"><span class="rvavg">'+s.avg.toFixed(1)+'</span><span class="rvstars">'+stars(Math.round(s.avg))+'</span><span class="muted">'+s.count+' đánh giá</span></div>') : '<p class="muted">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>';
     var form = '<form class="rvform" data-rvform="'+esc(id)+'">'
       + '<input class="rvinput" name="name" maxlength="40" placeholder="Tên của bạn (tuỳ chọn)">'
+      + '<input class="rvhp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'
       + '<div class="rvstarpick" data-rvstarpick>'+[1,2,3,4,5].map(function(n){return '<span class="rvstar" data-star="'+n+'">☆</span>';}).join('')+'<span class="rvhint muted">Chọn số sao</span></div>'
       + '<textarea class="rvinput" name="comment" maxlength="600" rows="3" placeholder="Chia sẻ cảm nhận của bạn…"></textarea>'
       + '<div class="rverr" data-rverr></div>'
@@ -818,16 +1039,26 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       if(rating<1){ err.textContent='Vui lòng chọn số sao.'; return; }
       if(!comment.trim()){ err.textContent='Vui lòng nhập nội dung đánh giá.'; return; }
       var btn=form.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Đang gửi…';
-      fetch('/api/reviews/'+encodeURIComponent(id), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: form.querySelector('[name=name]').value, rating: rating, comment: comment }) })
+      fetch('/api/reviews/'+encodeURIComponent(id), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: form.querySelector('[name=name]').value, rating: rating, comment: comment, website: form.querySelector('[name=website]').value }) })
         .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
         .then(function(res){ if(!res.ok || !res.d.ok){ err.textContent=(res.d&&res.d.error)||'Không gửi được.'; btn.disabled=false; btn.textContent='Gửi đánh giá'; return; }
-          var body=document.getElementById('rvbody'); body.innerHTML=reviewsBodyHtml(id, res.d); bindReviewForm(id); updateReviewBtn(id, res.d.summary); })
+          var body=document.getElementById('rvbody'); body.innerHTML=reviewsBodyHtml(id, res.d); bindReviewForm(id); updateReviewBtn(id, res.d.summary);
+          if(res.d.summary){ userRatings[id]={count:res.d.summary.count, avg:res.d.summary.avg}; renderUrate(id); } })
         .catch(function(){ err.textContent='Lỗi mạng, vui lòng thử lại.'; btn.disabled=false; btn.textContent='Gửi đánh giá'; });
     });
   }
-  function openReviews(id){ var v=byId[id]; if(!v) return; rvsheet.innerHTML=reviewsShellHtml(v); rvmodal.classList.add('show'); document.body.style.overflow='hidden';
+  function openReviews(id){ var v=byId[id]; if(!v) return; rvCurrentId=id; rvsheet.innerHTML=reviewsShellHtml(v); rvmodal.classList.add('show'); document.body.style.overflow='hidden';
     var body=document.getElementById('rvbody');
     fetch('/api/reviews/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok){ body.innerHTML='<p class="muted">Không tải được đánh giá.</p>'; return; } body.innerHTML=reviewsBodyHtml(id, d); bindReviewForm(id); updateReviewBtn(id, d.summary); }).catch(function(){ body.innerHTML='<p class="muted">Không tải được đánh giá.</p>'; });
+  }
+  function voteHelpful(reviewId, btn){
+    if(rvVoted[reviewId] || !rvCurrentId) return;
+    rvVoted[reviewId]=1; saveVoted();
+    btn.classList.add('voted'); btn.disabled=true;
+    fetch('/api/reviews/'+encodeURIComponent(rvCurrentId)+'/'+encodeURIComponent(reviewId)+'/helpful', { method:'POST' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d&&d.ok&&d.review){ btn.innerHTML='👍 Hữu ích ('+(d.review.helpful||0)+')'; } })
+      .catch(function(){});
   }
 
   /* ---------- Compare ---------- */
@@ -1132,6 +1363,8 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
 
   /* ---------- Global click delegation ---------- */
   document.addEventListener('click', function(e){
+    var fav=e.target.closest('[data-fav]');
+    if(fav){ e.stopPropagation(); toggleFav(fav.getAttribute('data-fav')); return; }
     var t=e.target.closest('[data-act]');
     if(t){
       var act=t.getAttribute('data-act'), id=t.getAttribute('data-id');
@@ -1149,6 +1382,10 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
     if(aa){ var aid=aa.getAttribute('data-aiadd'); aiToggle(aid); setAiBtn(aa, aiHas(aid)); return; }
     var rvb=e.target.closest('[data-reviews]');
     if(rvb){ openReviews(rvb.getAttribute('data-reviews')); return; }
+    var sh=e.target.closest('[data-share]');
+    if(sh){ doShare(sh.getAttribute('data-share')); return; }
+    var rvh=e.target.closest('[data-rvhelpful]');
+    if(rvh){ voteHelpful(rvh.getAttribute('data-rvhelpful'), rvh); return; }
     if(e.target.closest('[data-rvclose]')){ closeRvModal(); return; }
     if(e.target.closest('[data-close]')) closeModal();
   });
@@ -1158,6 +1395,9 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
     if(picked.length<2){ $('catalog').scrollIntoView({behavior:'smooth'}); alert('Chọn ít nhất 2 xe (nút ⚖️ trên thẻ) rồi bấm So sánh.'); return; }
     openCompare();
   };
+
+  /* ---------- Mở chi tiết từ link chia sẻ ?v=<id> ---------- */
+  (function(){ try{ var m=location.search.match(/[?&]v=([^&]+)/); if(m){ var id=decodeURIComponent(m[1]); if(byId[id]) openDetail(id); } }catch(e){} })();
 })();
 </script>
 </body>

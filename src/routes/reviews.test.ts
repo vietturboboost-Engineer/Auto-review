@@ -75,4 +75,37 @@ describe('Reviews API /api/reviews', () => {
       .send({ rating: 4, comment: 'Test.' });
     expect(res.status).toBe(404);
   });
+
+  it('GET / trả tổng hợp số liệu cho nhiều xe', async () => {
+    const res = await request(app).get('/api/reviews');
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(typeof res.body.summaries).toBe('object');
+    expect(res.body.summaries[seededId].count).toBeGreaterThan(0);
+  });
+
+  it('POST helpful tăng lượt hữu ích', async () => {
+    const list = await request(app).get(`/api/reviews/${seededId}`);
+    const rid = list.body.reviews[0].id;
+    const before = list.body.reviews[0].helpful ?? 0;
+    const res = await request(app).post(`/api/reviews/${seededId}/${rid}/helpful`);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.review.helpful).toBe(before + 1);
+  });
+
+  it('POST helpful trả 404 với đánh giá không tồn tại', async () => {
+    const res = await request(app).post(`/api/reviews/${seededId}/khong-co-id/helpful`);
+    expect(res.status).toBe(404);
+  });
+
+  it('POST honeypot (website) giả thành công nhưng không lưu', async () => {
+    const before = await request(app).get(`/api/reviews/${seededId}`);
+    const res = await request(app)
+      .post(`/api/reviews/${seededId}`)
+      .send({ rating: 5, comment: 'spam bot', website: 'http://spam.example' });
+    expect(res.status).toBe(201);
+    expect(res.body.review).toBeNull();
+    expect(res.body.summary.count).toBe(before.body.summary.count);
+  });
 });

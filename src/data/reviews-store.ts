@@ -13,6 +13,8 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  /** Số lượt bình chọn "hữu ích". */
+  helpful: number;
 }
 
 interface Store {
@@ -67,6 +69,7 @@ function seed(): Store {
       rating: p[1],
       comment: p[2],
       createdAt: new Date(base - (i * 3 + j + 1) * 86_400_000).toISOString(),
+      helpful: 0,
     }));
   });
   return { version: 1, reviews };
@@ -92,11 +95,40 @@ function load(): Store {
   }
 }
 
+/** Chuẩn hoá 1 bản ghi (dữ liệu cũ có thể thiếu trường helpful). */
+function normalize(r: Review): Review {
+  return { ...r, helpful: Number.isFinite(r.helpful) ? r.helpful : 0 };
+}
+
 export function listReviews(vehicleId: string): Review[] {
   const s = load();
   return (s.reviews[vehicleId] ?? [])
-    .slice()
+    .map(normalize)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Tổng hợp số liệu đánh giá cho TẤT CẢ xe (dùng cho badge trên thẻ xe). */
+export function summarizeAll(): Record<string, { count: number; avg: number }> {
+  const s = load();
+  const out: Record<string, { count: number; avg: number }> = {};
+  for (const [id, arr] of Object.entries(s.reviews)) {
+    if (!arr || arr.length === 0) continue;
+    const avg = arr.reduce((sum, x) => sum + x.rating, 0) / arr.length;
+    out[id] = { count: arr.length, avg: Math.round(avg * 10) / 10 };
+  }
+  return out;
+}
+
+/** Tăng 1 lượt "hữu ích" cho 1 đánh giá. Trả về bản ghi đã cập nhật hoặc null nếu không thấy. */
+export function voteHelpful(vehicleId: string, reviewId: string): Review | null {
+  const s = load();
+  const arr = s.reviews[vehicleId];
+  if (!arr) return null;
+  const r = arr.find((x) => x.id === reviewId);
+  if (!r) return null;
+  r.helpful = (Number.isFinite(r.helpful) ? r.helpful : 0) + 1;
+  persist(s);
+  return normalize(r);
 }
 
 export function summarize(vehicleId: string): { count: number; avg: number } {
@@ -136,6 +168,7 @@ export function addReview(vehicleId: string, input: NewReviewInput): Review {
     rating,
     comment,
     createdAt: new Date().toISOString(),
+    helpful: 0,
   };
 
   const s = load();
