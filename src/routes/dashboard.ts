@@ -291,6 +291,10 @@ html[data-theme="light"] .bct{color:oklch(from var(--bc,#444444) min(l,0.46) c h
 .pccol li{font-size:13px;line-height:1.5}
 .pc-good h4{color:var(--good)}
 .pc-bad h4{color:var(--bad)}
+.brandbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.blogo-lg{width:104px;height:104px;object-fit:contain;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.brandbox .bb-name{font-weight:800;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--bc, var(--text))}
+.brandbox .bb-sub{font-size:12px;color:var(--muted);margin-top:-4px}
 @media(max-width:760px){.proscons{grid-template-columns:1fr}}
 @media(max-width:760px){.ovgrid{grid-template-columns:1fr}.ovimg{max-height:260px}}
 
@@ -471,7 +475,10 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
   var FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#26262e"/><path d="M40 120 q10 -40 55 -44 l70 -2 q34 0 52 30 l24 4 q14 2 14 16 q0 9 -11 9 l-200 0 q-11 0 -11 -9 z" fill="#3a3a44"/><circle cx="95" cy="118" r="16" fill="#15151a"/><circle cx="210" cy="118" r="16" fill="#15151a"/><text x="160" y="158" font-family="Arial" font-size="13" fill="#9a9aa6" text-anchor="middle">Ảnh đang cập nhật</text></svg>');
   document.addEventListener('error', function(e){
     var t = e.target;
-    if(t && t.tagName === 'IMG' && t.classList.contains('blogo')){ t.style.display='none'; return; }
+    if(t && t.tagName === 'IMG' && (t.classList.contains('blogo') || t.classList.contains('blogo-lg'))){
+      if(t.classList.contains('blogo-lg')){ var bx=t.closest('.brandbox'); if(bx){ bx.style.display='none'; return; } }
+      t.style.display='none'; return;
+    }
     if(t && t.tagName === 'IMG' && !t.classList.contains('flagicon') && !t.getAttribute('data-fb')){ t.setAttribute('data-fb','1'); t.src = FALLBACK; }
   }, true);
 
@@ -727,6 +734,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       +       '<div class="ovside">'
       +         '<div class="pccol pc-good"><h4>✅ Ưu điểm</h4><ul>'+(v.pros||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
       +         '<div class="pccol pc-bad"><h4>⚠️ Nhược điểm</h4><ul>'+(v.cons||[]).map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'
+      +         (brandLogoMap[v.brandSlug] ? '<div class="brandbox"><img class="blogo-lg" src="'+esc(brandLogoMap[v.brandSlug])+'" alt="'+esc(v.brand)+' logo" loading="lazy"><div class="bb-name" style="--bc:'+c+'">'+esc(v.brand)+'</div></div>' : '')
       +       '</div>'
       +       '<div class="ovinfo">'
       +         '<p class="ovh" style="margin-top:0"><b>An toàn</b></p>'+tags(v.safetyFeatures)
