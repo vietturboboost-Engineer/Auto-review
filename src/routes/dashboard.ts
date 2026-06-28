@@ -720,6 +720,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
     <p>Cẩm nang ${vehicles.length}+ mẫu xe từ ${brands.length} hãng tại Việt Nam — thông số, chi phí sở hữu, bảo dưỡng và gợi ý xe bằng AI.</p>
     <div class="searchbar">
       <input id="search" type="search" placeholder="Tìm theo hãng, mẫu xe, từ khóa… (vd: SUV, xe điện, 7 chỗ, giá rẻ, chính hãng)">
+      <button id="search-btn" class="btn btn-primary" type="button" aria-label="Tìm kiếm">🔍</button>
     </div>
     <div class="cta">
       <button class="btn btn-primary btn-lg" id="cta-reco">🤖 Gợi ý xe bằng AI</button>
@@ -942,6 +943,13 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
     arr.forEach(function(c){ grid.appendChild(c); });
   }
   $('search').addEventListener('input', function(e){ state.q=e.target.value.trim().toLowerCase(); applyFilters(); });
+  function scrollToResults(){
+    var sec=document.getElementById('catalog');
+    if(sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function runSearch(){ state.q=$('search').value.trim().toLowerCase(); applyFilters(); scrollToResults(); }
+  $('search').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); runSearch(); } });
+  $('search-btn').addEventListener('click', runSearch);
   $('f-segment').addEventListener('change', function(e){ state.segment=e.target.value; applyFilters(); });
   $('f-fuel').addEventListener('change', function(e){ state.fuel=e.target.value; applyFilters(); });
   $('f-vn').addEventListener('change', function(e){ state.vn=e.target.value; applyFilters(); });
