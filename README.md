@@ -260,7 +260,7 @@ curl -L https://fly.io/install.sh | sh
 flyctl auth signup     # hoặc: flyctl auth login
 
 # 3. Tạo app (tên phải unique toàn cầu)
-flyctl apps create my-cool-api-xyz123
+flyctl apps create autoiq
 
 # 4. Sửa dòng `app = "..."` trong fly.toml cho khớp tên vừa tạo
 

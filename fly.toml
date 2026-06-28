@@ -10,7 +10,7 @@
 #   6. Thêm value vào GitHub Secrets dưới tên `FLY_API_TOKEN`
 #   7. Push code → GitHub Actions deploy luôn.
 
-app = "my-cool-api-xyz123"
+app = "autoiq"
 primary_region = "sin"  # sin=Singapore, nrt=Tokyo, sjc=San Jose, fra=Frankfurt, lhr=London
 
 # Image được build bởi docker-publish.yml và push lên GHCR.

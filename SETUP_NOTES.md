@@ -103,8 +103,8 @@ Could not find App "CHANGE-ME-auto-review-api"
 **Fix**: tạo app **trước**, rồi sửa `fly.toml` cho khớp, rồi mới tạo token:
 
 ```bash
-flyctl apps create my-cool-api-xyz123       # tên unique toàn cầu
-# Sửa dòng `app = "..."` trong fly.toml -> "my-cool-api-xyz123"
+flyctl apps create autoiq       # tên unique toàn cầu
+# Sửa dòng `app = "..."` trong fly.toml -> "autoiq"
 flyctl tokens create deploy --expiry 87600h  # ~10 năm
 ```
 
@@ -156,8 +156,8 @@ flyctl auth login    # account đã có
 ### 3. Tạo app + token
 
 ```bash
-flyctl apps create my-cool-api-xyz123
-# Sửa fly.toml: app = "my-cool-api-xyz123"
+flyctl apps create autoiq
+# Sửa fly.toml: app = "autoiq"
 flyctl tokens create deploy --expiry 87600h
 # Copy toàn bộ chuỗi "FlyV1 fm2_..." (gồm cả phần thứ 2 sau dấu phẩy)
 ```
@@ -169,7 +169,7 @@ Repo → **Settings → Secrets and variables → Actions**:
 | Type | Name | Value |
 |---|---|---|
 | Secret | `FLY_API_TOKEN` | Chuỗi token bước 3 |
-| Variable | `PRODUCTION_URL` | `https://my-cool-api-xyz123.fly.dev` |
+| Variable | `PRODUCTION_URL` | `https://autoiq.fly.dev` |
 
 ### 5. Push code
 
@@ -190,7 +190,7 @@ Repo → Packages (sidebar) → click package → Package settings → **Change 
 Actions → click run `Deploy (Fly.io)` bị fail (nếu có) → **Re-run all jobs**.
 
 ```bash
-curl https://my-cool-api-xyz123.fly.dev/health
+curl https://autoiq.fly.dev/health
 # {"status":"ok","uptime":..,"timestamp":".."}
 ```
 
