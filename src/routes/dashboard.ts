@@ -228,13 +228,13 @@ section{padding:26px 0}
 .vthumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
 .vthumb:hover img{transform:scale(1.05)}
 .vnbadge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:800;padding:4px 9px;
-  border-radius:999px;backdrop-filter:blur(4px);background:rgba(10,10,14,.45);color:#fff;
+  border-radius:999px;backdrop-filter:blur(4px);background:rgba(10,10,14,.62);color:#fff;
   border:1px solid rgba(255,255,255,.18);box-shadow:0 4px 14px rgba(0,0,0,.35)}
-.vnbadge.vn-on{background:rgba(28,120,70,.6);border-color:rgba(120,230,170,.4)}
-.vnbadge.vn-lim{background:rgba(150,110,10,.6);border-color:rgba(255,210,110,.4)}
-.vnbadge.vn-dis{background:rgba(30,80,150,.6);border-color:rgba(130,180,255,.4)}
-.vnbadge.vn-up{background:rgba(60,60,70,.6);border-color:rgba(180,180,200,.4)}
-.vnbadge.vn-no{background:rgba(150,40,40,.6);border-color:rgba(255,140,140,.4)}
+.vnbadge.vn-on{background:rgba(28,120,70,.82);border-color:rgba(120,230,170,.4)}
+.vnbadge.vn-lim{background:rgba(150,110,10,.82);border-color:rgba(255,210,110,.4)}
+.vnbadge.vn-dis{background:rgba(30,80,150,.82);border-color:rgba(130,180,255,.4)}
+.vnbadge.vn-up{background:rgba(60,60,70,.82);border-color:rgba(180,180,200,.4)}
+.vnbadge.vn-no{background:rgba(150,40,40,.82);border-color:rgba(255,140,140,.4)}
 .vlogo{position:absolute;top:8px;right:8px;font-size:11px;font-weight:900;letter-spacing:.3px;
   padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.94);max-width:48%;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.28)}
