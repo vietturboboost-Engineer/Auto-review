@@ -232,7 +232,7 @@ section{padding:26px 0}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.28)}
 .vbody{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .vbrand{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
-.blogo{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:8px;flex:0 0 auto;background:#fff;border-radius:5px;padding:2px;box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.blogo{display:inline-block;width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:8px;flex:0 0 auto;background:#fff;border-radius:5px;padding:2px;box-sizing:border-box;box-shadow:0 3px 8px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.06)}
 .vcountry{font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0}
 /* Màu thương hiệu: kẹp độ sáng theo theme để chữ luôn đọc được, vẫn giữ nhận diện hãng */
 .brandmark,.vbrand,.bct{color:var(--bc,currentColor)}
@@ -294,7 +294,7 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
   border-radius:22px;width:100%;max-width:1240px;box-shadow:var(--shadow);overflow:hidden;margin:auto;
   display:flex;flex-direction:column;height:min(94vh,960px)}
 .sheet-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
-.sheet-head h3{margin:0;font-size:18px;flex:1}
+.sheet-head h3{margin:0;font-size:18px;flex:1;text-shadow:0 1px 2px rgba(0,0,0,.25)}
 .closebtn{border:1px solid var(--line);background:var(--card);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px}
 .sheet-body{padding:18px;flex:1 1 auto;overflow-y:auto}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
@@ -345,7 +345,7 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .cc-big{font-size:26px;font-weight:900;color:var(--accent)}
 .cc-big span{font-size:14px;font-weight:600;color:var(--muted)}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
-.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
+.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.32), 0 3px 8px rgba(0,0,0,.20)}
 .ovinfo{min-width:0}
 .ovh{margin:14px 0 7px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
 .ovh b{color:var(--accent2)}
