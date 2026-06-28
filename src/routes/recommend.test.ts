@@ -55,7 +55,7 @@ describe('POST /api/recommend', () => {
     process.env.GEMINI_API_KEY = 'test-key';
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({ ok: false, status: 429, json: async () => ({}) })),
+      vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })),
     );
     const res = await request(app)
       .post('/api/recommend')

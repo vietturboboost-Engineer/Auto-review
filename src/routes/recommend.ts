@@ -37,14 +37,14 @@ async function callGeminiWithRetry(url: string, payload: string, retries = 2): P
     if (r.ok || (r.status !== 429 && r.status !== 503) || attempt >= retries) {
       return r;
     }
-    const retryAfter = Number(r.headers.get('retry-after'));
+    const retryAfter = r.headers && typeof r.headers.get === 'function' ? Number(r.headers.get('retry-after')) : NaN;
     const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 800 * 2 ** attempt;
     await sleep(Math.min(wait, 8000));
     attempt += 1;
   }
 }
 
-function buildPrompt(profile: string, cars: unknown[]): string {
+function buildPrompt(profile: string, cars: unknown[], compareMode = false): string {
   const carLines = cars
     .map((c, i) => {
       const o = (c ?? {}) as Record<string, unknown>;
@@ -61,6 +61,14 @@ function buildPrompt(profile: string, cars: unknown[]): string {
     .join('\n');
 
   return [
+    ...(compareMode
+      ? [
+          'NGƯỜI DÙNG ĐANG PHÂN VÂN giữa đúng các xe được liệt kê bên dưới và muốn được SO SÁNH trực tiếp.',
+          'Hãy TẬP TRUNG so sánh đúng các xe này; phân tích ưu/nhược từng xe theo nhu cầu người dùng.',
+          'Nếu có xe vượt trội rõ ràng, nêu cụ thể lý do. CHỈ gợi ý xe khác khi thật sự cần thiết.',
+          '',
+        ]
+      : []),
     'Bạn là chuyên gia tư vấn mua ô tô tại Việt Nam, trung thực và minh bạch.',
     'Dưới đây là HỒ SƠ người dùng và TOP xe đã được hệ thống chấm điểm sẵn.',
     'CHỈ dùng đúng dữ liệu được cung cấp, KHÔNG bịa thêm thông số, giá hay mẫu xe mới.',
@@ -90,9 +98,10 @@ function buildPrompt(profile: string, cars: unknown[]): string {
 
 recommendRouter.post('/', async (req: Request, res: Response): Promise<void> => {
   const apiKey = process.env.GEMINI_API_KEY;
-  const body = (req.body ?? {}) as { profile?: unknown; cars?: unknown };
+  const body = (req.body ?? {}) as { profile?: unknown; cars?: unknown; selectedVehicles?: unknown };
   const cars = Array.isArray(body.cars) ? body.cars.slice(0, 5) : [];
   const profile = asText(body.profile).slice(0, 4000);
+  const compareMode = Array.isArray(body.selectedVehicles) && body.selectedVehicles.length > 0;
 
   if (cars.length === 0) {
     res.status(400).json({ ok: false, error: 'Thiếu danh sách xe để phân tích.' });
@@ -107,7 +116,7 @@ recommendRouter.post('/', async (req: Request, res: Response): Promise<void> => 
   }
 
   try {
-    const prompt = buildPrompt(profile, cars);
+    const prompt = buildPrompt(profile, cars, compareMode);
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=` +
       encodeURIComponent(apiKey);
