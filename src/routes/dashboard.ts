@@ -122,6 +122,7 @@ const page = `<!doctype html>
 <meta name="twitter:title" content="AutoReview — Cẩm nang chọn xe đa hãng">
 <meta name="twitter:description" content="So sánh minh bạch xe tại Việt Nam — thông số, chi phí sở hữu, đánh giá người dùng & gợi ý AI.">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@500;600;700&family=Patrick+Hand&display=swap');
 *{box-sizing:border-box}
 :root{
   --bg1:#060608; --bg2:#101015; --surface:#1a1a20; --card:#17171d; --ink:#0a0a0c;
@@ -437,6 +438,127 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
 .credit b{color:var(--accent)}
 .credit a{color:var(--accent2);font-weight:600}
 @media(max-width:560px){.searchbar{flex-direction:column}.nav nav a{padding:7px 9px}}
+
+/* ===================== THEME: HAND-DRAWN (data-skin="handdrawn") =====================
+   Chỉ thay đổi diện mạo qua design token + viền/nền kiểu vẽ tay.
+   KHÔNG áp filter lên ảnh xe (.vthumb img, .ovimg, .cmpimg, .simcard img, .reco-card img,
+   .picker-item img) và KHÔNG đụng tới logo hãng (.blogo, .blogo-lg, .vlogo). */
+html[data-skin="handdrawn"]{
+  --hand:"Caveat","Patrick Hand","Segoe UI",cursive;
+  --hand2:"Patrick Hand","Architects Daughter","Segoe UI",sans-serif;
+  --hd-ra:255px 15px 225px 15px/15px 225px 15px 255px;
+  --hd-rb:15px 225px 15px 255px/225px 15px 255px 15px;
+  --hd-sm:14px 20px 12px 22px/20px 14px 22px 12px;
+  --hd-pill:22px 30px 22px 30px/30px 22px 30px 22px;
+}
+html[data-skin="handdrawn"][data-theme="light"]{
+  --bg1:#f1e9d8; --bg2:#f7f1e3; --surface:#fffdf6; --card:#fffdf6; --ink:#2c2a24;
+  --accent:#3f6f8f; --accent2:#345b75; --text:#2c2a24; --muted:#6f6859;
+  --line:rgba(58,53,44,.55); --good:#3a7d54; --bad:#c0533f;
+  --shadow:3px 4px 0 rgba(50,44,34,.16), 0 10px 26px rgba(50,44,34,.10);
+  --hd-stroke:#3a352c; --hd-dot:rgba(60,50,30,.08); --hd-squiggle:%233a352c;
+}
+html[data-skin="handdrawn"][data-theme="dark"]{
+  --bg1:#1b1c20; --bg2:#202127; --surface:#262830; --card:#262830; --ink:#f1ece0;
+  --accent:#e6b566; --accent2:#d8a24f; --text:#ece7da; --muted:#a7a194;
+  --line:rgba(236,231,218,.42); --good:#7fcf9f; --bad:#f0907c;
+  --shadow:3px 4px 0 rgba(0,0,0,.5), 0 10px 26px rgba(0,0,0,.4);
+  --hd-stroke:#ece7da; --hd-dot:rgba(255,255,255,.06); --hd-squiggle:%23ece7da;
+}
+/* Nền giấy chấm li ti như sổ tay */
+html[data-skin="handdrawn"] body{
+  background:var(--bg2);
+  background-image:radial-gradient(circle at 1px 1px,var(--hd-dot) 1.4px,transparent 0);
+  background-size:24px 24px; background-attachment:fixed;
+}
+/* Chữ tiêu đề & nhãn trang trí dùng font viết tay; phần thân vẫn sans-serif cho dễ đọc */
+html[data-skin="handdrawn"] .logo,
+html[data-skin="handdrawn"] .hero h1{font-family:var(--hand);font-weight:700;letter-spacing:.4px}
+html[data-skin="handdrawn"] .h-row h2,
+html[data-skin="handdrawn"] .vname,
+html[data-skin="handdrawn"] .sheet-head h3,
+html[data-skin="handdrawn"] .vprice,
+html[data-skin="handdrawn"] .btn,
+html[data-skin="handdrawn"] .btn-lg,
+html[data-skin="handdrawn"] .tab,
+html[data-skin="handdrawn"] .chip,
+html[data-skin="handdrawn"] .tag,
+html[data-skin="handdrawn"] .vnbadge,
+html[data-skin="handdrawn"] .opt,
+html[data-skin="handdrawn"] .pct,
+html[data-skin="handdrawn"] .specsec h4,
+html[data-skin="handdrawn"] .pccol h4{font-family:var(--hand2);letter-spacing:.3px}
+/* Header / footer / nav */
+html[data-skin="handdrawn"] .nav{border-bottom:2px solid var(--hd-stroke)}
+html[data-skin="handdrawn"] footer{border-top:2px dashed var(--hd-stroke)}
+html[data-skin="handdrawn"] .themebtn{border:2px solid var(--hd-stroke);border-radius:var(--hd-sm);background:var(--surface)}
+/* Khung dạng thẻ giấy + viền bút chì + bóng mềm */
+html[data-skin="handdrawn"] .vcard,
+html[data-skin="handdrawn"] .brandchip,
+html[data-skin="handdrawn"] .sheet,
+html[data-skin="handdrawn"] .credit,
+html[data-skin="handdrawn"] .costcalc,
+html[data-skin="handdrawn"] .ai-box,
+html[data-skin="handdrawn"] .rvitem,
+html[data-skin="handdrawn"] .simcard,
+html[data-skin="handdrawn"] .brandbox,
+html[data-skin="handdrawn"] .picker-item,
+html[data-skin="handdrawn"] .reco-card{
+  border:2px solid var(--hd-stroke);border-radius:var(--hd-ra);box-shadow:var(--shadow);background:var(--card)
+}
+html[data-skin="handdrawn"] .vcard:nth-child(even),
+html[data-skin="handdrawn"] .simcard:nth-child(even){border-radius:var(--hd-rb)}
+html[data-skin="handdrawn"] .vcard:hover{transform:scale(1.02) rotate(-.3deg);border-color:var(--hd-stroke)}
+/* Nút bấm kiểu vẽ tay (giữ logic, chỉ đổi nét) */
+html[data-skin="handdrawn"] .btn{border:2px solid var(--hd-stroke);border-radius:var(--hd-pill);box-shadow:var(--shadow);background:var(--surface);color:var(--text)}
+html[data-skin="handdrawn"] .btn-primary{background:var(--accent);color:var(--ink)}
+html[data-skin="handdrawn"] .btn-ghost{background:var(--surface);color:var(--text)}
+html[data-skin="handdrawn"] .btn:hover{transform:translateY(-1px) rotate(-.5deg)}
+html[data-skin="handdrawn"] .btn:active{transform:translate(1px,2px)}
+/* Ô nhập, dropdown, nút phụ */
+html[data-skin="handdrawn"] .searchbar input,
+html[data-skin="handdrawn"] .filters select,
+html[data-skin="handdrawn"] .rvinput,
+html[data-skin="handdrawn"] .cc-row input,
+html[data-skin="handdrawn"] .picker-search,
+html[data-skin="handdrawn"] .clearbtn{border:2px solid var(--hd-stroke);border-radius:var(--hd-sm);background:var(--surface)}
+/* Badge / tag / chip / slot */
+html[data-skin="handdrawn"] .chip,
+html[data-skin="handdrawn"] .tag,
+html[data-skin="handdrawn"] .vnbadge,
+html[data-skin="handdrawn"] .ai-badge,
+html[data-skin="handdrawn"] .slot,
+html[data-skin="handdrawn"] .opt,
+html[data-skin="handdrawn"] .rvhelp,
+html[data-skin="handdrawn"] .vurate{border:1.5px solid var(--hd-stroke);border-radius:var(--hd-pill);background:var(--surface)}
+/* Tabs */
+html[data-skin="handdrawn"] .tab{border:2px solid transparent;border-radius:var(--hd-sm)}
+html[data-skin="handdrawn"] .tab.active{border-color:var(--hd-stroke);background:var(--surface)}
+/* Bảng (so sánh, thông số) */
+html[data-skin="handdrawn"] .cmp-tbl th,
+html[data-skin="handdrawn"] .cmp-tbl td,
+html[data-skin="handdrawn"] .dtbl th,
+html[data-skin="handdrawn"] .dtbl td{border:1.5px solid var(--hd-stroke)}
+html[data-skin="handdrawn"] .specrow{border-bottom:1.5px dashed var(--hd-stroke)}
+/* Thanh tiến trình / "biểu đồ" mức độ phù hợp */
+html[data-skin="handdrawn"] .matchbar{height:12px;border:2px solid var(--hd-stroke);border-radius:var(--hd-pill);background:var(--surface)}
+html[data-skin="handdrawn"] .matchbar i{background:var(--accent)}
+/* Modal / dialog + thanh so sánh + nút nổi */
+html[data-skin="handdrawn"] .cmpbar{border:2px solid var(--hd-stroke);border-radius:var(--hd-ra)}
+html[data-skin="handdrawn"] .fab{border:2px solid var(--hd-stroke);border-radius:var(--hd-pill)}
+/* Gạch chân viết tay dưới tiêu đề mục (divider sketch) */
+html[data-skin="handdrawn"] .h-row h2{position:relative;padding-bottom:8px}
+html[data-skin="handdrawn"] .h-row h2::after{content:"";position:absolute;left:0;bottom:0;width:min(100%,200px);height:7px;
+  background:left center/auto 7px repeat-x url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='7' viewBox='0 0 90 7'><path d='M0 4 Q 11 0 22 4 T 45 4 T 68 4 T 90 4' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round'/></svg>")}
+/* Empty state: minh hoạ ô tô vẽ tay (illustration, KHÔNG phải ảnh xe thật) */
+html[data-skin="handdrawn"] .empty::before{content:"";display:block;width:130px;height:74px;margin:0 auto 16px;
+  background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='130' height='74' viewBox='0 0 130 74'><g fill='none' stroke='%23999' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M10 52 q4 -22 30 -24 l34 -1 q18 0 28 17 l12 3 q9 2 9 11 q0 6 -7 6'/><path d='M10 52 q-3 0 -3 6 q0 6 6 6'/><path d='M19 64 l86 0'/><circle cx='38' cy='62' r='9'/><circle cx='92' cy='62' r='9'/><path d='M46 28 l28 -1 q11 0 17 9 l-45 1 z'/></g></svg>")}
+/* Hiệu ứng nhẹ: mực hiện dần khi mở modal; tôn trọng prefers-reduced-motion */
+@keyframes hd-ink{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
+@media(prefers-reduced-motion:reduce){html[data-skin="handdrawn"] *{animation:none!important;transition:none!important}}
+/* Nút skin đang bật (hiển thị ở mọi theme để biết trạng thái) */
+.themebtn.active{color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
 </style>
 </head>
 <body>
@@ -449,6 +571,7 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
       <a id="nav-reco">🤖 Gợi ý AI</a>
       <a href="/toyota">Showroom Toyota 3D</a>
     </nav>
+    <button class="themebtn" id="skinbtn" title="Giao diện vẽ tay (Hand-drawn)">✏️</button>
     <button class="themebtn" id="themebtn" title="Đổi giao diện sáng/tối">🌙</button>
   </div>
 </header>
@@ -576,6 +699,17 @@ footer{padding:46px 0 calc(72px + env(safe-area-inset-bottom,0px));color:var(--m
     root.setAttribute('data-theme', next);
     try{ localStorage.setItem('ar-theme', next); }catch(e){}
     syncThemeIcon();
+  };
+
+  /* ---------- Skin: Hand-drawn (vẽ tay) ---------- */
+  try{ var savedSkin = localStorage.getItem('ar-skin'); if(savedSkin==='handdrawn'){ root.setAttribute('data-skin','handdrawn'); } }catch(e){}
+  function syncSkinBtn(){ var on=root.getAttribute('data-skin')==='handdrawn'; var b=$('skinbtn'); if(!b) return; b.classList.toggle('active', on); b.title = on ? 'Tắt giao diện vẽ tay' : 'Giao diện vẽ tay (Hand-drawn)'; }
+  syncSkinBtn();
+  $('skinbtn').onclick = function(){
+    var on = root.getAttribute('data-skin')==='handdrawn';
+    if(on){ root.removeAttribute('data-skin'); } else { root.setAttribute('data-skin','handdrawn'); }
+    try{ localStorage.setItem('ar-skin', on ? 'default' : 'handdrawn'); }catch(e){}
+    syncSkinBtn();
   };
 
   /* ---------- Smooth jump ---------- */
