@@ -1895,6 +1895,66 @@ export const vehicles: Vehicle[] = [
       'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Ford_Everest_3.0_V6_Turbo_Diesel_4WD_Platinum_%28III%29_%E2%80%93_f_02012026.jpg/330px-Ford_Everest_3.0_V6_Turbo_Diesel_4WD_Platinum_%28III%29_%E2%80%93_f_02012026.jpg',
     r: { safety: 5, comfort: 4, performance: 5, cargo: 5, family: 5, fuelEcon: 2 },
   }),
+  // Ford Focus 1.5 EcoBoost (C346 facelift) — đã ngừng phân phối chính hãng tại VN (~2019).
+  // Nguồn:
+  //  - Wikipedia "Ford Focus (third generation)" (infobox + mục "1.5-litre EcoBoost"):
+  //    mã C346; máy 1.5L EcoBoost I4 177 hp (132 kW) / 240 Nm; hộp số tự động 6 cấp (6F35);
+  //    dài 4.358 (hatchback) / 4.534 (sedan), rộng 1.823, cao 1.484, trục cơ sở 2.648 mm;
+  //    khối lượng 1.270–1.471 kg; ngừng sản xuất 2019. (177 hp = 132 kW ≈ 180 PS theo cách ghi mã lực VN)
+  //  - Latin NCAP 2013 (Focus III): 5 sao người lớn.
+  // CHƯA xác minh đủ 2 nguồn (ước lượng): giá niêm yết ~770–799 triệu là giá tham khảo cuối (~2018),
+  //   nay chỉ còn xe cũ; dung tích cốp 316 L và mức tiêu thụ ~6,5 L/100km là số ước lượng.
+  mk({
+    id: 'ford-focus',
+    brandSlug: 'ford',
+    model: 'Focus',
+    gen: 'C346 (2016 FL)',
+    year: 2018,
+    trim: 'Sport 1.5 EcoBoost',
+    engine: '1.5L EcoBoost tăng áp',
+    trans: 'AT 6 cấp',
+    fuel: 'Xăng',
+    drive: 'FWD',
+    seats: 5,
+    segment: 'Hatchback hạng C',
+    bodyType: 'Hatchback',
+    pmin: 770,
+    pmax: 799,
+    econ: '~6,5 L/100km',
+    dims: [4358, 1823, 1484, 2648],
+    cargo: 316,
+    hp: 180,
+    torque: 240,
+    curbWeight: 1330,
+    rel: 3,
+    pros: [
+      'Động cơ 1.5 EcoBoost tăng áp bốc, vận hành thể thao.',
+      'Khung gầm chắc, cầm lái và vào cua tốt bậc nhất phân khúc.',
+      'Trang bị công nghệ khá (SYNC, màn cảm ứng) so với đời xe.',
+    ],
+    cons: [
+      'Đã ngừng bán chính hãng — chỉ còn mua xe cũ, khó giữ giá.',
+      'Chi phí phụ tùng EcoBoost cao hơn xe phổ thông; cần thợ quen.',
+      'Khoang cốp và không gian hàng ghế sau ở mức vừa phải.',
+    ],
+    issues: [
+      'Lưu ý đời dùng hộp số ly hợp kép PowerShift (DPS6) trước facelift hay bị giật — bản 1.5 EcoBoost facelift dùng số tự động biến mô 6F35 ổn định hơn.',
+      'Kiểm tra hệ thống làm mát/đệm máy động cơ EcoBoost khi mua xe cũ.',
+    ],
+    vn: {
+      status: 'discontinued',
+      available: false,
+      assembly: 'CKD',
+      waitTime: 'Chỉ còn xe đã qua sử dụng',
+      notes: [
+        '🔵 Ford Focus đã ngừng phân phối chính hãng tại VN (khoảng 2019).',
+        '✔ Từng lắp ráp trong nước (CKD) bởi Ford Việt Nam.',
+        '• Hiện chủ yếu mua lại trên thị trường xe cũ.',
+        '• Cần kiểm tra kỹ hộp số & động cơ EcoBoost khi mua xe cũ.',
+      ],
+    },
+    r: { performance: 4, tech: 4, comfort: 3, safety: 4, resale: 2 },
+  }),
 
   // ===== Chevrolet =====
   mk({
