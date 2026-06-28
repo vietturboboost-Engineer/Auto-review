@@ -378,6 +378,8 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .specrow .sl{color:var(--muted);font-size:13px}
 .specrow .sv{font-weight:600;font-size:13px;text-align:right;white-space:nowrap}
 .specrow.hl .sv{color:var(--accent);font-weight:800}
+.stf{color:var(--accent)}
+.ste{color:var(--muted);opacity:.55}
 @media(max-width:760px){.specgrid{grid-template-columns:1fr;gap:0}}
 .taglist{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
 .tag{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
@@ -673,6 +675,8 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function $(id){ return document.getElementById(id); }
   function stars(n){ var f=Math.max(0,Math.min(5,Math.round(n))); return '★★★★★'.slice(0,f)+'☆☆☆☆☆'.slice(0,5-f); }
+  /* Tô sao đã chọn (★) màu vàng, sao rỗng (☆) mờ — dùng cho phần chi tiết. An toàn vì chỉ chứa ký tự sao. */
+  function starsHtml(str){ var out=''; for(var i=0;i<str.length;i++){ var ch=str.charAt(i); out += (ch==='★') ? '<span class="stf">★</span>' : '<span class="ste">☆</span>'; } return out; }
   /* Yêu cầu Wikimedia trả ảnh phân giải cao hơn khi xem chi tiết (cards vẫn dùng bản nhẹ). */
   function hiRes(u){
     if(typeof u!=='string' || u.indexOf('upload.wikimedia.org')<0) return u;
@@ -892,7 +896,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
 
   /* ---------- Vehicle detail ---------- */
   function row(k,v){ return '<tr><th>'+esc(k)+'</th><td>'+esc(v)+'</td></tr>'; }
-  function srow(label,val,hl){ return '<div class="specrow'+(hl?' hl':'')+'"><span class="sl">'+esc(label)+'</span><span class="sv">'+esc(val)+'</span></div>'; }
+  function srow(label,val,hl){ var isStars = typeof val==='string' && /^[★☆]+$/.test(val); var sv = isStars ? starsHtml(val) : esc(val); return '<div class="specrow'+(hl?' hl':'')+'"><span class="sl">'+esc(label)+'</span><span class="sv">'+sv+'</span></div>'; }
   function specSec(title,rows){ return rows ? '<div class="specsec"><h4>'+title+'</h4><div class="specgrid">'+rows+'</div></div>' : ''; }
   /* Lớp render chỉ ĐỊNH DẠNG giá trị; trả null nếu dữ liệu không tồn tại -> bỏ qua dòng (không bịa số liệu). */
   function uval(val,unit){ return (val===0||val)?(val+(unit||'')):null; }
@@ -1071,7 +1075,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +       '<img class="ovimg" src="'+esc(hiRes(v.image))+'" data-orig="'+esc(v.image)+'" alt="">'
       +       '<div class="ovinfo">'
       +         '<div class="vprice" style="font-size:20px">'+esc(v.price.label)+'</div>'
-      +         '<div class="vmeta" style="margin:8px 0">'+stars(v.reliability)+' · '+esc(v.segment)+' · '+esc(v.fuelType)+' · '+v.seats+' chỗ</div>'
+      +         '<div class="vmeta" style="margin:8px 0">'+starsHtml(stars(v.reliability))+' · '+esc(v.segment)+' · '+esc(v.fuelType)+' · '+v.seats+' chỗ</div>'
       +         '<table class="dtbl">'
       +           row('Động cơ', v.engine) + row('Hộp số', v.transmission) + row('Dẫn động', v.driveType)
       +           row('Công suất', v.horsepower+' hp / '+v.torque+' Nm') + row('Tiêu hao', v.fuelEconomy)
