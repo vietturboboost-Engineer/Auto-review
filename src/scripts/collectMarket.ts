@@ -114,6 +114,19 @@ const result = await collectAll(vehicles, (v) => [...loadVerifiedSources(v), ...
 const ids = Object.keys(result);
 console.log('Số xe có dữ liệu mới lấy được:', ids.length);
 
+const nameById = new Map(vehicles.map((v) => [v.id, v.brand + ' ' + v.model]));
+if (ids.length > 0) {
+  console.log('Các xe được cập nhật:');
+  for (const id of ids) {
+    const ct = result[id];
+    const evCount = ct.recentEvents.length;
+    const alCount = ct.marketAlerts.length;
+    console.log(
+      '  • ' + (nameById.get(id) ?? id) + ' — ' + evCount + ' sự kiện, ' + alCount + ' cảnh báo',
+    );
+  }
+}
+
 const fresh = collectedToMarketData(result);
 
 // MARKET_CLEAR=1 -> xoá toàn bộ snapshot (chỉ giữ dữ liệu vừa lấy).
