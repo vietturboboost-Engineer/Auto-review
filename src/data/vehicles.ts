@@ -172,6 +172,60 @@ export interface Vehicle {
   turningRadius?: number | null;
   /** Trọng lượng không tải (kg). */
   curbWeight?: number | null;
+  /** Dữ liệu thị trường thật (chỉ điền khi có nguồn đáng tin cậy — không bịa). */
+  marketTrends?: MarketTrendsData;
+}
+
+/** Một mốc giá thị trường xe cũ (triệu VND) theo thời gian. */
+export interface MarketPricePoint {
+  /** Nhãn mốc thời gian (vd "T1/2025", "2024"). */
+  label: string;
+  /** Giá trung bình thị trường (triệu VND). */
+  price: number;
+}
+
+/** Một sự kiện trên dòng thời gian thị trường. */
+export interface MarketTimelineEvent {
+  /** Mốc thời gian (vd "2024", "Hiện tại"). */
+  period: string;
+  /** Mô tả sự kiện. */
+  label: string;
+}
+
+/**
+ * Dữ liệu thị trường THẬT của xe (tùy chọn).
+ * Chỉ điền khi thu thập được từ nguồn đáng tin cậy (hãng, sàn xe cũ, tin tức,
+ * dữ liệu giao dịch, thống kê nội bộ app). KHÔNG bịa số liệu — thiếu thì để trống.
+ */
+export interface MarketTrendsData {
+  /** Giá trung bình thị trường xe cũ hiện tại (triệu VND). */
+  avgPrice?: number;
+  /** Lịch sử giá theo thời gian. */
+  priceHistory?: MarketPricePoint[];
+  /** Thay đổi giá 30 ngày (%). */
+  change30d?: number;
+  /** Thay đổi giá 90 ngày (%). */
+  change90d?: number;
+  /** Thay đổi giá 1 năm (%). */
+  change1y?: number;
+  /** Mức nguồn cung. */
+  supply?: 'Thấp' | 'Trung bình' | 'Cao';
+  /** Mức nhu cầu. */
+  demand?: 'Thấp' | 'Trung bình' | 'Cao' | 'Rất cao';
+  /** Thời gian bán trung bình (ngày). */
+  daysOnMarket?: number;
+  /** Xu hướng tìm kiếm 30 ngày (%). */
+  searchTrend30d?: number;
+  /** Lượt yêu thích (thống kê nội bộ). */
+  favorites?: number;
+  /** Lượt đưa vào so sánh (thống kê nội bộ). */
+  comparisons?: number;
+  /** Cảnh báo/sự kiện thị trường (vd "Giảm giá từ hãng"). */
+  alerts?: string[];
+  /** Dòng sự kiện theo thời gian. */
+  events?: MarketTimelineEvent[];
+  /** Nguồn dữ liệu. */
+  source?: string;
 }
 
 // --- Lịch bảo dưỡng & phụ tùng mặc định (dùng chung) ---
@@ -780,6 +834,8 @@ interface Mk {
   weightDistribution?: string | null;
   turningRadius?: number | null;
   curbWeight?: number | null;
+  /** Tùy chọn: dữ liệu thị trường thật (chỉ điền khi có nguồn đáng tin cậy). */
+  marketTrends?: MarketTrendsData;
 }
 
 function mk(o: Mk): Vehicle {
@@ -853,6 +909,7 @@ function mk(o: Mk): Vehicle {
     weightDistribution: o.weightDistribution ?? null,
     turningRadius: o.turningRadius ?? null,
     curbWeight: o.curbWeight ?? null,
+    marketTrends: o.marketTrends,
   };
 }
 
@@ -7573,5 +7630,155 @@ export function getDepreciation(v: Vehicle): DepreciationProfile {
     factors,
     insight,
     verdict,
+  };
+}
+
+// ===== Xu hướng thị trường =====
+
+export interface MarketPriceTrend {
+  /** Giá trung bình thị trường xe cũ hiện tại (triệu VND). */
+  avgPrice: number;
+  /** Thay đổi giá 30 ngày (%) — null nếu chưa có dữ liệu. */
+  change30d: number | null;
+  /** Thay đổi giá 90 ngày (%) — null nếu chưa có dữ liệu. */
+  change90d: number | null;
+  /** Thay đổi giá 1 năm (%) — null nếu chưa có dữ liệu. */
+  change1y: number | null;
+  /** Lịch sử giá (triệu VND). */
+  history: MarketPricePoint[];
+}
+
+export interface MarketSupplyDemand {
+  supply: string;
+  demand: string;
+  daysOnMarket: number | null;
+}
+
+export interface MarketPopularity {
+  searchTrend30d: number | null;
+  favorites: number | null;
+  comparisons: number | null;
+}
+
+export interface MarketTrendsResult {
+  /** Điểm giữ giá (★, 1..5) — suy ra nội bộ. */
+  resaleStars: number;
+  /** % giá trị giữ lại sau 5 năm (ước tính). */
+  retain5y: number;
+  /** % xe cùng phân khúc mà xe này giữ giá tốt hơn. */
+  betterThanPct: number;
+  /** Số xe cùng phân khúc dùng để đối chiếu. */
+  segmentCount: number;
+  /** Nhận định khấu hao (ước tính). */
+  depreciationVerdict: string;
+  /** Mức độ tin cậy giữ giá (suy ra từ điểm giữ giá). */
+  confidence: string;
+  /** Cảnh báo thị trường (suy ra từ trạng thái VN + dữ liệu thật nếu có). */
+  alerts: string[];
+  /** Dòng tóm tắt thị trường (chỉ từ dữ liệu có thật/suy ra nội bộ). */
+  summary: string[];
+  /** Dòng sự kiện (chỉ khi dataset cung cấp). */
+  events: MarketTimelineEvent[];
+  /** Xu hướng giá — null nếu chưa có dữ liệu thật. */
+  priceTrend: MarketPriceTrend | null;
+  /** Cung & cầu — null nếu chưa có dữ liệu thật. */
+  supplyDemand: MarketSupplyDemand | null;
+  /** Độ phổ biến — null nếu chưa có dữ liệu thật. */
+  popularity: MarketPopularity | null;
+}
+
+/**
+ * Tổng hợp "Xu hướng thị trường" cho một xe.
+ * NGUYÊN TẮC: không bịa số liệu thị trường. Chỉ hiển thị:
+ *  - Phần giữ giá: suy ra nội bộ từ điểm giữ giá & phân khúc (gắn cờ ước tính).
+ *  - Cảnh báo: suy ra từ trạng thái phân phối tại VN.
+ *  - Giá / cung-cầu / độ phổ biến / sự kiện: chỉ khi dataset có dữ liệu thật,
+ *    nếu không trả về null để UI hiển thị "Chưa có đủ dữ liệu".
+ */
+export function getMarketTrends(v: Vehicle): MarketTrendsResult {
+  const dep = getDepreciation(v);
+  const retain5y = dep.retain5y;
+
+  const peers = vehicles.filter((x) => x.segment === v.segment);
+  let worse = 0;
+  for (const p of peers) {
+    const pr = depRetain5Pct(p.ratings.resale, p.fuelType === 'Điện', VN_MASS_BRANDS.has(p.brandSlug));
+    if (pr < retain5y) worse += 1;
+  }
+  const betterThanPct = peers.length > 1 ? Math.round((worse / (peers.length - 1)) * 100) : 0;
+
+  const resale = v.ratings.resale;
+  const confidence = resale >= 5 ? 'Cao' : resale >= 4 ? 'Khá cao' : resale >= 3 ? 'Trung bình' : 'Thấp';
+
+  const md = v.marketTrends;
+
+  // ----- Cảnh báo thị trường: suy ra từ trạng thái VN + dữ liệu thật -----
+  const alerts: string[] = [];
+  const status = v.vietnam.status;
+  if (status === 'upcoming') alerts.push('🆕 Sắp ra mắt / chưa mở bán chính thức tại VN');
+  else if (status === 'limited') alerts.push('⏳ Nguồn cung hạn chế — thường nhận đặt hàng');
+  else if (status === 'discontinued') alerts.push('🔻 Đã ngừng phân phối chính hãng — chỉ còn xe đã qua sử dụng');
+  else if (status === 'global-only') alerts.push('🌐 Chưa phân phối chính hãng tại VN');
+  if (md?.alerts) for (const a of md.alerts) alerts.push(a);
+
+  // ----- Tóm tắt: chỉ dùng dữ liệu có thật / suy ra nội bộ -----
+  const name = v.brand + ' ' + v.model;
+  const summary: string[] = [];
+  if (dep.vsSegment >= 3) {
+    summary.push(name + ' thuộc nhóm giữ giá tốt trong phân khúc ' + v.segment + ' (ước tính).');
+  } else if (dep.vsSegment <= -3) {
+    summary.push(name + ' khấu hao nhanh hơn trung bình phân khúc ' + v.segment + ' (ước tính).');
+  } else {
+    summary.push(name + ' giữ giá ở mức trung bình phân khúc ' + v.segment + ' (ước tính).');
+  }
+  summary.push('Sau 5 năm, giá trị ước tính còn khoảng ' + retain5y + '%.');
+  if (status === 'on-sale') summary.push('Đang được phân phối chính hãng tại Việt Nam.');
+  else if (status === 'discontinued') summary.push('Hiện chủ yếu giao dịch trên thị trường xe đã qua sử dụng.');
+  else if (status === 'limited') summary.push('Số lượng tại VN hạn chế, thường phải đặt hàng.');
+  else if (status === 'upcoming') summary.push('Mẫu xe sắp mở bán — dữ liệu thị trường sẽ cập nhật sau.');
+
+  // ----- Các nhóm cần dữ liệu thị trường THẬT (null = chưa có dữ liệu) -----
+  let priceTrend: MarketPriceTrend | null = null;
+  if (md && (md.avgPrice != null || (md.priceHistory && md.priceHistory.length))) {
+    priceTrend = {
+      avgPrice: md.avgPrice ?? (md.priceHistory && md.priceHistory.length ? md.priceHistory[md.priceHistory.length - 1].price : v.price.min),
+      change30d: md.change30d ?? null,
+      change90d: md.change90d ?? null,
+      change1y: md.change1y ?? null,
+      history: md.priceHistory ?? [],
+    };
+  }
+
+  let supplyDemand: MarketSupplyDemand | null = null;
+  if (md && (md.supply || md.demand || md.daysOnMarket != null)) {
+    supplyDemand = {
+      supply: md.supply ?? 'Chưa có đủ dữ liệu',
+      demand: md.demand ?? 'Chưa có đủ dữ liệu',
+      daysOnMarket: md.daysOnMarket ?? null,
+    };
+  }
+
+  let popularity: MarketPopularity | null = null;
+  if (md && (md.searchTrend30d != null || md.favorites != null || md.comparisons != null)) {
+    popularity = {
+      searchTrend30d: md.searchTrend30d ?? null,
+      favorites: md.favorites ?? null,
+      comparisons: md.comparisons ?? null,
+    };
+  }
+
+  return {
+    resaleStars: resale,
+    retain5y,
+    betterThanPct,
+    segmentCount: peers.length,
+    depreciationVerdict: dep.verdict,
+    confidence,
+    alerts,
+    summary,
+    events: md?.events ?? [],
+    priceTrend,
+    supplyDemand,
+    popularity,
   };
 }

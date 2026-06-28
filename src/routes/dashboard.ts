@@ -7,6 +7,7 @@ import {
   getMaintTaskTemplates,
   getOwnershipTimeline,
   getDepreciation,
+  getMarketTrends,
   getSegments,
   type Vehicle,
 } from '../data/vehicles.js';
@@ -21,6 +22,7 @@ const clientVehicles = vehicles.map((v) => ({
   maintTasks: getMaintTaskTemplates(v),
   ownershipTimeline: getOwnershipTimeline(v),
   depreciation: getDepreciation(v),
+  market: getMarketTrends(v),
 }));
 
 const clientBrands = brands.map((b) => ({
@@ -439,6 +441,38 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .dep-factors li.neg{color:var(--muted)}
 .dep-sell-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .cmp-dep-note{margin:10px 0 0;font-size:13px;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;background:rgba(247,183,51,.08)}
+/* xu hướng thị trường */
+.mkt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:6px 0 8px}
+.mkt-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px;min-height:120px}
+.mkt-card.nd{background:var(--card);border-style:dashed}
+.mkt-card-t{font-size:13px;font-weight:800}
+.mkt-big{font-size:24px;font-weight:900;color:var(--accent)}
+.mkt-chgs{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.mkt-chg{font-weight:800}
+.mkt-chg.up{color:#22c55e}
+.mkt-chg.down{color:#f87171}
+.mkt-chg.na{color:var(--muted)}
+.mkt-pairs{display:flex;flex-direction:column;gap:7px}
+.mkt-pairs>div{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.mkt-k{color:var(--muted)}
+.mkt-v{font-weight:800}
+.mkt-stars{font-size:18px}
+.mkt-sub{font-size:13px;color:var(--muted)}
+.mkt-sub b{color:var(--text)}
+.mkt-nodata{display:flex;flex-direction:column;gap:2px;align-items:flex-start;justify-content:center;flex:1;color:var(--muted);font-weight:700;font-size:14px}
+.mkt-nodata span{font-weight:400;font-size:12px}
+.mkt-sec{margin:16px 0 0}
+.mkt-sec h5{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.mkt-alerts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.mkt-alerts li{font-size:13px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:8px 12px;background:var(--card)}
+.mkt-tl{display:flex;flex-direction:column;gap:2px}
+.mkt-tl-item{border:1px solid var(--line);border-radius:10px;padding:9px 13px;background:var(--surface)}
+.mkt-tl-p{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+.mkt-tl-l{font-size:14px;font-weight:700}
+.mkt-tl-arrow{text-align:center;color:var(--muted)}
+.mkt-sum-line{margin:0 0 6px;font-size:14px;line-height:1.5}
+.mkt-sum-line:last-child{margin-bottom:0}
+@media(max-width:680px){.mkt-grid{grid-template-columns:1fr}}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
 .ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
@@ -1361,6 +1395,104 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
     };});
     renderDepSell(v,3);
   }
+  // ----- Xu hướng thị trường -----
+  function trendChange(val){
+    if(val==null) return '<span class="mkt-chg na">—</span>';
+    var up=val>=0;
+    return '<span class="mkt-chg '+(up?'up':'down')+'">'+(up?'↑ +':'↓ ')+val+'%</span>';
+  }
+  function mktCard(title, body, nodata){
+    return '<div class="mkt-card'+(nodata?' nd':'')+'"><div class="mkt-card-t">'+esc(title)+'</div>'+body+'</div>';
+  }
+  function noData(sub){
+    return '<div class="mkt-nodata">Chưa có đủ dữ liệu'+(sub?'<span>'+esc(sub)+'</span>':'')+'</div>';
+  }
+  function trendPaneHtml(v){
+    var m=v.market; if(!m) return noData();
+    // Giá thị trường
+    var priceBody;
+    if(m.priceTrend){
+      var pt=m.priceTrend;
+      priceBody='<div class="mkt-big">'+pt.avgPrice+' triệu</div>'
+        +'<div class="mkt-chgs"><span>30 ngày '+trendChange(pt.change30d)+'</span>'
+        +'<span>90 ngày '+trendChange(pt.change90d)+'</span>'
+        +'<span>1 năm '+trendChange(pt.change1y)+'</span></div>';
+    } else {
+      priceBody=noData('Cần dữ liệu giá xe cũ thực tế');
+    }
+    // Cung & cầu
+    var sdBody;
+    if(m.supplyDemand){
+      var sd=m.supplyDemand;
+      sdBody='<div class="mkt-pairs">'
+        +'<div><span class="mkt-k">Nguồn cung</span><span class="mkt-v">'+esc(sd.supply)+'</span></div>'
+        +'<div><span class="mkt-k">Nhu cầu</span><span class="mkt-v">'+esc(sd.demand)+'</span></div>'
+        +'<div><span class="mkt-k">Thời gian bán TB</span><span class="mkt-v">'+(sd.daysOnMarket!=null?sd.daysOnMarket+' ngày':'—')+'</span></div>'
+        +'</div>';
+    } else {
+      sdBody=noData('Cần dữ liệu sàn xe cũ');
+    }
+    // Giữ giá (luôn có)
+    var starsH=starsHtml(stars(m.resaleStars));
+    var retBody='<div class="mkt-stars">'+starsH+'</div>'
+      +'<div class="mkt-sub">Giữ lại ~<b>'+m.retain5y+'%</b> sau 5 năm (ước tính)</div>'
+      +'<div class="mkt-sub">Tốt hơn <b>'+m.betterThanPct+'%</b> xe cùng phân khúc ('+m.segmentCount+' xe)</div>'
+      +'<div class="mkt-sub">Mức tin cậy giữ giá: <b>'+esc(m.confidence)+'</b></div>';
+    // Độ phổ biến
+    var popBody;
+    if(m.popularity){
+      var po=m.popularity;
+      popBody='<div class="mkt-pairs">'
+        +'<div><span class="mkt-k">Tìm kiếm 30 ngày</span><span class="mkt-v">'+trendChange(po.searchTrend30d)+'</span></div>'
+        +'<div><span class="mkt-k">Lượt yêu thích</span><span class="mkt-v">'+(po.favorites!=null?po.favorites:'—')+'</span></div>'
+        +'<div><span class="mkt-k">Lượt so sánh</span><span class="mkt-v">'+(po.comparisons!=null?po.comparisons:'—')+'</span></div>'
+        +'</div>';
+    } else {
+      popBody=noData('Cần thống kê người dùng');
+    }
+    var grid='<div class="mkt-grid">'
+      + mktCard('📈 Giá thị trường', priceBody, !m.priceTrend)
+      + mktCard('📊 Cung & cầu', sdBody, !m.supplyDemand)
+      + mktCard('💰 Giữ giá', retBody, false)
+      + mktCard('🔥 Độ phổ biến', popBody, !m.popularity)
+      + '</div>';
+    // Cảnh báo
+    var alerts='';
+    if(m.alerts && m.alerts.length){
+      var al=''; for(var i=0;i<m.alerts.length;i++){ al+='<li>'+esc(m.alerts[i])+'</li>'; }
+      alerts='<div class="mkt-sec"><h5>⚠ Cảnh báo thị trường</h5><ul class="mkt-alerts">'+al+'</ul></div>';
+    } else {
+      alerts='<div class="mkt-sec"><h5>⚠ Cảnh báo thị trường</h5><p class="muted" style="font-size:13px;margin:0">Không có cảnh báo đáng chú ý.</p></div>';
+    }
+    // Lịch sử giữ giá (ước tính) — từ dữ liệu khấu hao nội bộ
+    var depChart='';
+    if(v.depreciation && v.depreciation.points){
+      var dp=v.depreciation; var pts=dp.points;
+      var rows='<div class="bar-row"><span class="bar-lab">Mới</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">100%</span></div>';
+      for(var j=0;j<pts.length;j++){
+        rows+='<div class="bar-row"><span class="bar-lab">Năm '+pts[j].year+'</span><span class="bar-track"><span class="bar-fill'+(j===pts.length-1?'':' dep')+'" style="width:'+pts[j].resalePercent+'%"></span></span><span class="bar-val">'+pts[j].resalePercent+'%</span></div>';
+      }
+      depChart='<div class="chart" style="margin-top:14px"><h5>Lịch sử giữ giá ước tính (% giá mua mới)</h5>'+rows+'</div>';
+    }
+    // Dòng sự kiện
+    var tl='';
+    if(m.events && m.events.length){
+      var ev='';
+      for(var k=0;k<m.events.length;k++){
+        ev+='<div class="mkt-tl-item"><div class="mkt-tl-p">'+esc(m.events[k].period)+'</div><div class="mkt-tl-l">✓ '+esc(m.events[k].label)+'</div></div>';
+        if(k<m.events.length-1) ev+='<div class="mkt-tl-arrow">↓</div>';
+      }
+      tl='<div class="mkt-sec"><h5>🕒 Dòng sự kiện thị trường</h5><div class="mkt-tl">'+ev+'</div></div>';
+    } else {
+      tl='<div class="mkt-sec"><h5>🕒 Dòng sự kiện thị trường</h5>'+noData('Cần mốc sự kiện được xác minh')+'</div>';
+    }
+    // AI tóm tắt
+    var sm=''; for(var s=0;s<m.summary.length;s++){ sm+='<p class="mkt-sum-line">'+esc(m.summary[s])+'</p>'; }
+    var ai='<div class="aibox"><h4>🤖 Tóm tắt thị trường</h4>'+sm+'</div>';
+    return '<p class="maint-note">📈 Xu hướng thị trường — dữ liệu giữ giá là ước tính nội bộ; các chỉ số giá/cung-cầu/phổ biến chỉ hiển thị khi có nguồn thật.</p>'
+      + grid + alerts + depChart + tl + ai
+      + '<p class="maint-note" style="margin-top:10px">* App chưa kết nối nguồn dữ liệu thị trường trực tiếp (sàn xe cũ, thống kê giao dịch). Những mục thiếu dữ liệu hiển thị "Chưa có đủ dữ liệu" thay vì ước đoán.</p>';
+  }
   function detailHtml(v){
     var c = brandColor[v.brandSlug] || 'var(--accent)';
     var pc = (v.partsCatalog||[]).map(function(p){
@@ -1376,6 +1508,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +   '<button class="tab" data-tab="parts">Phụ tùng</button>'
       +   '<button class="tab" data-tab="cost">Chi phí sở hữu</button>'
       +   '<button class="tab" data-tab="dep">📉 Khấu hao</button>'
+      +   '<button class="tab" data-tab="trend">📈 Xu hướng</button>'
       +   '<button class="tab" data-tab="vn">🇻🇳 Thị trường VN</button>'
       + '</div>'
       + '<div class="sheet-body">'
@@ -1429,6 +1562,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +     '</div>'
       +   '</div>'
       +   '<div class="tabpane" data-pane="dep">'+depPaneHtml(v)+'</div>'
+      +   '<div class="tabpane" data-pane="trend">'+trendPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="vn">'+vnPane(v.vietnam)+'</div>'
       + '</div>';
   }
