@@ -4,6 +4,8 @@ import {
   toMarketTrendsData,
   verifiedReportsToSources,
   hasMarketData,
+  applyCollectedMarketTrends,
+  collectedToMarketData,
   type MarketDataSource,
   type SourceKind,
   type SourceReport,
@@ -162,5 +164,29 @@ describe('verifiedReportsToSources + mapper', () => {
     const ct = await collectMarketTrend(VH, sources);
     const md = toMarketTrendsData(ct);
     expect(md.demand).toBeUndefined();
+  });
+});
+
+describe('applyCollectedMarketTrends', () => {
+  it('only attaches data to matching ids and leaves others untouched', async () => {
+    const sources = verifiedReportsToSources({
+      vehicleId: VH.id,
+      reports: [
+        { publisher: 'A', kind: 'news', url: 'https://a/x', date: '2026-05-01', fields: { averageMarketPrice: 800 } },
+        { publisher: 'B', kind: 'marketplace', url: 'https://b/x', date: '2026-05-02', fields: { averageMarketPrice: 800 } },
+      ],
+    });
+    const ct = await collectMarketTrend(VH, sources);
+    const data = collectedToMarketData({ [VH.id]: ct });
+
+    const list = [
+      { id: VH.id, marketTrends: undefined as ReturnType<typeof toMarketTrendsData> | undefined },
+      { id: 'other-car', marketTrends: undefined as ReturnType<typeof toMarketTrendsData> | undefined },
+    ];
+    const n = applyCollectedMarketTrends(list, data);
+    expect(n).toBe(1);
+    expect(list[0].marketTrends).not.toBeUndefined();
+    expect(list[0].marketTrends?.avgPrice).toBe(800);
+    expect(list[1].marketTrends).toBeUndefined();
   });
 });

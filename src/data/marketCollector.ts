@@ -424,3 +424,32 @@ export async function collectAll(
   }
   return out;
 }
+
+/**
+ * Gắn dữ liệu thị trường ĐÃ XÁC MINH vào danh sách xe (tại chỗ).
+ * Chỉ áp dụng cho xe có id khớp trong `data`; xe khác giữ nguyên (không bịa).
+ * Trả về số xe được cập nhật.
+ */
+export function applyCollectedMarketTrends<T extends { id: string; marketTrends?: MarketTrendsData }>(
+  list: T[],
+  data: Record<string, MarketTrendsData>,
+): number {
+  let applied = 0;
+  for (const v of list) {
+    const m = data[v.id];
+    if (m) {
+      v.marketTrends = m;
+      applied += 1;
+    }
+  }
+  return applied;
+}
+
+/** Chuyển kết quả thu thập (Record id -> CollectedMarketTrend) sang shape UI. */
+export function collectedToMarketData(
+  collected: Record<string, CollectedMarketTrend>,
+): Record<string, MarketTrendsData> {
+  const out: Record<string, MarketTrendsData> = {};
+  for (const [id, ct] of Object.entries(collected)) out[id] = toMarketTrendsData(ct);
+  return out;
+}

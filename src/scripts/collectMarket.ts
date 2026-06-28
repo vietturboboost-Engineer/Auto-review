@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import { vehicles } from '../data/vehicles.js';
 import {
   collectAll,
+  collectedToMarketData,
   verifiedReportsToSources,
   type CollectorVehicle,
   type MarketDataSource,
@@ -22,6 +23,28 @@ import {
 } from '../data/marketCollector.js';
 
 const DATA_DIR = join(process.cwd(), 'src', 'data', 'market-data');
+const GENERATED_FILE = join(process.cwd(), 'src', 'data', 'marketTrends.generated.ts');
+
+const GENERATED_HEADER =
+  '/**\n' +
+  ' * DỮ LIỆU XU HƯỚNG THỊ TRƯỜNG ĐÃ XÁC MINH (tự sinh).\n' +
+  ' *\n' +
+  ' * KHÔNG sửa tay. File này do CLI sinh ra:\n' +
+  ' *   npm run build && npm run collect:market\n' +
+  ' *\n' +
+  ' * Nguồn: src/data/market-data/<vehicleId>.json (dữ liệu đã kiểm chứng >=2 nguồn).\n' +
+  ' * Mặc định rỗng — đúng nguyên tắc: chưa có dữ liệu thật thì KHÔNG bịa.\n' +
+  ' */\n' +
+  "import type { MarketTrendsData } from './vehicles.js';\n\n";
+
+function writeGenerated(data: Record<string, unknown>): void {
+  const body =
+    GENERATED_HEADER +
+    'export const collectedMarketTrends: Record<string, MarketTrendsData> = ' +
+    JSON.stringify(data, null, 2) +
+    ';\n';
+  writeFileSync(GENERATED_FILE, body, 'utf8');
+}
 
 function loadVerifiedSources(v: CollectorVehicle): MarketDataSource[] {
   const file = join(DATA_DIR, v.id + '.json');
@@ -50,7 +73,10 @@ console.log('Số xe có dữ liệu thị trường xác minh được:', ids.l
 if (ids.length > 0) {
   const outFile = join(DATA_DIR, '_collected.json');
   writeFileSync(outFile, JSON.stringify(result, null, 2) + '\n', 'utf8');
+  writeGenerated(collectedToMarketData(result));
   console.log('✓ Đã ghi:', outFile);
+  console.log('✓ Đã sinh:', GENERATED_FILE, '(dữ liệu sẽ hiện ở tab Xu hướng sau khi build lại)');
 } else {
-  console.log('Chưa có dữ liệu đã kiểm chứng — không ghi gì (đúng nguyên tắc: không bịa số liệu).');
+  writeGenerated({});
+  console.log('Chưa có dữ liệu đã kiểm chứng — sinh file rỗng (đúng nguyên tắc: không bịa số liệu).');
 }

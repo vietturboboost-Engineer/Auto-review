@@ -1,6 +1,8 @@
 import { getBrand } from './brands.js';
 import { realImages } from './real-images.js';
 import { reviews } from './reviews.js';
+import { applyCollectedMarketTrends } from './marketCollector.js';
+import { collectedMarketTrends } from './marketTrends.generated.js';
 
 // ===== Cơ sở dữ liệu xe đa hãng (mở rộng dễ: thêm 1 dòng mk({...}) vào mảng `vehicles`) =====
 // Ảnh lấy từ Wikipedia/Wikimedia Commons (URL chuẩn). Số liệu mang tính THAM KHẢO cho thị
@@ -7168,6 +7170,9 @@ export const vehicles: Vehicle[] = [
     r: { comfort: 5, brandRep: 5, performance: 5, resale: 3 },
   }),
 ];
+
+// Gắn dữ liệu Xu hướng thị trường đã xác minh (nếu có). Mặc định rỗng -> không bịa số liệu.
+applyCollectedMarketTrends(vehicles, collectedMarketTrends);
 
 const vehicleById = new Map(vehicles.map((v) => [v.id, v]));
 
