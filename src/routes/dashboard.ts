@@ -438,6 +438,7 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .dep-factors li.pos{color:var(--text)}
 .dep-factors li.neg{color:var(--muted)}
 .dep-sell-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.cmp-dep-note{margin:10px 0 0;font-size:13px;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;background:rgba(247,183,51,.08)}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
 .ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
 .ovinfo{min-width:0}
@@ -1540,6 +1541,20 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
         return '<td'+(i===bi?' class="best"':'')+'>'+esc(disp)+'</td>';
       }).join('')+'</tr>';
     }
+    function depRetain(v){ return v.depreciation?v.depreciation.retain5y:0; }
+    function depDrop(v){ return v.depreciation?Math.round((v.depreciation.newPrice-v.depreciation.points[v.depreciation.points.length-1].value)/1000000):0; }
+    var bestResale=best(vs.map(depRetain), true);
+    var depMax=1; vs.forEach(function(v){ var r=depRetain(v); if(r>depMax) depMax=r; });
+    var depBars='<div class="chart" style="margin-top:16px"><h5>📉 Giữ giá sau 5 năm (ước tính)</h5>';
+    vs.forEach(function(v,i){ var r=depRetain(v); var w=Math.round(r/depMax*100);
+      depBars+='<div class="bar-row"><span class="bar-lab" style="width:130px;flex:0 0 auto">'+esc(v.brand+' '+v.model)+'</span><span class="bar-track"><span class="bar-fill'+(i===bestResale?'':' dep')+'" style="width:'+w+'%"></span></span><span class="bar-val">'+r+'%'+(i===bestResale?' 🏆':'')+'</span></div>';
+    });
+    depBars+='</div>';
+    var depNote='';
+    if(bestResale>=0 && vs[bestResale].depreciation){
+      var bn=vs[bestResale].brand+' '+vs[bestResale].model;
+      depNote='<p class="cmp-dep-note">🏆 <b>Giữ giá tốt nhất / khấu hao thấp nhất:</b> '+esc(bn)+' — còn ~'+depRetain(vs[bestResale])+'% sau 5 năm (ước tính).</p>';
+    }
     var html=''
       + '<div class="sheet-head"><h3>So sánh '+vs.length+' xe</h3><button class="closebtn" data-close>✕</button></div>'
       + '<div class="sheet-body" style="overflow-x:auto"><table class="cmp-tbl"><tr><th>Tiêu chí</th>'
@@ -1553,9 +1568,12 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       + rowCmp('Mô-men (Nm)', function(v){return v.torque;}, true)
       + rowCmp('Khoang hành lý (L)', function(v){return v.cargo;}, true)
       + rowCmp('Độ tin cậy', function(v){return v.reliability;}, true)
+      + rowCmp('Giữ giá sau 5 năm (%)', depRetain, true)
+      + rowCmp('Khấu hao 5 năm (triệu)', depDrop, false)
       + rowCmp('Tiêu hao', function(v){return v.fuelEconomy;})
       + rowCmp('Bảo hành', function(v){return v.warranty;})
-      + '</table><p class="muted" style="margin-top:10px">Ô <span class="best">xanh</span> là tốt nhất ở tiêu chí định lượng.</p></div>';
+      + '</table>' + depBars + depNote
+      + '<p class="muted" style="margin-top:10px">Ô <span class="best">xanh</span> là tốt nhất ở tiêu chí định lượng. Khấu hao là số liệu ước tính theo điểm giữ giá &amp; phân khúc.</p></div>';
     openModal(html);
     Array.prototype.forEach.call(document.querySelectorAll('#sheet .cmpimg'), function(im){
       im.setAttribute('data-fb','1');
@@ -1790,6 +1808,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
     var cars=src.filter(function(it){ return it && it.v; }).map(function(it){ var v=it.v; return {
       name:v.brand+' '+v.model+' '+v.trim, price:v.price.label, overall:it.pct||0, body:v.segment,
       seats:v.seats, engine:v.engine, gearbox:v.transmission, fuelStr:v.fuelType, monthly:0,
+      resale5y:(v.depreciation?v.depreciation.retain5y:0), depVerdict:(v.depreciation?v.depreciation.verdict:''),
       vnStatus:(v.vietnam&&v.vietnam.statusLabel)||'', vnAvailable:!!(v.vietnam&&v.vietnam.available)
     };});
     if(!cars.length){ box.innerHTML='<div class="ai-box"><span class="ai-warn">⚠ Chưa có xe để phân tích. Hãy chọn xe hoặc bấm “Phân tích & gợi ý”.</span></div>'; return; }
