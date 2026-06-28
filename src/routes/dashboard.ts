@@ -515,6 +515,9 @@ html[data-skin="handdrawn"] .reco-card{
 html[data-skin="handdrawn"] .vcard:nth-child(even),
 html[data-skin="handdrawn"] .simcard:nth-child(even){border-radius:var(--hd-rb)}
 html[data-skin="handdrawn"] .vcard:hover{transform:scale(1.02) rotate(-.3deg);border-color:var(--hd-stroke)}
+/* Tắt zoom ảnh khi hover ở theme vẽ tay: ảnh được transform sẽ tách layer riêng mà clip bo góc
+   bất đối xứng của thẻ KHÔNG áp được lên layer đó -> nháy góc vuông. Bỏ zoom là hết nháy. */
+html[data-skin="handdrawn"] .vthumb:hover img{transform:none}
 /* Nút bấm kiểu vẽ tay (giữ logic, chỉ đổi nét) */
 html[data-skin="handdrawn"] .btn{border:2px solid var(--hd-stroke);border-radius:var(--hd-pill);box-shadow:var(--shadow);background:var(--surface);color:var(--text)}
 html[data-skin="handdrawn"] .btn-primary{background:var(--accent);color:var(--ink)}
