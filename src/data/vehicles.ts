@@ -128,6 +128,50 @@ export interface Vehicle {
   /** Tùy chọn: lịch bảo dưỡng / phụ tùng riêng. Nếu bỏ trống -> dùng mặc định. */
   maintenanceSchedule?: MaintenanceItem[];
   partsCatalog?: PartItem[];
+
+  // ----- Thông số kỹ thuật mở rộng (TÙY CHỌN, chỉ điền khi xác minh được từ nguồn tin cậy) -----
+  /** Dung tích xy-lanh (L). */
+  engineDisplacement?: number | null;
+  /** Mô tả mô-tơ điện (xe hybrid/PHEV). */
+  electricMotor?: string | null;
+  /** Công suất tổng hệ truyền động (hp) cho hybrid/PHEV. */
+  combinedPower?: number | null;
+  /** Dung tích bình nhiên liệu (L). */
+  fuelTank?: number | null;
+  /** EV/PHEV: dung lượng pin (kWh). */
+  batteryCapacity?: number | null;
+  /** EV: quãng đường mỗi lần sạc theo công bố (km). */
+  range?: number | null;
+  /** EV: công suất sạc AC tối đa (kW). */
+  acCharging?: number | null;
+  /** EV: công suất sạc nhanh DC tối đa (kW). */
+  dcCharging?: number | null;
+  /** EV: thời gian sạc mô tả (vd "10–80% ~31 phút (DC)"). */
+  chargingTime?: string | null;
+  /** Các chế độ lái. */
+  driveModes?: string[];
+  /** Tăng tốc 0–100 km/h (giây). */
+  zeroTo100?: number | null;
+  /** Tốc độ tối đa (km/h). */
+  topSpeed?: number | null;
+  /** Bán tải: tải trọng (kg). */
+  payload?: number | null;
+  /** Khả năng kéo (kg). */
+  towing?: number | null;
+  /** Khóa vi sai. */
+  differentialLock?: boolean | null;
+  /** Khả năng lội nước (mm). */
+  waterWading?: number | null;
+  /** MPV: cửa trượt. */
+  slidingDoors?: boolean | null;
+  /** Hàng ghế thứ 3. */
+  thirdRow?: boolean | null;
+  /** Phân bổ trọng lượng (vd "50:50"). */
+  weightDistribution?: string | null;
+  /** Bán kính quay đầu (m). */
+  turningRadius?: number | null;
+  /** Trọng lượng không tải (kg). */
+  curbWeight?: number | null;
 }
 
 // --- Lịch bảo dưỡng & phụ tùng mặc định (dùng chung) ---
@@ -714,6 +758,28 @@ interface Mk {
   ownership?: string;
   /** Tùy chọn ghi đè dữ liệu thị trường VN. */
   vn?: Partial<VietnamMarket>;
+  // ----- Thông số kỹ thuật mở rộng (tùy chọn, chỉ điền khi xác minh được) -----
+  engineDisplacement?: number | null;
+  electricMotor?: string | null;
+  combinedPower?: number | null;
+  fuelTank?: number | null;
+  batteryCapacity?: number | null;
+  range?: number | null;
+  acCharging?: number | null;
+  dcCharging?: number | null;
+  chargingTime?: string | null;
+  driveModes?: string[];
+  zeroTo100?: number | null;
+  topSpeed?: number | null;
+  payload?: number | null;
+  towing?: number | null;
+  differentialLock?: boolean | null;
+  waterWading?: number | null;
+  slidingDoors?: boolean | null;
+  thirdRow?: boolean | null;
+  weightDistribution?: string | null;
+  turningRadius?: number | null;
+  curbWeight?: number | null;
 }
 
 function mk(o: Mk): Vehicle {
@@ -766,6 +832,27 @@ function mk(o: Mk): Vehicle {
     image: o.image ?? realImages[o.id] ?? ph(o.brandSlug, o.model),
     ratings: r,
     vietnam,
+    engineDisplacement: o.engineDisplacement ?? null,
+    electricMotor: o.electricMotor ?? null,
+    combinedPower: o.combinedPower ?? null,
+    fuelTank: o.fuelTank ?? null,
+    batteryCapacity: o.batteryCapacity ?? null,
+    range: o.range ?? null,
+    acCharging: o.acCharging ?? null,
+    dcCharging: o.dcCharging ?? null,
+    chargingTime: o.chargingTime ?? null,
+    driveModes: o.driveModes,
+    zeroTo100: o.zeroTo100 ?? null,
+    topSpeed: o.topSpeed ?? null,
+    payload: o.payload ?? null,
+    towing: o.towing ?? null,
+    differentialLock: o.differentialLock ?? null,
+    waterWading: o.waterWading ?? null,
+    slidingDoors: o.slidingDoors ?? null,
+    thirdRow: o.thirdRow ?? null,
+    weightDistribution: o.weightDistribution ?? null,
+    turningRadius: o.turningRadius ?? null,
+    curbWeight: o.curbWeight ?? null,
   };
 }
 
