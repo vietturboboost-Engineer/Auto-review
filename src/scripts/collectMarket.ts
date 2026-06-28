@@ -1,14 +1,22 @@
 /**
- * CLI thu thập Xu hướng thị trường (chạy offline).
+ * CLI thu thập Xu hướng thị trường (fetch thủ công).
  *
- *   npm run build && npm run collect:market
+ *   npm run refresh:market           # build -> fetch -> build (1 lệnh gọn)
+ *   npm run collect:market           # chỉ fetch (cần build trước)
  *
- * Đọc các file dữ liệu ĐÃ KIỂM CHỨNG trong src/data/market-data/<vehicleId>.json,
- * đối chiếu theo quy tắc >=2 nguồn rồi ghi kết quả ra src/data/market-data/_collected.json.
+ * Nguồn:
+ *   - Feed RSS tin xe thật (mặc định VnExpress/Tuổi Trẻ/Dân Trí),
+ *     ghi đè bằng MARKET_RSS_FEEDS="Tên|url,...", tắt bằng MARKET_RSS_FEEDS=off.
+ *   - File đã kiểm chứng thủ công trong src/data/market-data/<vehicleId>.json.
  *
- * KHÔNG có nguồn web tự bịa: nếu chưa có file kiểm chứng nào, kết quả rỗng (đúng nguyên tắc).
- * Muốn thu thập tự động online: bổ sung adapter MarketDataSource thật (API hãng, sàn xe cũ)
- * vào hàm sourcesFor bên dưới.
+ * Kết quả ghi vào src/data/marketTrends.generated.ts = SNAPSHOT OFFLINE (đã commit),
+ * nên KHÔNG cần internet vẫn load được dữ liệu ở tab Xu hướng.
+ *
+ * GỘP an toàn: dữ liệu mới ghi đè theo từng xe; xe không refresh giữ snapshot cũ.
+ * => Mất mạng (fetch = 0) sẽ KHÔNG xoá mất data đã lưu. Đặt MARKET_CLEAR=1 để xoá hết.
+ *
+ * Nguyên tắc: chỉ lấy thông tin nguồn công bố rõ ràng (kèm publisher/url/ngày),
+ * KHÔNG bịa số liệu. Ngưỡng nguồn tối thiểu: MARKET_MIN_SOURCES (mặc định 1).
  */
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -22,6 +30,7 @@ import {
   type VerifiedMarketFile,
 } from '../data/marketCollector.js';
 import { createRssNewsSource } from '../data/sources/rssNews.js';
+import { collectedMarketTrends as existingSnapshot } from '../data/marketTrends.generated.js';
 
 const DATA_DIR = join(process.cwd(), 'src', 'data', 'market-data');
 const GENERATED_FILE = join(process.cwd(), 'src', 'data', 'marketTrends.generated.ts');
@@ -103,15 +112,30 @@ console.log('Ngưỡng nguồn tối thiểu:', minSources);
 
 const result = await collectAll(vehicles, (v) => [...loadVerifiedSources(v), ...rssSources], { minSources });
 const ids = Object.keys(result);
-console.log('Số xe có dữ liệu thị trường xác minh được:', ids.length);
+console.log('Số xe có dữ liệu mới lấy được:', ids.length);
+
+const fresh = collectedToMarketData(result);
+
+// MARKET_CLEAR=1 -> xoá toàn bộ snapshot (chỉ giữ dữ liệu vừa lấy).
+const clearOld = (process.env.MARKET_CLEAR ?? '').trim() === '1';
+
+// Gộp: dữ liệu mới ghi đè theo từng xe; xe không refresh giữ snapshot offline cũ.
+// Nhờ vậy khi mất mạng (fetch = 0) vẫn KHÔNG mất data đã lưu.
+const merged: Record<string, unknown> = clearOld ? { ...fresh } : { ...existingSnapshot, ...fresh };
+writeGenerated(merged);
+
+const totalCount = Object.keys(merged).length;
+const keptCount = totalCount - ids.length;
 
 if (ids.length > 0) {
   const outFile = join(DATA_DIR, '_collected.json');
   writeFileSync(outFile, JSON.stringify(result, null, 2) + '\n', 'utf8');
-  writeGenerated(collectedToMarketData(result));
   console.log('✓ Đã ghi:', outFile);
-  console.log('✓ Đã sinh:', GENERATED_FILE, '(dữ liệu sẽ hiện ở tab Xu hướng sau khi build lại)');
-} else {
-  writeGenerated({});
-  console.log('Chưa có dữ liệu đã kiểm chứng — sinh file rỗng (đúng nguyên tắc: không bịa số liệu).');
+}
+console.log('✓ Đã sinh snapshot offline:', GENERATED_FILE);
+console.log('   - Cập nhật mới:', ids.length, 'xe');
+if (!clearOld) console.log('   - Giữ từ snapshot cũ:', keptCount, 'xe');
+console.log('   - Tổng cộng:', totalCount, 'xe (build lại để hiện ở tab Xu hướng).');
+if (ids.length === 0 && totalCount > 0) {
+  console.log('ℹ Không lấy được dữ liệu mới (có thể do mất mạng) — đã giữ nguyên data offline.');
 }

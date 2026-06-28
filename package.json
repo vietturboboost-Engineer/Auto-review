@@ -14,6 +14,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "collect:market": "node dist/scripts/collectMarket.js",
+    "refresh:market": "npm run build && npm run collect:market && npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

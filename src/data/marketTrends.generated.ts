@@ -146,15 +146,11 @@ export const collectedMarketTrends: Record<string, MarketTrendsData> = {
     ],
     "events": [
       {
-        "period": "2026-06-27",
-        "label": "Hyundai Elantra 2027 - cú lột xác toàn diện"
-      },
-      {
         "period": "2026-06-26",
         "label": "Hyundai Elantra đời mới ra mắt, lột xác từ trong ra ngoài"
       }
     ],
-    "source": "Tuổi Trẻ, VnExpress"
+    "source": "Tuổi Trẻ"
   },
   "mitsubishi-attrage": {
     "alerts": [
