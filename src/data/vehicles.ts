@@ -1,5 +1,6 @@
 import { getBrand } from './brands.js';
 import { realImages } from './real-images.js';
+import { variantYears } from './variant-years.generated.js';
 import { reviews } from './reviews.js';
 import { applyCollectedMarketTrends } from './marketCollector.js';
 import { collectedMarketTrends } from './marketTrends.generated.js';
@@ -43,6 +44,18 @@ export interface VehicleRatings {
 
 export type FuelType = 'Xăng' | 'Hybrid' | 'Dầu' | 'Điện';
 export type DriveType = 'FWD' | 'RWD' | 'AWD' | '4WD';
+
+/** Một phiên bản (trim) cụ thể của xe, kèm ảnh & giá để người dùng phân biệt. */
+export interface Variant {
+  /** Tên phiên bản, ví dụ "1.5 G CVT" hoặc "Premium AWD". */
+  name: string;
+  /** Giá niêm yết (triệu VND) nếu biết. */
+  price: number | null;
+  /** Ảnh riêng cho phiên bản (mặc định dùng ảnh xe chính). */
+  image: string;
+  /** Điểm khác biệt nổi bật, ví dụ ["Mâm 18\"", "Cửa sổ trời", "ADAS"]. */
+  highlights: string[];
+}
 
 /** Tình trạng phân phối tại Việt Nam. */
 export type VnStatus = 'on-sale' | 'limited' | 'discontinued' | 'upcoming' | 'global-only';
@@ -125,8 +138,9 @@ export interface Vehicle {
   reliability: number;
   image: string;
   ratings: VehicleRatings;
-  /** Dữ liệu thị trường Việt Nam (suy ra tự động, có thể cập nhật độc lập). */
   vietnam: VietnamMarket;
+  /** Các phiên bản (trim) kèm ảnh & giá để người dùng so sánh. */
+  variants: Variant[];
   /** Tùy chọn: lịch bảo dưỡng / phụ tùng riêng. Nếu bỏ trống -> dùng mặc định. */
   maintenanceSchedule?: MaintenanceItem[];
   partsCatalog?: PartItem[];
@@ -814,6 +828,8 @@ interface Mk {
   ownership?: string;
   /** Tùy chọn ghi đè dữ liệu thị trường VN. */
   vn?: Partial<VietnamMarket>;
+  /** Tùy chọn: danh sách phiên bản chi tiết (mặc định suy ra từ vn.trims). */
+  variants?: Array<{ name: string; price?: number; image?: string; highlights?: string[] }>;
   // ----- Thông số kỹ thuật mở rộng (tùy chọn, chỉ điền khi xác minh được) -----
   engineDisplacement?: number | null;
   electricMotor?: string | null;
@@ -840,6 +856,93 @@ interface Mk {
   marketTrends?: MarketTrendsData;
 }
 
+// Ảnh riêng cho từng phiên bản (chỉ điền khi có nguồn xác minh): "id::tên-phiên-bản".
+const variantImages: Record<string, string> = {};
+
+// Ghi đè ảnh theo đời cho thị trường VN (ưu tiên hơn dữ liệu fetch tự động).
+const variantYearsOverride: Record<string, { year: number; image: string }[]> = {
+  'honda-city': [
+    {
+      year: 2022,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/2022_Honda_City_Hatchback_RS%2C_IIMS_Hybrid%2C_Grand_City%2C_Central_Surabaya.jpg/960px-2022_Honda_City_Hatchback_RS%2C_IIMS_Hybrid%2C_Grand_City%2C_Central_Surabaya.jpg',
+    },
+    {
+      year: 2023,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Honda_City_e-HEV_RS.jpg/960px-2023_Honda_City_e-HEV_RS.jpg',
+    },
+    {
+      year: 2025,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Honda_City_e-HEV_RS.jpg/960px-2023_Honda_City_e-HEV_RS.jpg',
+    },
+  ],
+  'toyota-vios': [
+    {
+      year: 2022,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Toyota_Vios_%28XP150%29_sedan_front_view.jpg/960px-Toyota_Vios_%28XP150%29_sedan_front_view.jpg',
+    },
+    {
+      year: 2023,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/2023_Toyota_Vios_G_01.jpg/960px-2023_Toyota_Vios_G_01.jpg',
+    },
+    {
+      year: 2024,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/2023_Toyota_Vios_G_01.jpg/960px-2023_Toyota_Vios_G_01.jpg',
+    },
+  ],
+  'toyota-camry': [
+    {
+      year: 2023,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Toyota_Camry_IX_front_quarter%2C_Guangzhou%2C_202311191645.jpg/960px-Toyota_Camry_IX_front_quarter%2C_Guangzhou%2C_202311191645.jpg',
+    },
+    {
+      year: 2024,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Toyota_Camry_IX_front_quarter%2C_Guangzhou%2C_202311191645.jpg/960px-Toyota_Camry_IX_front_quarter%2C_Guangzhou%2C_202311191645.jpg',
+    },
+    {
+      year: 2025,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/2025_Toyota_Camry_LE%2C_front_left%2C_05-24-2025.jpg/960px-2025_Toyota_Camry_LE%2C_front_left%2C_05-24-2025.jpg',
+    },
+  ],
+};
+
+function deriveVariants(o: Mk, vietnam: VietnamMarket, mainImage: string): Variant[] {
+  if (o.variants && o.variants.length) {
+    return o.variants.map((vr) => ({
+      name: vr.name,
+      price: vr.price ?? null,
+      image: vr.image ?? variantImages[`${o.id}::${vr.name}`] ?? mainImage,
+      highlights: vr.highlights ?? [],
+    }));
+  }
+  // Ảnh theo đời (2022–2025) tự fetch nếu có.
+  const years = variantYearsOverride[o.id] ?? variantYears[o.id];
+  if (years && years.length) {
+    return years.map((y) => ({
+      name: `Đời ${y.year}`,
+      price: null,
+      image: y.image || mainImage,
+      highlights: [],
+    }));
+  }
+  const names = vietnam.trims && vietnam.trims.length ? vietnam.trims : [o.trim];
+  const n = names.length;
+  return names.map((name, i) => ({
+    name,
+    price: n > 1 ? Math.round(o.pmin + ((o.pmax - o.pmin) * i) / (n - 1)) : o.pmin,
+    image: variantImages[`${o.id}::${name}`] ?? mainImage,
+    highlights: [],
+  }));
+}
+
 function mk(o: Mk): Vehicle {
   const brand = getBrand(o.brandSlug);
   const safety =
@@ -851,6 +954,8 @@ function mk(o: Mk): Vehicle {
   const vietnam: VietnamMarket = { ...vnBase, ...vietnamOverrides[o.id], ...(o.vn ?? {}) };
   vietnam.statusLabel = VN_STATUS_LABEL[vietnam.status];
   vietnam.badge = VN_BADGE[vietnam.status];
+  const mainImage = o.image ?? realImages[o.id] ?? ph(o.brandSlug, o.model);
+  const variants = deriveVariants(o, vietnam, mainImage);
   return {
     id: o.id,
     brand: brand?.name ?? o.brandSlug,
@@ -887,9 +992,10 @@ function mk(o: Mk): Vehicle {
     suitableFor: o.suitableFor ?? deriveSuitable(o.seats, o.fuel, o.pmin, bodyType),
     tags: o.tags ?? deriveTags(o, bodyType, r, vietnam),
     reliability: o.rel,
-    image: o.image ?? realImages[o.id] ?? ph(o.brandSlug, o.model),
+    image: mainImage,
     ratings: r,
     vietnam,
+    variants,
     engineDisplacement: o.engineDisplacement ?? null,
     electricMotor: o.electricMotor ?? null,
     combinedPower: o.combinedPower ?? null,
@@ -1112,7 +1218,7 @@ export const vehicles: Vehicle[] = [
     torque: 145,
     rel: 4,
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/2022_Honda_City_ZX_i-VTEC_%28India%29_front_view_%28cropped%29.jpg/330px-2022_Honda_City_ZX_i-VTEC_%28India%29_front_view_%28cropped%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Honda_City_e-HEV_RS.jpg/500px-2023_Honda_City_e-HEV_RS.jpg',
     r: { safety: 4, performance: 4, fuelEcon: 4, brandRep: 4 },
   }),
   mk({
@@ -1136,7 +1242,7 @@ export const vehicles: Vehicle[] = [
     torque: 240,
     rel: 4,
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Honda_Civic_e-HEV_Sport_%28XI%29_%E2%80%93_f_30062024.jpg/330px-Honda_Civic_e-HEV_Sport_%28XI%29_%E2%80%93_f_30062024.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Honda_Civic_e-HEV_Sport_%28XI%29_%E2%80%93_f_30062024.jpg/500px-Honda_Civic_e-HEV_Sport_%28XI%29_%E2%80%93_f_30062024.jpg',
     r: { performance: 5, tech: 4, safety: 4, brandRep: 4 },
   }),
   mk({
@@ -1160,7 +1266,7 @@ export const vehicles: Vehicle[] = [
     torque: 253,
     rel: 4,
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/2023_Honda_HR-V_Advance_i-MMD_CVT_1.5.jpg/330px-2023_Honda_HR-V_Advance_i-MMD_CVT_1.5.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/2023_Honda_HR-V_Advance_i-MMD_CVT_1.5.jpg/500px-2023_Honda_HR-V_Advance_i-MMD_CVT_1.5.jpg',
     r: { fuelEcon: 4, comfort: 4, safety: 4, tech: 4 },
   }),
   mk({
@@ -1184,7 +1290,7 @@ export const vehicles: Vehicle[] = [
     torque: 335,
     rel: 4,
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Honda_CR-V_e-HEV_Elegance_AWD_%28VI%29_%E2%80%93_f_14072024.jpg/330px-Honda_CR-V_e-HEV_Elegance_AWD_%28VI%29_%E2%80%93_f_14072024.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Honda_CR-V_e-HEV_Elegance_AWD_%28VI%29_%E2%80%93_f_14072024.jpg/500px-Honda_CR-V_e-HEV_Elegance_AWD_%28VI%29_%E2%80%93_f_14072024.jpg',
     r: { safety: 5, comfort: 4, performance: 4, tech: 4, family: 4 },
   }),
   mk({
@@ -1208,7 +1314,7 @@ export const vehicles: Vehicle[] = [
     torque: 260,
     rel: 4,
     image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/2023_Honda_Accord_LX%2C_front_left%2C_07-13-2023.jpg/330px-2023_Honda_Accord_LX%2C_front_left%2C_07-13-2023.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/2023_Honda_Accord_LX%2C_front_left%2C_07-13-2023.jpg/500px-2023_Honda_Accord_LX%2C_front_left%2C_07-13-2023.jpg',
     r: { comfort: 5, safety: 5, performance: 4, brandRep: 4 },
   }),
 
@@ -1243,6 +1349,52 @@ export const vehicles: Vehicle[] = [
     image:
       'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Mitsubishi_Xpander_NC1W_FL2_1.5_GLS_Quartz_White_Pearl_01.jpg/330px-Mitsubishi_Xpander_NC1W_FL2_1.5_GLS_Quartz_White_Pearl_01.jpg',
     r: { cargo: 4, fuelEcon: 4, family: 5, brandRep: 4 },
+  }),
+  mk({
+    id: 'mitsubishi-xpander-cross',
+    brandSlug: 'mitsubishi',
+    model: 'Xpander Cross',
+    gen: '(2022 FL)',
+    trim: '1.5 AT',
+    engine: '1.5L xăng 4A91 MIVEC',
+    trans: 'AT 4 cấp',
+    fuel: 'Xăng',
+    drive: 'FWD',
+    seats: 7,
+    segment: 'MPV 7 chỗ',
+    pmin: 688,
+    pmax: 698,
+    econ: '~6,8 L/100km',
+    dims: [4595, 1750, 1750, 2775],
+    cargo: 322,
+    hp: 105,
+    torque: 141,
+    clearance: 225,
+    curbWeight: 1265,
+    rel: 4,
+    r: { cargo: 4, fuelEcon: 4, family: 5, brandRep: 4 },
+  }),
+  mk({
+    id: 'mitsubishi-destinator',
+    brandSlug: 'mitsubishi',
+    model: 'Destinator',
+    gen: '(2025)',
+    trim: '1.5T CVT',
+    engine: '1.5L turbo xăng',
+    trans: 'CVT',
+    fuel: 'Xăng',
+    drive: 'FWD',
+    seats: 7,
+    segment: 'SUV hạng C',
+    pmin: 700,
+    pmax: 850,
+    econ: '~7,0 L/100km',
+    dims: [4680, 1810, 1773, 2815],
+    cargo: 300,
+    hp: 161,
+    torque: 250,
+    rel: 4,
+    r: { tech: 4, family: 5, comfort: 4, safety: 4 },
   }),
   mk({
     id: 'mitsubishi-xforce',

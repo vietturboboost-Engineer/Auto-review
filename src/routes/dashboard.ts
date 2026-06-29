@@ -482,7 +482,7 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .mkt-sum-line:last-child{margin-bottom:0}
 @media(max-width:680px){.mkt-grid{grid-template-columns:1fr}}
 .ovgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-bottom:14px}
-.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px}
+.ovimg{width:100%;height:100%;min-height:240px;max-height:420px;object-fit:cover;border-radius:14px;cursor:zoom-in}
 .ovinfo{min-width:0}
 .ovh{margin:14px 0 7px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
 .ovh b{color:var(--accent2)}
@@ -500,6 +500,17 @@ html[data-theme="light"] .simcard .sim-b{color:oklch(from var(--bc,#444444) min(
 .brandbox .bb-sub{font-size:12px;color:var(--muted);margin-top:-4px}
 @media(max-width:760px){.proscons{grid-template-columns:1fr}}
 @media(max-width:760px){.ovgrid{grid-template-columns:1fr}.ovimg{max-height:260px}}
+.vergrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.vercard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);display:flex;flex-direction:column}
+.verimg{width:100%;height:140px;object-fit:cover;background:var(--bg)}
+.verbody{padding:10px 12px}
+.vername{font-weight:700;font-size:14px}
+.verprice{color:var(--accent);font-weight:700;font-size:13px;margin-top:2px}
+.verimg{cursor:zoom-in}
+.lightbox{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;cursor:zoom-out}
+.lightbox.show{display:flex}
+.lightbox img{max-width:94vw;max-height:90vh;object-fit:contain;border-radius:8px}
+.lbclose{position:fixed;top:18px;right:22px;font-size:26px;background:none;border:none;color:#fff;cursor:pointer}
 
 /* tables */
 .dtbl{width:100%;border-collapse:collapse;font-size:14px}
@@ -683,6 +694,12 @@ html[data-skin="handdrawn"] .vnbadge{border:1.5px solid var(--hd-stroke);border-
 /* Tabs */
 html[data-skin="handdrawn"] .tab{border:2px solid transparent;border-radius:var(--hd-sm)}
 html[data-skin="handdrawn"] .tab.active{border-color:var(--hd-stroke);background:var(--surface)}
+/* Brand chip viết tay: bỏ nét đậm + bo góc; trạng thái chọn dùng nền accent cho rõ */
+html[data-skin="handdrawn"] .brandchip{border:2px solid var(--hd-stroke);border-radius:var(--hd-sm);background:var(--surface)}
+html[data-skin="handdrawn"] .brandchip.active{background:var(--accent);color:var(--ink);border-color:var(--hd-stroke);box-shadow:var(--shadow)}
+html[data-skin="handdrawn"] .brandchip.active .brandmark,
+html[data-skin="handdrawn"] .brandchip.active .brandcountry,
+html[data-skin="handdrawn"] .brandchip.active .brandcount{color:var(--ink)}
 /* Bảng (so sánh, thông số) */
 html[data-skin="handdrawn"] .cmp-tbl th,
 html[data-skin="handdrawn"] .cmp-tbl td,
@@ -1007,10 +1024,11 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
   var modal=$('modal'), sheet=$('sheet');
   var rvmodal=$('rvmodal'), rvsheet=$('rvsheet');
   function openModal(html){ sheet.innerHTML=html; modal.classList.add('show'); document.body.style.overflow='hidden'; bindTabs(); }
+  function openLightbox(src){ if(!src) return; var lb=document.getElementById('lightbox'); if(!lb){ lb=document.createElement('div'); lb.id='lightbox'; lb.className='lightbox'; lb.innerHTML='<img alt=""><button class="lbclose" aria-label="Đóng">✕</button>'; document.body.appendChild(lb); lb.addEventListener('click', function(){ lb.classList.remove('show'); }); } lb.querySelector('img').src=hiRes(src); lb.classList.add('show'); }
   function closeModal(){ modal.classList.remove('show'); document.body.style.overflow=''; clearShareUrl(); }
   modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
   rvmodal.addEventListener('click', function(e){ if(e.target===rvmodal) closeRvModal(); });
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(rvmodal.classList.contains('show')) closeRvModal(); else closeModal(); } });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ var lb=document.getElementById('lightbox'); if(lb&&lb.classList.contains('show')) lb.classList.remove('show'); else if(rvmodal.classList.contains('show')) closeRvModal(); else closeModal(); } });
 
   /* ---------- Floating scroll buttons ---------- */
   var totop=$('totop'), tobottom=$('tobottom');
@@ -1122,6 +1140,18 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
   }
   function srows(v,keys){ var out=''; for(var i=0;i<keys.length;i++){ var f=SPEC_FIELDS[keys[i]]; if(!f) continue; var val=f.g(v); if(val==null||val==='') continue; out+=srow(f.l,val,f.hl); } return out; }
   function chipsBlock(arr){ return (arr&&arr.length)? '<div class="taglist" style="margin:8px 0 0">'+arr.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>' : ''; }
+  function versionsPaneHtml(v){
+    var vs=v.variants||[]; if(!vs.length){ return '<p class="muted">Chưa có dữ liệu phiên bản.</p>'; }
+    var cards=vs.map(function(vr){
+      var img=vr.image||v.image;
+      var pr=(vr.price!=null)? (vr.price.toLocaleString('vi-VN')+' triệu') : 'Liên hệ';
+      var hl=(vr.highlights&&vr.highlights.length)? '<div class="taglist" style="margin:6px 0 0">'+vr.highlights.map(function(h){return '<span class="tag">'+esc(h)+'</span>';}).join('')+'</div>':'';
+      return '<div class="vercard"><img class="verimg" loading="lazy" src="'+esc(img)+'" data-full="'+esc(img)+'" alt="'+esc(vr.name)+'" title="Bấm để xem ảnh lớn">'
+        + '<div class="verbody"><div class="vername">'+esc(vr.name)+'</div><div class="verprice">'+esc(pr)+'</div>'+hl+'</div></div>';
+    }).join('');
+    return '<p class="muted" style="margin:0 0 10px">'+vs.length+' phiên bản — giá tham khảo, thay đổi theo đại lý & thời điểm.</p>'
+      + '<div class="vergrid">'+cards+'</div>';
+  }
   function specPaneHtml(v){
     var t=vehicleType(v), html='';
     html+=specSec('🚗 Tổng quan', srows(v,['brand','model','genYear','segment','bodyType','seats','fuelType','driveType','transmission']));
@@ -1536,6 +1566,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       + '<div class="tabs">'
       +   '<button class="tab active" data-tab="ov">Tổng quan</button>'
       +   '<button class="tab" data-tab="spec">Thông số</button>'
+      +   '<button class="tab" data-tab="ver">🚘 Phiên bản</button>'
       +   '<button class="tab" data-tab="maint">Bảo dưỡng</button>'
       +   '<button class="tab" data-tab="parts">Phụ tùng</button>'
       +   '<button class="tab" data-tab="cost">Chi phí sở hữu</button>'
@@ -1546,7 +1577,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       + '<div class="sheet-body">'
       +   '<div class="tabpane active" data-pane="ov">'
       +     '<div class="ovgrid">'
-      +       '<img class="ovimg" src="'+esc(hiRes(v.image))+'" data-orig="'+esc(v.image)+'" alt="">'
+      +       '<img class="ovimg" src="'+esc(hiRes(v.image))+'" data-orig="'+esc(v.image)+'" data-full="'+esc(v.image)+'" alt="" title="Bấm để xem ảnh lớn">'
       +       '<div class="ovinfo">'
       +         '<div class="vprice" style="font-size:20px">'+esc(v.price.label)+'</div>'
       +         '<div class="vmeta" style="margin:8px 0">'+starsHtml(stars(v.reliability))+' · '+esc(v.segment)+' · '+esc(v.fuelType)+' · '+v.seats+' chỗ</div>'
@@ -1580,6 +1611,7 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
       +     '</div>'
       +   '</div>'
       +   '<div class="tabpane" data-pane="spec">'+specPaneHtml(v)+'</div>'
+      +   '<div class="tabpane" data-pane="ver">'+versionsPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="maint">'+maintPaneHtml(v)+'</div>'
       +   '<div class="tabpane" data-pane="parts"><p class="muted">Giá phụ tùng tham khảo:</p><table class="dtbl">'+pc+'</table></div>'
       +   '<div class="tabpane" data-pane="cost">'
@@ -1997,6 +2029,8 @@ html[data-skin="handdrawn"] .modal.show .sheet{animation:hd-ink .28s ease both}
   document.addEventListener('click', function(e){
     var fav=e.target.closest('[data-fav]');
     if(fav){ e.stopPropagation(); toggleFav(fav.getAttribute('data-fav')); return; }
+    var lb=e.target.closest('[data-full]');
+    if(lb){ openLightbox(lb.getAttribute('data-full')); return; }
     var t=e.target.closest('[data-act]');
     if(t){
       var act=t.getAttribute('data-act'), id=t.getAttribute('data-id');

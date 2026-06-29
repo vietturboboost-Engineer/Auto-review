@@ -19,6 +19,7 @@ const brandFix = {
 // Tên bài Wikipedia thủ công cho xe có tên khác model gốc
 const idTitle = {
   'kia-k3': 'Kia Cerato',
+  'mitsubishi-xpander-cross': 'Mitsubishi Xpander Cross',
   'ford-territory': 'Ford Territory (China)',
   'suzuki-ertiga': 'Suzuki Ertiga',
   'gmc-sierra': 'GMC Sierra',
